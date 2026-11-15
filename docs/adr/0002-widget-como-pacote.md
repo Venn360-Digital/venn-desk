@@ -4,7 +4,7 @@
 
 ## Decisão
 O widget é um pacote React source-only, `packages/desk-widget` no monorepo
-`venn360/venn-saas`, e fala apenas com a API HTTP do Venn Desk.
+`Venn360-Digital/venn-saas`, e fala apenas com a API HTTP do Venn Desk.
 
 ## Consequências
 Quem builda é o app hospedeiro, então o pacote não publica em registry e exige

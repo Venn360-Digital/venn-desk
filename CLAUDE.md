@@ -13,7 +13,7 @@ Um serviço separado. Repositório, Worker e banco próprios. Nenhuma tabela nos
 bancos dos apps, nenhuma leitura do banco de app nenhum. Os apps alcançam o
 Venn Desk só pela API HTTP, autenticados por JWT assinado por cada app.
 
-O monorepo dos apps é outro: `venn360/venn-saas` (`~/Desktop/Projects/venn-saas`).
+O monorepo dos apps é outro: `Venn360-Digital/venn-saas` (`~/Desktop/Projects/venn-saas`).
 O widget mora lá, em `packages/desk-widget`, e consome só esta API.
 
 ## Stack
