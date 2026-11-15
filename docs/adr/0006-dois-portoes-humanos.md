@@ -7,6 +7,17 @@ O gestor aprova a issue antes do desenvolvimento. Um humano aprova a promoção
 de staging para produção, e o segundo portão é imposto no GitHub — `main`
 protegida, merge restrito ao app do Bridge — não só por um botão no Slack.
 
+## Medição de 15/11/2026: a trava não existe ainda
+
+A conta `venn360` é pessoal, no plano gratuito, e o GitHub recusa proteção de
+branch e rulesets em repositório privado nesse plano (403 "Upgrade to GitHub Pro
+or make this repository public"), tanto no `venn-desk` quanto no `venn-saas`.
+
+Enquanto isso valer, o Portão 2 é só o botão no Slack, o `CODEOWNERS` deste
+repositório é indicativo e `main` aceita push direto. O desenho não muda — falta
+o plano que o impõe. Recomendado: organização no GitHub no plano Team, que
+também atende à exigência de organização do Claude Tag. Pré-requisito da Fase 6.
+
 ## Consequências
 Nenhuma credencial da IA escreve na branch de produção. A variante mais rígida
 (environment com revisor obrigatório) não se aplica, porque dependia de deploy

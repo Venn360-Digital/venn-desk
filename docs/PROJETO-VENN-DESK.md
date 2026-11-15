@@ -376,6 +376,8 @@ Um defeito percorre sete passos, com dois portões humanos, e nenhuma credencial
 - Variante mais rígida: environment `production` com revisor obrigatório não se aplica, porque depende de deploy pelo GitHub Actions, removido dos três apps.
 - `CODEOWNERS` para caminhos sensíveis: autenticação, cobrança, isolamento entre tenants, migrações de banco, workflows. PR da IA que toque esses caminhos exige revisão de código por uma pessoa antes de ir para staging.
 
+**Medido em 15/11/2026: nenhuma dessas travas existe hoje.** A conta `venn360` é uma conta pessoal no plano gratuito, e o GitHub recusa proteção de branch e rulesets em repositório privado nesse plano — a API responde 403 "Upgrade to GitHub Pro or make this repository public", tanto no `venn-desk` quanto no `venn-saas`, que serve a produção dos três apps. Sem isso, o Portão 2 fica sendo só o botão no Slack, `CODEOWNERS` é apenas indicativo, e nada impede um push direto em `main`. O desenho dos dois portões não muda; o que falta é o plano que o impõe. A saída recomendada é criar uma **organização no GitHub no plano Team**, que resolve as duas coisas de uma vez: as travas agora e a exigência de organização do Claude Tag depois (seção 4). O GitHub Pro resolve só a primeira, por menos. Isso é pré-requisito da Fase 6, não da Fase 1.
+
 **Limites da correção automática**
 
 - Migração de banco: aplicada primeiro em uma branch do Neon ligada ao staging. Migração destrutiva (remover coluna ou tabela, alterar tipo) nunca é automática.
@@ -490,6 +492,7 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 * [ ] Confirmar no Workers Builds de cada app: builds de branches não produtivas, check run no PR, falha do portão reprovando o check, minutos e builds simultâneos do plano
 * [ ] Criar o workspace do Slack no plano gratuito para o piloto
 * [x] Ativar o plano Workers Paid na conta da Cloudflare, antes da Fase 2 (e-mail a destinatário arbitrário) e da Fase 5 (builds simultâneos)
+* [ ] Criar a organização no GitHub e pôr no plano Team, movendo `venn-saas` e `venn-desk` para ela — sem isso não há proteção de branch (medido em 15/11/2026) e o Portão 2 da Fase 6 não é imponível
 
 **Aceite:** relatório de auditoria dos três apps, executor decidido, ambientes criados e "hello world" publicado em staging.
 
@@ -662,6 +665,7 @@ As metas abaixo são uma proposta inicial para calibrar após o primeiro mês de
 | Dados de pacientes em chamados | Exposição de dado sensível | Minimização, mascaramento, anexos fora do Slack e do GitHub |
 | Custo de IA sem controle | Gasto imprevisto | Teto mensal, limite por tenant, painel de custo |
 | Divergência entre os três repositórios | Correções triplicadas | Rotina de apps irmãos agora. Monorepo resolve na origem |
+| Plano do GitHub sem proteção de branch | O Portão 2 deixa de ser imposto: push direto em main é possível e CODEOWNERS não exige revisão | Medido em 15/11/2026: conta pessoal gratuita, 403 em repositório privado. Organização no plano Team antes da Fase 6, que também atende ao Claude Tag |
 
 **Decisões que só você pode tomar**
 
