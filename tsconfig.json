@@ -1,0 +1,32 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "lib": ["ES2022"],
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+
+        // Faz o typecheck resolver o cliente do Prisma pela mesma condição que o
+        // wrangler usa no bundle. Sem isto, o tipo verificado seria o de Node e
+        // o publicado o de workerd.
+        "customConditions": ["workerd"],
+
+        "types": ["@cloudflare/workers-types"],
+
+        "strict": true,
+        "noUncheckedIndexedAccess": true,
+        "noImplicitOverride": true,
+        "exactOptionalPropertyTypes": true,
+        "verbatimModuleSyntax": true,
+
+        // Os imports carregam `.ts` porque não há etapa de emissão: quem
+        // empacota é o wrangler, e o Node 24 e o vitest resolvem o mesmo
+        // caminho.
+        "noEmit": true,
+        "allowImportingTsExtensions": true,
+
+        "skipLibCheck": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true
+    },
+    "include": ["src/**/*.ts", "vitest.config.ts"]
+}

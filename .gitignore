@@ -7,3 +7,6 @@ dist/
 .wrangler/
 .DS_Store
 *.tsbuildinfo
+
+# O build do Console. Nasce do Vite, não entra no repositório.
+console/dist/

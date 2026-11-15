@@ -1,0 +1,708 @@
+/**
+ * O banco do Venn Desk — seção 6 de `docs/PROJETO-VENN-DESK.md`.
+ *
+ * É um banco SEPARADO dos bancos dos apps. Nada aqui referencia tabela de app
+ * nenhum: o vínculo é por `externalId`, o identificador que o app manda dentro
+ * do JWT. O Venn Desk nunca lê o banco de um app, e os apps não ganham tabela.
+ *
+ * **Toda tabela de negócio carrega `appId`.** Não é redundância com o caminho
+ * de relacionamento: é o que permite ao filtro de escopo (`src/dados/escopo.ts`)
+ * provar isolamento em UMA cláusula, em qualquer consulta, sem depender de o
+ * autor da consulta ter lembrado de atravessar a relação certa.
+ */
+
+/**
+ * DOIS clientes gerados, como no `@venn/db` do monorepo — e pela mesma razão
+ * medida lá: o cliente `workerd` importa o engine wasm e só funciona dentro de
+ * um bundler que resolva esse import; o de Node falha com ele. Quem escolhe é a
+ * condição `workerd`, declarada em `imports` do `package.json` (`#prisma`).
+ */
+generator client {
+    provider     = "prisma-client"
+    output       = "../src/gerado/prisma"
+    runtime      = "nodejs"
+    moduleFormat = "esm"
+
+    previewFeatures = ["postgresqlExtensions"]
+}
+
+generator clientWorkerd {
+    provider     = "prisma-client"
+    output       = "../src/gerado/prisma-workerd"
+    runtime      = "workerd"
+    moduleFormat = "esm"
+
+    previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+    provider   = "postgresql"
+    url        = env("DATABASE_URL")
+    /// `vector` serve a busca semântica da base de conhecimento (Fase 4). Entra
+    /// já aqui para a extensão não exigir uma migração à parte depois.
+    extensions = [vector]
+}
+
+// ============================================
+// 1. APPS, TENANTS E PESSOAS
+// ============================================
+
+/**
+ * Cada produto atendido. Incluir um app é inserir uma linha aqui.
+ */
+model App {
+    id     String @id @default(cuid())
+    slug   String @unique
+    nome   String
+    /// Prefixo do número legível do chamado: ODB, CNT, STG.
+    prefixo String @unique
+
+    /// Chave PÚBLICA do token do app, em JWK. A privada é segredo do Worker
+    /// daquele app e nunca passa por aqui.
+    chavePublicaJwk Json   @map("chave_publica_jwk")
+    /// Repositório do app no GitHub, para os canais de engenharia (Fase 5).
+    repositorio     String?
+    canalSuporte    String? @map("canal_suporte")
+    canalEngenharia String? @map("canal_engenharia")
+
+    /// Modo sombra: a resposta da IA sai como rascunho até alguém aprovar.
+    /// Liga e desliga por app, a qualquer momento (seção 4).
+    modoSombra Boolean @default(true) @map("modo_sombra")
+    /// Tema e textos do widget: cores, posição do botão, vocabulário do nicho.
+    tema       Json?
+
+    /**
+     * A sequência do número do chamado, por app.
+     *
+     * Mora numa coluna e não numa SEQUENCE do Postgres porque a numeração é por
+     * app, e uma sequence por app significaria DDL a cada app novo — justamente
+     * o que a Fase 8 quer evitar. O incremento acontece dentro da transação que
+     * cria o chamado, com `UPDATE … RETURNING` (ver `src/dados/tickets.ts`).
+     */
+    proximoNumero Int @default(1) @map("proximo_numero")
+
+    criadoEm   DateTime  @default(now()) @map("criado_em")
+    excluidoEm DateTime? @map("excluido_em")
+
+    tenants     Tenant[]
+    requesters  Requester[]
+    tickets     Ticket[]
+    problems    Problem[]
+    kbArticles  KbArticle[]
+    slaPolicies SlaPolicy[]
+    macros      Macro[]
+    automations Automation[]
+    views       View[]
+    tags        Tag[]
+    customFields CustomField[]
+
+    @@map("apps")
+}
+
+/**
+ * Empresa cliente dentro de um app: a clínica, a agência, o estúdio.
+ */
+model Tenant {
+    id    String @id @default(cuid())
+    appId String @map("app_id")
+    app   App    @relation(fields: [appId], references: [id])
+
+    /// O id do tenant NO APP, como vem na claim do token.
+    externalId String  @map("external_id")
+    nome       String
+    plano      String?
+
+    criadoEm DateTime @default(now()) @map("criado_em")
+
+    requesters Requester[]
+    tickets    Ticket[]
+
+    @@unique([appId, externalId])
+    @@map("tenants")
+}
+
+/**
+ * Usuário final. Nasce da primeira claim: ninguém cadastra solicitante à mão.
+ */
+model Requester {
+    id       String @id @default(cuid())
+    appId    String @map("app_id")
+    app      App    @relation(fields: [appId], references: [id])
+    tenantId String @map("tenant_id")
+    tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+    externalId String  @map("external_id")
+    nome       String
+    email      String
+    /// Papel dentro do tenant. `admin` vê os chamados da empresa inteira.
+    papelNoTenant String @default("member") @map("papel_no_tenant")
+
+    criadoEm      DateTime @default(now()) @map("criado_em")
+    atualizadoEm  DateTime @updatedAt @map("atualizado_em")
+
+    tickets Ticket[]
+
+    @@unique([appId, externalId])
+    @@index([appId, email])
+    @@map("requesters")
+}
+
+/**
+ * Equipe interna e a IA. Não tem `appId`: a mesma pessoa atende vários apps, e
+ * o recorte de quem pode o quê é por `papel` mais a lista de aprovadores do app.
+ */
+model Agent {
+    id      String    @id @default(cuid())
+    nome    String
+    email   String    @unique
+    slackId String?   @unique @map("slack_id")
+    papel   AgentRole @default(AGENTE)
+    tipo    AgentKind @default(HUMANO)
+    ativo   Boolean   @default(true)
+
+    criadoEm DateTime @default(now()) @map("criado_em")
+
+    tickets   Ticket[]
+    approvals Approval[]
+
+    @@map("agents")
+}
+
+enum AgentRole {
+    AGENTE
+    GESTOR
+    ADMIN
+
+    @@map("agent_role")
+}
+
+enum AgentKind {
+    HUMANO
+    IA
+
+    @@map("agent_kind")
+}
+
+// ============================================
+// 2. O CHAMADO
+// ============================================
+
+model Ticket {
+    id    String @id @default(cuid())
+    appId String @map("app_id")
+    app   App    @relation(fields: [appId], references: [id])
+
+    /// Sequência por app. Com o prefixo, forma `ODB-1042`.
+    numero Int
+
+    tenantId    String    @map("tenant_id")
+    tenant      Tenant    @relation(fields: [tenantId], references: [id])
+    requesterId String    @map("requester_id")
+    requester   Requester @relation(fields: [requesterId], references: [id])
+
+    assunto    String
+    tipo       TicketType     @default(DUVIDA)
+    prioridade TicketPriority @default(NORMAL)
+    status     TicketStatus   @default(NOVO)
+    /// Nível de atendimento em que o chamado está (seção 4).
+    nivel      SupportLevel   @default(N1)
+
+    /// Responsável humano, quando houver. A IA não ocupa esta coluna: o que ela
+    /// faz fica na trilha de eventos, com a ferramenta que chamou.
+    assigneeId String? @map("assignee_id")
+    assignee   Agent?  @relation(fields: [assigneeId], references: [id])
+
+    /// O defeito que agrupa este incidente (Fase 5).
+    problemId String?  @map("problem_id")
+    problem   Problem? @relation(fields: [problemId], references: [id])
+
+    /**
+     * Contexto capturado pelo widget sem o usuário digitar: rota, versão do app,
+     * navegador, tela, idioma, plano, últimos erros do console e requisições com
+     * falha. É o que permite à IA reproduzir o defeito (seção 7).
+     *
+     * Não guarda corpo de requisição nem conteúdo de formulário — minimização
+     * exigida pela seção 10.
+     */
+    contexto Json?
+
+    criadoEm       DateTime  @default(now()) @map("criado_em")
+    atualizadoEm   DateTime  @updatedAt @map("atualizado_em")
+    primeiraRespostaEm DateTime? @map("primeira_resposta_em")
+    resolvidoEm    DateTime? @map("resolvido_em")
+    fechadoEm      DateTime? @map("fechado_em")
+    excluidoEm     DateTime? @map("excluido_em")
+
+    messages    TicketMessage[]
+    attachments Attachment[]
+    events      TicketEvent[]
+    slackThread SlackThread?
+    slaTimers   SlaTimer[]
+    csat        CsatResponse?
+    tags        TicketTag[]
+    customValues CustomFieldValue[]
+
+    @@unique([appId, numero])
+    @@index([appId, status])
+    @@index([appId, tenantId, status])
+    @@index([appId, requesterId])
+    @@map("tickets")
+}
+
+enum TicketStatus {
+    NOVO
+    ABERTO
+    AGUARDANDO_USUARIO
+    EM_ESPERA
+    RESOLVIDO
+    FECHADO
+
+    @@map("ticket_status")
+}
+
+enum TicketType {
+    DUVIDA
+    INCIDENTE
+    PROBLEMA
+    SOLICITACAO
+
+    @@map("ticket_type")
+}
+
+enum TicketPriority {
+    BAIXA
+    NORMAL
+    ALTA
+    URGENTE
+
+    @@map("ticket_priority")
+}
+
+enum SupportLevel {
+    N1
+    N2
+    N3
+    HUMANO
+
+    @@map("support_level")
+}
+
+/**
+ * A linha do tempo. Mensagem pública e nota interna na mesma tabela, separadas
+ * por `visibilidade` — nota interna NUNCA chega ao widget, e o filtro é no
+ * repositório, não na tela.
+ */
+model TicketMessage {
+    id       String @id @default(cuid())
+    appId    String @map("app_id")
+    ticketId String @map("ticket_id")
+    ticket   Ticket @relation(fields: [ticketId], references: [id])
+
+    autor        MessageAuthor
+    /// Quem escreveu, quando dá para nomear: agente, ou o solicitante.
+    autorId      String?            @map("autor_id")
+    visibilidade MessageVisibility  @default(PUBLICA)
+    origem       MessageOrigin      @default(WIDGET)
+    corpo        String
+
+    /// Rascunho do modo sombra: escrito pela IA, ainda não enviado (seção 4).
+    rascunho Boolean @default(false)
+
+    criadoEm DateTime @default(now()) @map("criado_em")
+
+    attachments Attachment[]
+
+    @@index([appId, ticketId, criadoEm])
+    @@map("ticket_messages")
+}
+
+enum MessageAuthor {
+    USUARIO
+    IA
+    HUMANO
+    SISTEMA
+
+    @@map("message_author")
+}
+
+enum MessageVisibility {
+    PUBLICA
+    INTERNA
+
+    @@map("message_visibility")
+}
+
+enum MessageOrigin {
+    WIDGET
+    SLACK
+    MCP
+    CONSOLE
+    PORTAL
+    EMAIL
+
+    @@map("message_origin")
+}
+
+/**
+ * Anexos em armazenamento privado (R2), entregues por link assinado de curta
+ * duração. Nunca vão para o Slack nem para o GitHub (seção 10).
+ */
+model Attachment {
+    id       String @id @default(cuid())
+    appId    String @map("app_id")
+    ticketId String @map("ticket_id")
+    ticket   Ticket @relation(fields: [ticketId], references: [id])
+
+    messageId String?        @map("message_id")
+    message   TicketMessage? @relation(fields: [messageId], references: [id])
+
+    /// Chave no bucket. Carrega o `appId` no caminho, para o escopo valer
+    /// também no armazenamento.
+    chave    String  @unique
+    nome     String
+    tipo     String
+    tamanho  Int
+
+    criadoEm DateTime @default(now()) @map("criado_em")
+
+    @@index([appId, ticketId])
+    @@map("attachments")
+}
+
+/**
+ * Auditoria. Nada é apagado e toda mudança passa por aqui: quem, quando, antes
+ * e depois. Ação da IA grava a ferramenta chamada e os parâmetros.
+ */
+model TicketEvent {
+    id       String @id @default(cuid())
+    appId    String @map("app_id")
+    ticketId String @map("ticket_id")
+    ticket   Ticket @relation(fields: [ticketId], references: [id])
+
+    ator    String
+    evento  String
+    antes   Json?
+    depois  Json?
+
+    criadoEm DateTime @default(now()) @map("criado_em")
+
+    @@index([appId, ticketId, criadoEm])
+    @@map("ticket_events")
+}
+
+/**
+ * Espelho no Slack. O chamado vive no Venn Desk; isto é só o endereço da thread.
+ */
+model SlackThread {
+    id       String @id @default(cuid())
+    appId    String @map("app_id")
+    ticketId String @unique @map("ticket_id")
+    ticket   Ticket @relation(fields: [ticketId], references: [id])
+
+    canal    String
+    threadTs String @map("thread_ts")
+
+    canalEngenharia    String? @map("canal_engenharia")
+    threadTsEngenharia String? @map("thread_ts_engenharia")
+
+    @@unique([canal, threadTs])
+    @@map("slack_threads")
+}
+
+/**
+ * Evento de entrada já processado — Slack, GitHub, Cloudflare.
+ *
+ * É a trava de idempotência da seção 6: cada entrada tem um id externo único e
+ * é ignorada se repetida. Sem isto, uma reentrega do Events API duplica
+ * mensagem na thread.
+ */
+model InboundEvent {
+    id         String   @id @default(cuid())
+    origem     String
+    externalId String   @map("external_id")
+    recebidoEm DateTime @default(now()) @map("recebido_em")
+
+    @@unique([origem, externalId])
+    @@map("inbound_events")
+}
+
+// ============================================
+// 3. ENGENHARIA (Fases 5 e 6)
+// ============================================
+
+model Problem {
+    id    String @id @default(cuid())
+    appId String @map("app_id")
+    app   App    @relation(fields: [appId], references: [id])
+
+    titulo String
+    causa  String?
+    etapa  EngStage @default(TRIADO)
+
+    criadoEm     DateTime  @default(now()) @map("criado_em")
+    atualizadoEm DateTime  @updatedAt @map("atualizado_em")
+    resolvidoEm  DateTime? @map("resolvido_em")
+
+    tickets   Ticket[]
+    engLinks  EngLink[]
+    approvals Approval[]
+
+    @@index([appId, etapa])
+    @@map("problems")
+}
+
+/**
+ * Etapas de engenharia do problema (seção 6). `RECUSADO_PELO_GESTOR` é estado
+ * final e devolve o chamado a um humano.
+ */
+enum EngStage {
+    TRIADO
+    ISSUE_CRIADA
+    APROVADO_PELO_GESTOR
+    EM_CORRECAO
+    PR_ABERTO
+    EM_STAGING
+    APROVADO_PARA_PRODUCAO
+    EM_PRODUCAO
+    VERIFICADO
+    RECUSADO_PELO_GESTOR
+
+    @@map("eng_stage")
+}
+
+model EngLink {
+    id        String  @id @default(cuid())
+    appId     String  @map("app_id")
+    problemId String  @map("problem_id")
+    problem   Problem @relation(fields: [problemId], references: [id])
+
+    tipo     EngLinkType
+    url      String
+    estado   String?
+    ambiente String?
+
+    criadoEm DateTime @default(now()) @map("criado_em")
+
+    @@index([appId, problemId])
+    @@map("eng_links")
+}
+
+enum EngLinkType {
+    ISSUE
+    PR
+    RUN
+    DEPLOY
+
+    @@map("eng_link_type")
+}
+
+/**
+ * Os dois portões humanos. Guardam quem aprovou, quando e por quê.
+ *
+ * No plano Ultra, o Portão 1 é a menção a @Claude na thread de engenharia, e é
+ * ela que o Bridge registra aqui (seção 4).
+ */
+model Approval {
+    id        String  @id @default(cuid())
+    appId     String  @map("app_id")
+    problemId String  @map("problem_id")
+    problem   Problem @relation(fields: [problemId], references: [id])
+
+    portao      ApprovalGate
+    decisao     ApprovalDecision
+    aprovadorId String           @map("aprovador_id")
+    aprovador   Agent            @relation(fields: [aprovadorId], references: [id])
+    justificativa String?
+
+    criadoEm DateTime @default(now()) @map("criado_em")
+
+    @@index([appId, problemId])
+    @@map("approvals")
+}
+
+enum ApprovalGate {
+    ISSUE
+    PRODUCAO
+
+    @@map("approval_gate")
+}
+
+enum ApprovalDecision {
+    APROVADO
+    RECUSADO
+    MAIS_INFORMACOES
+
+    @@map("approval_decision")
+}
+
+// ============================================
+// 4. BASE DE CONHECIMENTO (Fase 4)
+// ============================================
+
+model KbArticle {
+    id    String  @id @default(cuid())
+    /// Nulo = artigo global, válido para todos os apps.
+    appId String? @map("app_id")
+    app   App?    @relation(fields: [appId], references: [id])
+
+    titulo String
+    corpo  String
+    tags   String[]
+    status KbStatus @default(RASCUNHO)
+
+    /// Embedding da busca semântica. `Unsupported` porque o Prisma não tem tipo
+    /// para `vector`; a consulta é SQL cru.
+    embedding Unsupported("vector(1536)")?
+
+    criadoEm     DateTime @default(now()) @map("criado_em")
+    atualizadoEm DateTime @updatedAt @map("atualizado_em")
+
+    @@index([appId, status])
+    @@map("kb_articles")
+}
+
+enum KbStatus {
+    RASCUNHO
+    PUBLICADO
+    ARQUIVADO
+
+    @@map("kb_status")
+}
+
+// ============================================
+// 5. SLA, OPERAÇÃO E CLASSIFICAÇÃO (Fase 7)
+// ============================================
+
+model SlaPolicy {
+    id    String @id @default(cuid())
+    appId String @map("app_id")
+    app   App    @relation(fields: [appId], references: [id])
+
+    prioridade          TicketPriority
+    primeiraRespostaMin Int            @map("primeira_resposta_min")
+    proximaRespostaMin  Int            @map("proxima_resposta_min")
+    resolucaoMin        Int            @map("resolucao_min")
+    /// Calendário comercial: fuso, dias, horários e feriados.
+    calendario          Json?
+
+    @@unique([appId, prioridade])
+    @@map("sla_policies")
+}
+
+model SlaTimer {
+    id       String @id @default(cuid())
+    appId    String @map("app_id")
+    ticketId String @map("ticket_id")
+    ticket   Ticket @relation(fields: [ticketId], references: [id])
+
+    meta       String
+    venceEm    DateTime  @map("vence_em")
+    pausadoEm  DateTime? @map("pausado_em")
+    violadoEm  DateTime? @map("violado_em")
+    cumpridoEm DateTime? @map("cumprido_em")
+
+    @@index([appId, venceEm])
+    @@map("sla_timers")
+}
+
+model Macro {
+    id    String @id @default(cuid())
+    appId String @map("app_id")
+    app   App    @relation(fields: [appId], references: [id])
+
+    nome      String
+    definicao Json
+    donoId    String? @map("dono_id")
+
+    @@map("macros")
+}
+
+model Automation {
+    id    String @id @default(cuid())
+    appId String @map("app_id")
+    app   App    @relation(fields: [appId], references: [id])
+
+    nome      String
+    definicao Json
+    ativa     Boolean @default(true)
+
+    @@map("automations")
+}
+
+model View {
+    id    String @id @default(cuid())
+    appId String @map("app_id")
+    app   App    @relation(fields: [appId], references: [id])
+
+    nome      String
+    definicao Json
+    donoId    String? @map("dono_id")
+
+    @@map("views")
+}
+
+model CsatResponse {
+    id       String @id @default(cuid())
+    appId    String @map("app_id")
+    ticketId String @unique @map("ticket_id")
+    ticket   Ticket @relation(fields: [ticketId], references: [id])
+
+    nota       Int
+    comentario String?
+    /// Se quem atendeu foi a IA — o painel separa CSAT de IA e de humano.
+    atendidoPelaIa Boolean @default(false) @map("atendido_pela_ia")
+
+    criadoEm DateTime @default(now()) @map("criado_em")
+
+    @@map("csat_responses")
+}
+
+model Tag {
+    id    String @id @default(cuid())
+    appId String @map("app_id")
+    app   App    @relation(fields: [appId], references: [id])
+
+    nome String
+
+    tickets TicketTag[]
+
+    @@unique([appId, nome])
+    @@map("tags")
+}
+
+model TicketTag {
+    ticketId String @map("ticket_id")
+    ticket   Ticket @relation(fields: [ticketId], references: [id])
+    tagId    String @map("tag_id")
+    tag      Tag    @relation(fields: [tagId], references: [id])
+
+    @@id([ticketId, tagId])
+    @@map("ticket_tags")
+}
+
+model CustomField {
+    id    String @id @default(cuid())
+    appId String @map("app_id")
+    app   App    @relation(fields: [appId], references: [id])
+
+    chave     String
+    rotulo    String
+    definicao Json
+
+    valores CustomFieldValue[]
+
+    @@unique([appId, chave])
+    @@map("custom_fields")
+}
+
+model CustomFieldValue {
+    ticketId String      @map("ticket_id")
+    ticket   Ticket      @relation(fields: [ticketId], references: [id])
+    fieldId  String      @map("field_id")
+    field    CustomField @relation(fields: [fieldId], references: [id])
+
+    valor Json
+
+    @@id([ticketId, fieldId])
+    @@map("custom_field_values")
+}

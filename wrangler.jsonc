@@ -1,0 +1,67 @@
+{
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "name": "venn-desk",
+    "main": "src/index.ts",
+    "compatibility_date": "2026-11-15",
+    // `nodejs_compat` é exigido pelo driver do Neon e pelo cliente do Prisma.
+    "compatibility_flags": ["nodejs_compat"],
+    "observability": { "enabled": true, "head_sampling_rate": 1 },
+
+    // O Console é uma SPA Vite servida pelo próprio Worker (ADR 0008). O
+    // `not_found_handling` é o roteamento no cliente: qualquer caminho de
+    // `/console` devolve o index, e a API continua chegando ao Worker.
+    "assets": {
+        "directory": "./console/dist",
+        "binding": "ASSETS",
+        "not_found_handling": "single-page-application"
+    },
+
+    // Anexos. Link assinado de curta duração, e a chave carrega o app_id no
+    // caminho — o escopo vale também no armazenamento (seção 10).
+    "r2_buckets": [{ "binding": "ANEXOS", "bucket_name": "venn-desk-anexos" }],
+
+    // Saída de e-mail: Cloudflare Email Sending (seção 7). Sem
+    // `destination_addresses`, porque o destinatário é o usuário de cada
+    // cliente — é isto que exige o plano Workers Paid.
+    "send_email": [{ "name": "EMAIL" }],
+
+    // Teto de abertura por usuário e por tenant (seção 5). Em Workers um `Map`
+    // em memória não conta nada: cada isolate teria o próprio contador.
+    "ratelimits": [
+        {
+            "name": "ABERTURA_RATE_LIMITER",
+            "namespace_id": "2001",
+            "simple": { "limit": 10, "period": 60 }
+        }
+    ],
+
+    "vars": {
+        "AMBIENTE": "staging"
+    },
+
+    // DATABASE_URL entra por `wrangler secret put`, nunca aqui.
+    "//secrets": "DATABASE_URL",
+
+    "env": {
+        "producao": {
+            "name": "venn-desk-producao",
+            "vars": { "AMBIENTE": "producao" },
+            "assets": {
+                "directory": "./console/dist",
+                "binding": "ASSETS",
+                "not_found_handling": "single-page-application"
+            },
+            "r2_buckets": [
+                { "binding": "ANEXOS", "bucket_name": "venn-desk-anexos-producao" }
+            ],
+            "send_email": [{ "name": "EMAIL" }],
+            "ratelimits": [
+                {
+                    "name": "ABERTURA_RATE_LIMITER",
+                    "namespace_id": "2001",
+                    "simple": { "limit": 10, "period": 60 }
+                }
+            ]
+        }
+    }
+}
