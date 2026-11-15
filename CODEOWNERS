@@ -1,0 +1,13 @@
+# Caminhos sensíveis: PR que os toque exige revisão humana antes de staging
+# (ADR 0006, seção 9 da especificação).
+#
+# O portão de CI e a auditoria de isolamento estão aqui de propósito: sem isso,
+# uma correção automática poderia enfraquecer a própria verificação que a
+# aprova.
+/scripts/ci-worker.mjs        @venn360
+/scripts/lint-isolamento.mjs  @venn360
+/src/dados/escopo.ts          @venn360
+/src/auth/                    @venn360
+/prisma/                      @venn360
+/wrangler.jsonc               @venn360
+/package.json                 @venn360

@@ -19,10 +19,11 @@
         "migrar:dev": "prisma migrate dev",
         "migrar:deploy": "prisma migrate deploy",
         "typecheck": "tsc --noEmit",
+        "lint:isolamento": "node scripts/lint-isolamento.mjs",
         "test": "vitest run",
         "test:watch": "vitest",
         "//verificar": "O portão, no mesmo formato dos apps: é o que o Workers Builds roda antes de publicar, e é o check obrigatório do PR.",
-        "verificar": "pnpm run typecheck && pnpm run test",
+        "verificar": "pnpm run typecheck && node scripts/lint-isolamento.mjs && pnpm run test",
         "ci:worker": "node scripts/ci-worker.mjs"
     },
     "dependencies": {

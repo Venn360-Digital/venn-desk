@@ -10,3 +10,6 @@ dist/
 
 # O build do Console. Nasce do Vite, não entra no repositório.
 console/dist/
+
+# Os dois clientes do Prisma. Nascem do postinstall (prisma generate).
+src/gerado/

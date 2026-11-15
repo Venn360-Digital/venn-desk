@@ -160,6 +160,10 @@ model Agent {
     tipo    AgentKind @default(HUMANO)
     ativo   Boolean   @default(true)
 
+    /// Hash PBKDF2 da senha do Console. Nulo no agente que é IA — ela não entra
+    /// por login: age pelo MCP, com credencial por app.
+    senhaHash String? @map("senha_hash")
+
     criadoEm DateTime @default(now()) @map("criado_em")
 
     tickets   Ticket[]
