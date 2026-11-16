@@ -1,15 +1,17 @@
 import { Hono, type Context } from 'hono'
-import { setCookie } from 'hono/cookie'
+import { deleteCookie, setCookie } from 'hono/cookie'
 import { z } from 'zod'
 
 import { abrirChamado } from '../dados/abertura.ts'
 import { agentePorEmail } from '../dados/agentes.ts'
+import { alterarApp, appsAtivos, cadastrarApp } from '../dados/apps.ts'
 import { formatarNumero } from '../dominio/numero.ts'
 import type { Status } from '../dominio/estados.ts'
 import { ErroDeDominio, ErroDeToken } from '../lib/erros.ts'
 import type { Ambiente } from '../lib/ambiente.ts'
+import type { Prisma } from '#prisma'
 import { comApp, comCliente, comSessaoDeAgente } from '../auth/middleware.ts'
-import { conferirSenha, criarSessao, VALIDADE_DA_SESSAO_S } from '../auth/sessao-console.ts'
+import { conferirSenha, criarSessao, podeAprovar, VALIDADE_DA_SESSAO_S } from '../auth/sessao-console.ts'
 
 /**
  * A API interna — o que o Console consome, e o que a ponte do Slack vai chamar
@@ -272,4 +274,130 @@ rotasInternas.post('/api/console/:app/chamados', async (c) => {
         { chamado: { numero: formatarNumero(c.get('app').prefixo, chamado.numero) } },
         201
     )
+})
+
+const esquemaDoApp = z.object({
+    slug: z
+        .string()
+        .trim()
+        .min(2)
+        .max(32)
+        .regex(/^[a-z][a-z0-9-]*$/, 'use minúsculas, números e hífen'),
+    nome: z.string().trim().min(2).max(80),
+    prefixo: z
+        .string()
+        .trim()
+        .min(2)
+        .max(5)
+        .regex(/^[A-Za-z]+$/, 'só letras'),
+    chavePublicaJwk: z.record(z.string(), z.unknown()),
+    repositorio: z.string().trim().max(200).nullish(),
+    canalSuporte: z.string().trim().max(80).nullish(),
+    canalEngenharia: z.string().trim().max(80).nullish(),
+    modoSombra: z.boolean().optional(),
+})
+
+/** Quem está logado. É como a SPA do Console sabe se há sessão. */
+rotasInternas.get('/api/console/sessao', comSessaoDeAgente, (c) => {
+    const agente = c.get('agente')
+    return c.json({ agente: { nome: agente.nome, papel: agente.papel }, podeAprovar: podeAprovar(agente) })
+})
+
+rotasInternas.delete('/api/console/sessao', (c) => {
+    deleteCookie(c, 'venn_desk_sessao', { path: '/' })
+    return c.json({ ok: true })
+})
+
+/**
+ * Os apps atendidos. Esta rota NÃO é escopada por app — ela é o cadastro dos
+ * apps, e por isso passa por `src/dados/apps.ts`, o único lugar fora do escopo
+ * que fala com o banco (ver `scripts/lint-isolamento.mjs`).
+ */
+rotasInternas.get('/api/console/apps', comCliente, comSessaoDeAgente, async (c) => {
+    const apps = await appsAtivos(c.get('cliente'))
+
+    return c.json({
+        apps: apps.map((app) => ({
+            slug: app.slug,
+            nome: app.nome,
+            prefixo: app.prefixo,
+            repositorio: app.repositorio,
+            canalSuporte: app.canalSuporte,
+            canalEngenharia: app.canalEngenharia,
+            modoSombra: app.modoSombra,
+            proximoNumero: app.proximoNumero,
+            /// A chave pública não é segredo, mas não serve à tela: só a
+            /// impressão digital, para conferir que é a esperada.
+            chaveCadastrada: Object.keys((app.chavePublicaJwk ?? {}) as object).length > 0,
+        })),
+    })
+})
+
+rotasInternas.post('/api/console/apps', comCliente, comSessaoDeAgente, async (c) => {
+    const agente = c.get('agente')
+    if (agente.papel !== 'ADMIN') {
+        throw new ErroDeDominio('sem_permissao', 'Só administrador cadastra app.', 403)
+    }
+
+    const corpo = esquemaDoApp.safeParse(await c.req.json().catch(() => null))
+    if (!corpo.success) {
+        throw new ErroDeDominio(
+            'dados_invalidos',
+            corpo.error.issues[0]?.message ?? 'Dados do app inválidos.',
+            400
+        )
+    }
+
+    const app = await cadastrarApp(c.get('cliente'), {
+        slug: corpo.data.slug,
+        nome: corpo.data.nome,
+        prefixo: corpo.data.prefixo,
+        chavePublicaJwk: corpo.data.chavePublicaJwk as Prisma.InputJsonValue,
+        ...(corpo.data.repositorio === undefined ? {} : { repositorio: corpo.data.repositorio }),
+        ...(corpo.data.canalSuporte === undefined ? {} : { canalSuporte: corpo.data.canalSuporte }),
+        ...(corpo.data.canalEngenharia === undefined
+            ? {}
+            : { canalEngenharia: corpo.data.canalEngenharia }),
+        ...(corpo.data.modoSombra === undefined ? {} : { modoSombra: corpo.data.modoSombra }),
+    }).catch((erro: unknown) => {
+        /// Slug ou prefixo repetido é erro de quem cadastra, não falha interna.
+        const codigo = (erro as { code?: string }).code
+        if (codigo === 'P2002') {
+            throw new ErroDeDominio('ja_existe', 'Já existe app com esse slug ou prefixo.', 409)
+        }
+        throw erro
+    })
+
+    return c.json({ app: { slug: app.slug, prefixo: app.prefixo } }, 201)
+})
+
+rotasInternas.patch('/api/console/apps/:slug', comCliente, comSessaoDeAgente, async (c) => {
+    const agente = c.get('agente')
+    if (agente.papel === 'AGENTE') {
+        throw new ErroDeDominio('sem_permissao', 'Agente não altera cadastro de app.', 403)
+    }
+
+    const corpo = esquemaDoApp
+        .partial()
+        .omit({ slug: true, prefixo: true })
+        .safeParse(await c.req.json().catch(() => null))
+
+    if (!corpo.success) {
+        throw new ErroDeDominio('dados_invalidos', 'Nada a alterar.', 400)
+    }
+
+    /// A chave sai do spread: o tipo que o zod infere para um objeto livre não
+    /// é o `InputJsonValue` do Prisma, e juntar os dois num spread não compila.
+    const { chavePublicaJwk, ...resto } = corpo.data
+
+    const app = await alterarApp(c.get('cliente'), c.req.param('slug'), {
+        ...resto,
+        ...(chavePublicaJwk === undefined
+            ? {}
+            : { chavePublicaJwk: chavePublicaJwk as Prisma.InputJsonValue }),
+    })
+
+    if (app === null) throw new ErroDeDominio('app_nao_encontrado', 'App não encontrado.', 404)
+
+    return c.json({ app: { slug: app.slug, nome: app.nome, modoSombra: app.modoSombra } })
 })

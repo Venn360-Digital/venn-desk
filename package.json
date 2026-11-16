@@ -24,7 +24,9 @@
         "test:watch": "vitest",
         "//verificar": "O portão, no mesmo formato dos apps: é o que o Workers Builds roda antes de publicar, e é o check obrigatório do PR.",
         "verificar": "pnpm run typecheck && node scripts/lint-isolamento.mjs && pnpm run test",
-        "ci:worker": "node scripts/ci-worker.mjs"
+        "ci:worker": "node scripts/ci-worker.mjs",
+        "semear": "node prisma/seed.ts",
+        "semear:plano": "node prisma/seed.ts --plano"
     },
     "dependencies": {
         "@neondatabase/serverless": "1.2.0",
@@ -40,5 +42,9 @@
         "typescript": "^5",
         "vitest": "5.1.0",
         "wrangler": "4.162.0"
+    },
+    "prisma": {
+        "//seed": "Node 24 roda .ts nativamente, então a semente não precisa de tsx.",
+        "seed": "node prisma/seed.ts"
     }
 }

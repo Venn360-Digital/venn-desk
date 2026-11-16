@@ -42,6 +42,15 @@ e o Vite builda e roda nesta máquina — o que os apps não fazem mais.
   `ticket_events`.
 - Sem GitHub Actions. Build, portão de CI e deploy no Workers Builds.
 
+## Convenções
+
+- **Nenhuma parameter property em construtor.** O Node remove tipos em modo
+  strip-only e recusa `constructor(readonly x: string)` com
+  `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`. Declare o campo e atribua no corpo.
+  O ganho: qualquer `.ts` roda com `node arquivo.ts`, sem `tsx` — é assim que a
+  semente e os scripts funcionam.
+- Imports carregam a extensão `.ts`. Quem empacota é o wrangler; não há emissão.
+
 ## Ambiente desta máquina
 
 macOS 12.6: nada que instancie Miniflare roda aqui (`@cloudflare/vite-plugin`,

@@ -13,3 +13,6 @@ console/dist/
 
 # Os dois clientes do Prisma. Nascem do postinstall (prisma generate).
 src/gerado/
+
+# Chaves de desenvolvimento geradas pela semente. Nunca versionadas.
+.dev/

@@ -77,8 +77,15 @@ for (const caminho of arquivos(FONTE)) {
      * `import type` passa em qualquer lugar: tipo não consulta. O que a regra
      * barra é o import de VALOR — `PrismaClient` como construtor, um delegado,
      * um enum em runtime.
+     *
+     * **A classe é `[^\n]*` e o teste é por LINHA, não `[^;]*`.** A primeira
+     * versão usava `[^;]*`, que atravessa quebras de linha — e como este
+     * projeto não escreve ponto e vírgula, ela casava de um `import` qualquer
+     * até um `from '#prisma'` linhas adiante, acusando arquivo que só importa
+     * tipo. Falso positivo medido em 16/11/2026, em src/rotas/interna.ts.
      */
-    if (!ehDeDados && /import\s+(?!type\s)[^;]*from\s+['"]#prisma['"]/.test(texto)) {
+    const VALOR_DE_PRISMA = /^[^\S\n]*import\s+(?!type[\s{])[^\n]*from\s+['"]#prisma['"]/m
+    if (!ehDeDados && VALOR_DE_PRISMA.test(texto)) {
         problemas.push(`${curto}: importa valor de #prisma fora de src/dados/`)
     }
 
