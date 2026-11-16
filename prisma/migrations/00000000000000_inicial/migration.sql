@@ -1,5 +1,7 @@
--- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "public";
+-- O `CREATE SCHEMA IF NOT EXISTS "public"` que o Prisma emite foi REMOVIDO:
+-- `public` sempre existe, e a instrucao exige CREATE no BANCO, privilegio que
+-- a role de migracao nao tem de proposito (ela nao esta em neon_superuser).
+-- Mante-la custaria um GRANT que nenhuma migracao precisa.
 
 -- CreateExtension
 CREATE EXTENSION IF NOT EXISTS "vector";

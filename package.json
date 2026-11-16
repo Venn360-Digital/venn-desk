@@ -26,20 +26,33 @@
         "verificar": "pnpm run typecheck && node scripts/lint-isolamento.mjs && pnpm run test",
         "ci:worker": "node scripts/ci-worker.mjs",
         "semear": "node prisma/seed.ts",
-        "semear:plano": "node prisma/seed.ts --plano"
+        "semear:plano": "node prisma/seed.ts --plano",
+        "aceite:roles": "node scripts/aceite-roles.mjs"
     },
     "dependencies": {
         "@neondatabase/serverless": "1.2.0",
         "@prisma/adapter-neon": "6.19.3",
         "@prisma/client": "6.19.3",
+        "@tanstack/react-query": "^5.107.1",
         "hono": "4.13.18",
         "jose": "6.2.17",
+        "react": "^19.3.1",
+        "react-dom": "^19.3.1",
+        "react-router-dom": "^7.18.5",
         "zod": "^4.3.6"
     },
     "devDependencies": {
         "@cloudflare/workers-types": "4.20251014.0",
+        "@tailwindcss/vite": "^4.3.5",
+        "@types/pg": "^8.23.1",
+        "@types/react": "^19.3.0",
+        "@types/react-dom": "^19.3.0",
+        "@vitejs/plugin-react": "^6.3.0",
+        "pg": "^8.23.1",
         "prisma": "6.19.3",
+        "tailwindcss": "^4.3.5",
         "typescript": "^5",
+        "vite": "^8.3.8",
         "vitest": "5.1.0",
         "wrangler": "4.162.0"
     },
