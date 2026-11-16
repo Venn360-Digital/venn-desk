@@ -23,12 +23,15 @@
         "test": "vitest run",
         "test:watch": "vitest",
         "//verificar": "O portão, no mesmo formato dos apps: é o que o Workers Builds roda antes de publicar, e é o check obrigatório do PR.",
-        "verificar": "pnpm run typecheck && node scripts/lint-isolamento.mjs && pnpm run test",
+        "verificar": "pnpm run typecheck && pnpm run typecheck:console && node scripts/lint-isolamento.mjs && pnpm run test",
         "ci:worker": "node scripts/ci-worker.mjs",
         "semear": "node prisma/seed.ts",
         "semear:plano": "node prisma/seed.ts --plano",
         "aceite:roles": "node scripts/aceite-roles.mjs",
-        "aceite:fase-1": "node scripts/aceite-fase-1.mjs"
+        "aceite:fase-1": "node scripts/aceite-fase-1.mjs",
+        "console:dev": "vite --config console/vite.config.ts",
+        "console:build": "vite build --config console/vite.config.ts",
+        "typecheck:console": "tsc --noEmit -p console/tsconfig.json"
     },
     "dependencies": {
         "@neondatabase/serverless": "1.2.0",

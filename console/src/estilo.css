@@ -1,0 +1,27 @@
+@import 'tailwindcss';
+
+/**
+ * Os tokens do Console. Poucos de propósito: é tela interna, de trabalho, e a
+ * leitura rápida de uma fila importa mais que personalidade visual. A paleta
+ * por app vem do cadastro (campo `tema`) e entra na Fase 7, quando houver
+ * multimarca de verdade na operação.
+ */
+@theme {
+    --color-tinta: oklch(0.21 0.02 260);
+    --color-tinta-fraca: oklch(0.52 0.02 260);
+    --color-borda: oklch(0.91 0.01 260);
+    --color-fundo: oklch(0.985 0.002 260);
+    --color-destaque: oklch(0.55 0.17 258);
+    --color-urgente: oklch(0.56 0.19 25);
+    --color-atencao: oklch(0.72 0.16 70);
+    --color-calmo: oklch(0.62 0.13 160);
+}
+
+html {
+    color-scheme: light;
+}
+
+body {
+    @apply bg-fundo text-tinta antialiased;
+    font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
