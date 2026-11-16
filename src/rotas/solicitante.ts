@@ -19,9 +19,20 @@ import { veOsChamadosDaEmpresa } from '../auth/token-app.ts'
  * nota interna, rascunho da IA, etapa interna de engenharia além do rótulo, ou
  * dado de outro tenant.
  */
+/**
+ * **Por que `/api/app/<slug>/…` e não `/api/<slug>/…`.** O middleware desta
+ * rota casa em `/api/:app/*`, e com o prefixo curto ele engolia também
+ * `/api/console/sessao`: `:app` virava "console", a busca do app falhava e a
+ * resposta era 404 antes de a rota interna ser alcançada. Qualquer caminho
+ * `/api/<algo>/…` colide com um parâmetro nessa posição.
+ *
+ * Com os dois espaços separados — `/api/app/<slug>` para o que o app consome,
+ * `/api/console` para o que a equipe consome — a fronteira fica visível na URL
+ * e nenhum parâmetro pode capturar o outro. Achado pelo aceite da Fase 1.
+ */
 export const rotasDoSolicitante = new Hono<Ambiente>()
 
-rotasDoSolicitante.use('/api/:app/*', comCliente, comApp, comTokenDoApp)
+rotasDoSolicitante.use('/api/app/:app/*', comCliente, comApp, comTokenDoApp)
 
 const STATUS_DO_GRUPO: Record<GrupoNoWidget, Status[]> = {
     abertos: ['NOVO', 'ABERTO', 'AGUARDANDO_USUARIO'],
@@ -62,7 +73,7 @@ function paraOWidget(chamado: {
     }
 }
 
-rotasDoSolicitante.post('/api/:app/chamados', async (c) => {
+rotasDoSolicitante.post('/api/app/:app/chamados', async (c) => {
     const identidade = c.get('identidade')
     const solicitante = c.get('solicitante')
 
@@ -119,7 +130,7 @@ rotasDoSolicitante.post('/api/:app/chamados', async (c) => {
     return c.json({ chamado: paraOWidget(chamado, c.get('app').prefixo) }, 201)
 })
 
-rotasDoSolicitante.get('/api/:app/chamados', async (c) => {
+rotasDoSolicitante.get('/api/app/:app/chamados', async (c) => {
     const identidade = c.get('identidade')
     const solicitante = c.get('solicitante')
     const app = c.get('app')
@@ -174,7 +185,7 @@ async function chamadoDoSolicitante(c: Context<Ambiente>) {
     return chamado
 }
 
-rotasDoSolicitante.get('/api/:app/chamados/:numero', async (c) => {
+rotasDoSolicitante.get('/api/app/:app/chamados/:numero', async (c) => {
     const chamado = await chamadoDoSolicitante(c)
     const escopo = c.get('escopo')
 
@@ -198,7 +209,7 @@ rotasDoSolicitante.get('/api/:app/chamados/:numero', async (c) => {
     })
 })
 
-rotasDoSolicitante.post('/api/:app/chamados/:numero/mensagens', async (c) => {
+rotasDoSolicitante.post('/api/app/:app/chamados/:numero/mensagens', async (c) => {
     const chamado = await chamadoDoSolicitante(c)
     const escopo = c.get('escopo')
     const solicitante = c.get('solicitante')
@@ -259,7 +270,7 @@ rotasDoSolicitante.post('/api/:app/chamados/:numero/mensagens', async (c) => {
  * o bucket é privado e não existe credencial de S3 em lugar nenhum (ver
  * `src/lib/assinatura.ts`).
  */
-rotasDoSolicitante.get('/api/:app/chamados/:numero/anexos/:id', async (c) => {
+rotasDoSolicitante.get('/api/app/:app/chamados/:numero/anexos/:id', async (c) => {
     const chamado = await chamadoDoSolicitante(c)
     const anexo = await c.get('escopo').anexos.porChave(c.req.param('id'))
 
