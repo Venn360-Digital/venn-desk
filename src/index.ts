@@ -85,3 +85,6 @@ app.get('/arquivos/:chave{.+}', async (c) => {
 app.get('*', (c) => c.env.ASSETS.fetch(c.req.raw))
 
 export default app
+
+/// O Durable Object precisa ser exportado pelo módulo de entrada do Worker.
+export { SalaDoChamado } from './tempo-real/sala.ts'

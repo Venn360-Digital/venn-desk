@@ -43,6 +43,16 @@ const TRANSICOES: Readonly<Record<Status, Partial<Record<Evento, Status>>>> = {
         responder_usuario: 'AGUARDANDO_USUARIO',
         escalar_engenharia: 'EM_ESPERA',
         resolver: 'RESOLVIDO',
+        /**
+         * O usuário completa o relato antes de alguém atender, e o chamado
+         * SEGUE novo — ninguém agiu ainda.
+         *
+         * Faltava, e a falta era real: "esqueci de dizer que só acontece no
+         * Chrome" é a segunda mensagem mais natural que existe, e devolvia 422.
+         * Descoberto em 17/11/2026 exercitando o tempo real de ponta a ponta;
+         * nenhuma prova de unidade cobria essa combinação.
+         */
+        mensagem_do_usuario: 'NOVO',
     },
     ABERTO: {
         responder_usuario: 'AGUARDANDO_USUARIO',

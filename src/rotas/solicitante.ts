@@ -9,6 +9,7 @@ import { assinar, VALIDADE_DO_LINK_S } from '../lib/assinatura.ts'
 import { ErroDeDominio } from '../lib/erros.ts'
 import type { Ambiente } from '../lib/ambiente.ts'
 import { avisarPorEmail } from '../correio/avisar.ts'
+import { publicarNaSala } from '../tempo-real/publicar.ts'
 import { comApp, comCliente, comTokenDoApp } from '../auth/middleware.ts'
 import { veOsChamadosDaEmpresa } from '../auth/token-app.ts'
 
@@ -265,6 +266,17 @@ rotasDoSolicitante.post('/api/app/:app/chamados/:numero/mensagens', async (c) =>
         { ator: `requester:${solicitante.requesterId}` }
     )
 
+    /**
+     * O empurrão vai INLINE, não em `waitUntil`, e o e-mail vai em `waitUntil`.
+     * A divisão é por natureza: a sala é uma chamada local ao Durable Object,
+     * de milissegundos, cujo propósito é imediatismo; o e-mail é externo e
+     * lento, e esperar por ele atrasaria a tela à toa.
+     *
+     * (O `waitUntil` foi suspeito e inocentado: quem segurava o empurrão era a
+     * máquina de estados recusando `mensagem_do_usuario` em NOVO.)
+     */
+    await publicarNaSala(c.env.SALAS, chamado.id, { tipo: 'mensagem', resumo: 'usuario' })
+
     return c.json(
         {
             mensagem: { id: mensagem.id, criadoEm: mensagem.criadoEm },
@@ -430,4 +442,24 @@ rotasDoSolicitante.post('/api/app/:app/chamados/:numero/anexos', async (c) => {
     })
 
     return c.json({ anexo: { id: anexo.chave, nome: anexo.nome, tamanho: anexo.tamanho } }, 201)
+})
+
+/**
+ * O fluxo de eventos do chamado (SSE).
+ *
+ * A autorização acontece AQUI, com o token do app e a mesma conferência de
+ * dono que as outras rotas — `chamadoDoSolicitante`. Só depois a requisição é
+ * encaminhada à sala. O Durable Object nunca recebe pedido de fora do Worker e
+ * por isso não precisa saber de token.
+ */
+rotasDoSolicitante.get('/api/app/:app/chamados/:numero/eventos', async (c) => {
+    const chamado = await chamadoDoSolicitante(c)
+
+    if (c.env.SALAS === undefined) {
+        /// Ambiente sem o binding: o widget cai para a releitura periódica.
+        throw new ErroDeDominio('sem_tempo_real', 'Tempo real indisponível.', 501)
+    }
+
+    const sala = c.env.SALAS.get(c.env.SALAS.idFromName(chamado.id))
+    return sala.fetch('https://sala/assinar')
 })

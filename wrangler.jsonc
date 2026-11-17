@@ -16,6 +16,13 @@
         "not_found_handling": "single-page-application"
     },
 
+    // Uma sala por chamado: SSE agora, WebSocket do chat ao vivo depois.
+    // O mesmo objeto, para não duplicar a lista de assinantes.
+    "durable_objects": {
+        "bindings": [{ "name": "SALAS", "class_name": "SalaDoChamado" }]
+    },
+    "migrations": [{ "tag": "v1", "new_sqlite_classes": ["SalaDoChamado"] }],
+
     // Anexos. Link assinado de curta duração, e a chave carrega o app_id no
     // caminho — o escopo vale também no armazenamento (seção 10).
     "r2_buckets": [{ "binding": "ANEXOS", "bucket_name": "venn-desk-anexos" }],
@@ -63,6 +70,9 @@
             "r2_buckets": [
                 { "binding": "ANEXOS", "bucket_name": "venn-desk-anexos-producao" }
             ],
+            "durable_objects": {
+                "bindings": [{ "name": "SALAS", "class_name": "SalaDoChamado" }]
+            },
             "send_email": [{ "name": "EMAIL" }],
             "ratelimits": [
                 {

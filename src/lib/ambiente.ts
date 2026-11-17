@@ -29,6 +29,8 @@ export interface Ambiente {
         /** Origem para montar o link do chamado no e-mail. */
         URL_BASE?: string
         ABERTURA_RATE_LIMITER: RateLimit
+        /** Uma sala por chamado, para o tempo real (Fase 3). */
+        SALAS?: DurableObjectNamespace
     }
     Variables: {
         cliente: PrismaClient

@@ -34,7 +34,8 @@
         "typecheck:console": "tsc --noEmit -p console/tsconfig.json",
         "aceite:fase-2": "node scripts/aceite-fase-2.mjs",
         "widget:demo": "vite --config widget/vite.config.ts",
-        "typecheck:widget": "tsc --noEmit -p widget/tsconfig.json"
+        "typecheck:widget": "tsc --noEmit -p widget/tsconfig.json",
+        "aceite:fase-3": "node scripts/aceite-fase-3.mjs"
     },
     "dependencies": {
         "@neondatabase/serverless": "1.2.0",

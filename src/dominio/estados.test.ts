@@ -33,6 +33,20 @@ describe('máquina de estados do chamado', () => {
         expect(status).toBe('ABERTO')
     })
 
+    it('o usuario pode completar o relato antes de alguem atender', () => {
+        /// Chamado recem-aberto fica em NOVO; a segunda mensagem do proprio
+        /// autor nao pode ser recusada, e nao faz ninguem ter agido.
+        expect(proximoStatus('NOVO', 'mensagem_do_usuario')).toBe('NOVO')
+    })
+
+    it('mensagem do usuario e aceita em todo estado que nao seja fechado', () => {
+        for (const status of TODOS) {
+            const destino = proximoStatus(status, 'mensagem_do_usuario')
+            if (status === 'FECHADO') expect(destino).toBeNull()
+            else expect(destino).not.toBeNull()
+        }
+    })
+
     it('escala para engenharia e volta', () => {
         const emEspera = transicionar('ABERTO', 'escalar_engenharia')
         expect(emEspera).toBe('EM_ESPERA')
