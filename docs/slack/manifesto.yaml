@@ -1,0 +1,71 @@
+# Manifesto do app do Slack do Venn Desk — o "Bridge" da seção 8.
+#
+# COMO USAR
+#   1. https://api.slack.com/apps  →  Create New App  →  From a manifest
+#   2. escolha o workspace, cole este arquivo inteiro, confirme
+#   3. Install to Workspace
+#   4. guarde os dois valores NO COFRE, nunca no terminal do Claude Code:
+#        Basic Information  →  Signing Secret
+#        OAuth & Permissions →  Bot User OAuth Token  (xoxb-…)
+#      bash ~/.venn360-secrets/gravar-chave.sh venn-desk stg SLACK_SIGNING_SECRET
+#      bash ~/.venn360-secrets/gravar-chave.sh venn-desk stg SLACK_BOT_TOKEN
+#
+# Plano do Slack: o GRATUITO basta (seção 8). Criar um app é cadastro de
+# desenvolvedor, não assinatura. O "signing secret" é gerado pelo Slack e serve
+# para o Worker provar que a requisição veio mesmo de lá — você só copia.
+#
+# A URL de eventos já está abaixo e já responde: o Slack a verifica no instante
+# da criação, e o handshake está publicado. Ver src/rotas/slack.ts.
+#
+# ESCOPOS: só o que a seção 8 descreve. Nada de `files:read` (anexo não vai
+# para o Slack, seção 10), nada de `users:read.email` (o vínculo com `agents` é
+# pelo `slack_id`), nada de `channels:*` (todos os canais são privados).
+
+display_information:
+  name: Venn Desk Bridge
+  description: Ponte entre o Venn Desk e os canais de suporte e engenharia.
+  background_color: "#1b1d22"
+  long_description: >-
+    Publica cada chamado do Venn Desk como uma thread no canal do app, devolve
+    ao Venn Desk o que acontece nessa thread e oferece os botões de atendimento.
+    O registro oficial do chamado é sempre o Venn Desk; o Slack é a cabine.
+
+features:
+  bot_user:
+    display_name: Venn Desk
+    always_online: true
+  slash_commands:
+    - command: /desk
+      url: https://venn-desk.andre-7ee.workers.dev/slack/comandos
+      description: Comandos do Venn Desk na thread do chamado
+      usage_hint: responder <texto>
+      should_escape: false
+
+oauth_config:
+  scopes:
+    bot:
+      # postar na thread do chamado e atualizar as mensagens com botões
+      - chat:write
+      # ler as mensagens das threads: fora do chat ao vivo, viram nota interna
+      - groups:history
+      # resolver nome e id dos canais privados do app
+      - groups:read
+      # 👀 assume o chamado, ✅ resolve (só de quem está em `agents`)
+      - reactions:read
+      # casar o autor do evento com o agente cadastrado, pelo slack_id
+      - users:read
+      # o /desk acima
+      - commands
+
+settings:
+  event_subscriptions:
+    request_url: https://venn-desk.andre-7ee.workers.dev/slack/eventos
+    bot_events:
+      - message.groups
+      - reaction_added
+  interactivity:
+    is_enabled: true
+    request_url: https://venn-desk.andre-7ee.workers.dev/slack/interativo
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false

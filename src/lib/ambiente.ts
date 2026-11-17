@@ -32,6 +32,13 @@ export interface Ambiente {
         URL_STATUS?: string
         /** Origens da página de status, separadas por vírgula. Só elas no CORS. */
         ORIGENS_DO_STATUS?: string
+        /**
+         * Segredo de assinatura do app do Slack. Entra por `wrangler secret
+         * put`, nunca em `wrangler.jsonc`. Ausente, a ponte recusa tudo.
+         */
+        SLACK_SIGNING_SECRET?: string
+        /** Token do bot (`xoxb-…`), para a metade que POSTA. Também segredo. */
+        SLACK_BOT_TOKEN?: string
         ABERTURA_RATE_LIMITER: RateLimit
         /** Uma sala por chamado, para o tempo real (Fase 3). */
         SALAS?: DurableObjectNamespace

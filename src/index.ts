@@ -10,6 +10,7 @@ import { rotasDoSolicitante } from './rotas/solicitante.ts'
 import { rotasInternas } from './rotas/interna.ts'
 import { rotasDeStatus } from './rotas/status.ts'
 import { rotasDoPortal } from './rotas/portal.ts'
+import { rotasDoSlack } from './rotas/slack.ts'
 import { verificarSaude } from './saude/verificar.ts'
 import type { CaixaDeSaida } from './correio/enviar.ts'
 
@@ -46,6 +47,7 @@ app.route('/', rotasDoSolicitante)
 app.route('/', rotasInternas)
 app.route('/', rotasDeStatus)
 app.route('/', rotasDoPortal)
+app.route('/', rotasDoSlack)
 
 /**
  * A entrega do anexo. Só o link assinado abre: a chave carrega o app e a
