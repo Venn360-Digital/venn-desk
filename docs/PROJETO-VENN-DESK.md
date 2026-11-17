@@ -258,6 +258,13 @@ O app nunca envia o cookie de sessão ao Venn Desk, e o Venn Desk nunca lê o ba
 
 ### Contingência: app fora do ar
 
+**Estado em 17/11/2026.** Os itens 1, 2 e 4 estão no ar e provados contra o
+Worker publicado (`pnpm aceite:saude`, `pnpm aceite:portal`). O item 3 está no
+ar. O que falta do item 1 é a postagem no canal de engenharia, que depende da
+ponte com o Slack. Endereços: página de status em
+`https://venn360-digital.github.io/venn-desk/` (ADR 0010), portal em
+`<URL_BASE>/portal/<slug>`.
+
 Quando o app não abre nem a tela de login, o cliente ainda tem como ser atendido, porque o Venn Desk roda separado dos apps. Nenhum destes caminhos aceita usuário anônimo.
 
 1. **Detecção automática.** O Venn Desk verifica a saúde de cada app a cada minuto. Na falha, cria um problema urgente, posta no canal de engenharia mencionando @Claude, alerta os responsáveis e publica o incidente na página de status.
