@@ -7,6 +7,7 @@ import { Entrar } from './paginas/Entrar.tsx'
 import { Fila } from './paginas/Fila.tsx'
 import { Chamado } from './paginas/Chamado.tsx'
 import { Apps } from './paginas/Apps.tsx'
+import { Portal } from './paginas/Portal.tsx'
 import { Vazio } from './componentes/ui.tsx'
 
 /**
@@ -15,6 +16,29 @@ import { Vazio } from './componentes/ui.tsx'
  * não roda.
  */
 export function App() {
+    const local = useLocation()
+
+    /**
+     * O portal de contingência sai ANTES da sessão, e isso não é otimização: é
+     * o requisito. Ele é a central de suporte de quem não consegue entrar em
+     * lugar nenhum, e pedir sessão de agente a um cliente seria exigir
+     * justamente a porta que está fechada.
+     *
+     * A ramificação fica aqui, com `App` sem nenhum outro hook, para a ordem
+     * dos hooks do Console não depender da rota.
+     */
+    if (local.pathname.startsWith('/portal/')) {
+        return (
+            <Routes>
+                <Route path="/portal/:app" element={<Portal />} />
+            </Routes>
+        )
+    }
+
+    return <Console />
+}
+
+function Console() {
     const [sessao, setSessao] = useState<Agente | null | 'carregando'>('carregando')
 
     async function conferirSessao() {

@@ -38,6 +38,10 @@ export const TEXTOS = {
         afetadoEnviando: 'Enviando…',
         afetadoErro: 'Não foi possível registrar agora. Tente novamente em um minuto.',
         abrirApp: 'Abrir o aplicativo',
+        portalTitulo: 'Preciso falar com o suporte',
+        portalTexto:
+            'Seus chamados continuam acessíveis fora do aplicativo. O acesso é por um link enviado ao e-mail que você usa nele.',
+        portalBotao: 'Acessar meus chamados',
         rodape: 'Página gerada em',
         minutos: 'min',
         horas: 'h',
@@ -71,6 +75,10 @@ export const TEXTOS = {
         afetadoEnviando: 'Sending…',
         afetadoErro: 'Could not register right now. Please try again in a minute.',
         abrirApp: 'Open the application',
+        portalTitulo: 'I need to talk to support',
+        portalTexto:
+            'Your tickets stay reachable outside the application. Access is through a link sent to the email you use in it.',
+        portalBotao: 'Open my tickets',
         rodape: 'Page generated on',
         minutos: 'min',
         horas: 'h',
@@ -104,6 +112,10 @@ export const TEXTOS = {
         afetadoEnviando: 'Enviando…',
         afetadoErro: 'No se pudo registrar ahora. Inténtelo de nuevo en un minuto.',
         abrirApp: 'Abrir la aplicación',
+        portalTitulo: 'Necesito hablar con soporte',
+        portalTexto:
+            'Sus casos siguen accesibles fuera de la aplicación. El acceso es por un enlace enviado al correo que usa en ella.',
+        portalBotao: 'Acceder a mis casos',
         rodape: 'Página generada el',
         minutos: 'min',
         horas: 'h',

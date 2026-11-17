@@ -35,6 +35,16 @@ const SAIDA = join(RAIZ, 'dist')
 const API = process.env.API_STATUS ?? 'https://venn-desk.andre-7ee.workers.dev'
 
 /**
+ * O portal de contingência (seção 7, item 4: "como o cliente chega lá").
+ *
+ * Mora no Worker, e isso é coerente: o portal existe para quando o APP está
+ * fora, não para quando a Cloudflare está. Quando a Cloudflare cai, a página de
+ * status ainda abre e diz que não alcançou o Venn Desk — que é a informação
+ * verdadeira naquele instante, e é mais do que o cliente teria sem ela.
+ */
+const PORTAL = process.env.URL_DESK ?? API
+
+/**
  * Os apps da página. Ficam AQUI e não vêm da API de propósito: a lista precisa
  * existir no HTML para a página abrir e nomear os sistemas mesmo quando a API
  * está inalcançável — que é exatamente o caso em que ela é mais lida.
@@ -79,6 +89,7 @@ label{display:block;font-size:.82rem;color:var(--fraco);margin-bottom:.3rem}
 input{width:100%;padding:.55rem .7rem;border:1px solid var(--borda);border-radius:.45rem;background:var(--fundo);color:var(--texto);font-size:1rem}
 button{margin-top:.7rem;padding:.55rem 1rem;border:0;border-radius:.45rem;background:var(--texto);color:var(--fundo);font-size:.9rem;font-weight:600;cursor:pointer}
 button[disabled]{opacity:.55;cursor:default}
+.botao{display:inline-block;padding:.55rem 1rem;border-radius:.45rem;background:var(--texto);color:var(--fundo);font-size:.9rem;font-weight:600;text-decoration:none}
 .recado{margin-top:.7rem;font-size:.85rem;color:var(--fraco)}
 footer{margin-top:3rem;color:var(--fraco);font-size:.75rem}
 `.trim()
@@ -267,6 +278,10 @@ function pagina(app) {
   </tr></thead>
   <tbody id="episodios"></tbody>
 </table>
+
+<h2 data-t="portalTitulo">${escapar(padrao.portalTitulo)}</h2>
+<p class="sub" data-t="portalTexto">${escapar(padrao.portalTexto)}</p>
+<p><a class="botao" href="${PORTAL}/portal/${app.slug}" data-t="portalBotao">${escapar(padrao.portalBotao)}</a></p>
 
 <h2 data-t="afetadoTitulo">${escapar(padrao.afetadoTitulo)}</h2>
 <form id="afetado">

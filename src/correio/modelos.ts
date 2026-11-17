@@ -78,7 +78,7 @@ function preencher(modelo: string, valores: Record<string, string>): string {
 }
 
 /** Escapa o que vai para dentro do HTML. O texto é do usuário e do atendente. */
-function escapar(bruto: string): string {
+export function escapar(bruto: string): string {
     return bruto
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')

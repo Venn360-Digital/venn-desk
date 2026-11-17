@@ -39,7 +39,8 @@
         "aceite:saude": "node scripts/aceite-saude.mjs",
         "lint:rotas": "node scripts/lint-rotas.mjs",
         "status:montar": "node status/montar.mjs",
-        "status:publicar": "node scripts/publicar-status.mjs"
+        "status:publicar": "node scripts/publicar-status.mjs",
+        "aceite:portal": "node scripts/aceite-portal.mjs"
     },
     "dependencies": {
         "@neondatabase/serverless": "1.2.0",

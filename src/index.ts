@@ -9,6 +9,7 @@ import { escopoDoApp } from './dados/escopo.ts'
 import { rotasDoSolicitante } from './rotas/solicitante.ts'
 import { rotasInternas } from './rotas/interna.ts'
 import { rotasDeStatus } from './rotas/status.ts'
+import { rotasDoPortal } from './rotas/portal.ts'
 import { verificarSaude } from './saude/verificar.ts'
 import type { CaixaDeSaida } from './correio/enviar.ts'
 
@@ -44,6 +45,7 @@ app.get('/api/saude', (c) => c.json({ ok: true, ambiente: c.env.AMBIENTE }))
 app.route('/', rotasDoSolicitante)
 app.route('/', rotasInternas)
 app.route('/', rotasDeStatus)
+app.route('/', rotasDoPortal)
 
 /**
  * A entrega do anexo. Só o link assinado abre: a chave carrega o app e a
