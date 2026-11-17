@@ -1,5 +1,5 @@
 import type { Prisma, PrismaClient } from '#prisma'
-import type { Attachment, Ticket, TicketEvent, TicketMessage } from '#prisma'
+import type { Attachment, HealthEpisode, HealthState, Problem, Ticket, TicketEvent, TicketMessage } from '#prisma'
 
 import { ErroDeDominio } from '../lib/erros.ts'
 import { transicionar, type Evento, type Status } from '../dominio/estados.ts'
@@ -67,6 +67,16 @@ export interface EscopoDoApp {
         }): Promise<{ tenantId: string; requesterId: string }>
         /** Para quem o aviso por e-mail vai. Nunca vem do corpo da requisição. */
         porId(id: string): Promise<{ nome: string; email: string } | null>
+        /**
+         * Quem é este e-mail dentro deste app — e `null` se não for ninguém.
+         *
+         * Serve ao "também fui afetado" da página de status (seção 7), que é o
+         * único lugar onde um e-mail digitado por quem não está logado entra no
+         * sistema. Por isso devolve `null` em vez de criar: a seção 7 exige que
+         * o caminho atenda SÓ e-mail de usuário já conhecido, e nenhum caminho
+         * aceita usuário anônimo.
+         */
+        porEmail(email: string): Promise<{ id: string; tenantId: string; nome: string } | null>
     }
 
     chamados: {
@@ -119,6 +129,38 @@ export interface EscopoDoApp {
             emAndamento: number
             naoLidas: number
         }>
+    }
+
+    problemas: {
+        porId(id: string): Promise<Problem | null>
+        abrir(dados: { titulo: string; causa?: string }): Promise<Problem>
+        resolver(id: string): Promise<Problem | null>
+    }
+
+    /**
+     * A verificação de saúde (seção 7). Mora no escopo como o resto: o estado é
+     * por app, e a página de status de um app nunca enxerga outro.
+     */
+    saude: {
+        estado(): Promise<HealthState | null>
+        /** Grava o veredito e devolve a linha nova. */
+        gravarEstado(estado: {
+            saudavel: boolean
+            falhasSeguidas: number
+            desdeEm: Date
+            verificadoEm: Date
+            latenciaMs?: number | null
+            detalhe?: string | null
+        }): Promise<HealthState>
+        episodioAberto(): Promise<HealthEpisode | null>
+        abrirEpisodio(dados: {
+            iniciadoEm: Date
+            detalhe?: string | null
+            problemId?: string | null
+        }): Promise<HealthEpisode>
+        fecharEpisodio(id: string, terminadoEm: Date): Promise<void>
+        /** Os últimos episódios, para a página de status. */
+        episodios(limite?: number): Promise<HealthEpisode[]>
     }
 
     eventos: {
@@ -203,6 +245,15 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                     select: { nome: true, email: true },
                 })
                 return achado
+            },
+
+            async porEmail(email) {
+                /// Minúsculas dos dois lados: o usuário digita o e-mail à mão
+                /// nesse caminho, e `Joao@` não é outra pessoa que `joao@`.
+                return conexao.requester.findFirst({
+                    where: { appId, email: { equals: email.trim(), mode: 'insensitive' } },
+                    select: { id: true, tenantId: true, nome: true },
+                })
             },
         },
 
@@ -448,6 +499,89 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 ])
 
                 return { abertos, emAndamento, naoLidas }
+            },
+        },
+
+        problemas: {
+            async porId(id) {
+                return conexao.problem.findFirst({ where: { id, appId } })
+            },
+
+            async abrir(dados) {
+                return conexao.problem.create({
+                    data: {
+                        appId,
+                        titulo: dados.titulo,
+                        ...(dados.causa === undefined ? {} : { causa: dados.causa }),
+                    },
+                })
+            },
+
+            async resolver(id) {
+                const { count } = await conexao.problem.updateMany({
+                    where: { id, appId, resolvidoEm: null },
+                    data: { resolvidoEm: new Date() },
+                })
+                return count === 1 ? conexao.problem.findFirst({ where: { id, appId } }) : null
+            },
+        },
+
+        saude: {
+            async estado() {
+                return conexao.healthState.findFirst({ where: { appId } })
+            },
+
+            async gravarEstado(estado) {
+                const campos = {
+                    saudavel: estado.saudavel,
+                    falhasSeguidas: estado.falhasSeguidas,
+                    desdeEm: estado.desdeEm,
+                    verificadoEm: estado.verificadoEm,
+                    latenciaMs: estado.latenciaMs ?? null,
+                    detalhe: estado.detalhe ?? null,
+                }
+
+                /// `upsert` pela chave primária, que AQUI é o próprio `app_id` —
+                /// é o único caso do escopo em que a chave única já é o escopo,
+                /// então não há como a consulta alcançar outro app.
+                return conexao.healthState.upsert({
+                    where: { appId },
+                    create: { appId, ...campos },
+                    update: campos,
+                })
+            },
+
+            async episodioAberto() {
+                return conexao.healthEpisode.findFirst({
+                    where: { appId, terminadoEm: null },
+                    orderBy: { iniciadoEm: 'desc' },
+                })
+            },
+
+            async abrirEpisodio(dados) {
+                return conexao.healthEpisode.create({
+                    data: {
+                        appId,
+                        iniciadoEm: dados.iniciadoEm,
+                        detalhe: dados.detalhe ?? null,
+                        problemId: dados.problemId ?? null,
+                    },
+                })
+            },
+
+            async fecharEpisodio(id, terminadoEm) {
+                await conexao.healthEpisode.updateMany({
+                    where: { id, appId, terminadoEm: null },
+                    data: { terminadoEm },
+                })
+            },
+
+            async episodios(limite) {
+                return conexao.healthEpisode.findMany({
+                    where: { appId },
+                    orderBy: { iniciadoEm: 'desc' },
+                    take: limite ?? 20,
+                })
             },
         },
 

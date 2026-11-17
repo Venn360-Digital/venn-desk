@@ -127,13 +127,13 @@ async function main() {
     entrada.status === 200 ? ok(`sessao aberta como ${entrada.json.agente?.nome}`) : nao(`login devolveu ${entrada.status}`)
     if (!cookie) return nao('sem cookie de sessao')
 
-    const fila = await api('/api/console/odontobox/fila', { cookie })
+    const fila = await api('/api/console/app/odontobox/fila', { cookie })
     fila.status === 200 && fila.json.chamados?.length >= 1
         ? ok(`fila do odontobox: ${fila.json.chamados.length}`)
         : nao(`fila devolveu ${fila.status}`)
 
     console.log('\n— agente: responder e resolver —')
-    const resposta = await api(`/api/console/odontobox/chamados/${numero}/mensagens`, {
+    const resposta = await api(`/api/console/app/odontobox/chamados/${numero}/mensagens`, {
         metodo: 'POST',
         cookie,
         corpo: { corpo: 'Oi Ana, era cache do navegador. Pode testar agora?', visibilidade: 'PUBLICA' },
@@ -142,7 +142,7 @@ async function main() {
         ? ok('resposta publica enviada, chamado em AGUARDANDO_USUARIO')
         : nao(`responder devolveu ${resposta.status} / ${resposta.json.status}`)
 
-    const nota = await api(`/api/console/odontobox/chamados/${numero}/mensagens`, {
+    const nota = await api(`/api/console/app/odontobox/chamados/${numero}/mensagens`, {
         metodo: 'POST',
         cookie,
         corpo: { corpo: 'Nota interna: conferir se e o bug do service worker.', visibilidade: 'INTERNA' },
@@ -155,7 +155,7 @@ async function main() {
         ? ok('o solicitante ve a resposta publica e NAO ve a nota interna')
         : nao('vazou nota interna para o solicitante, ou a publica nao chegou')
 
-    const resolvido = await api(`/api/console/odontobox/chamados/${numero}/eventos`, {
+    const resolvido = await api(`/api/console/app/odontobox/chamados/${numero}/eventos`, {
         metodo: 'POST',
         cookie,
         corpo: { evento: 'resolver' },

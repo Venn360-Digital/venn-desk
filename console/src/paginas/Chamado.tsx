@@ -24,12 +24,12 @@ export function Chamado() {
     const chave = ['chamado', app, numero]
     const { data, isPending } = useQuery({
         queryKey: chave,
-        queryFn: () => api<ChamadoCompleto>(`/${app}/chamados/${numero}`),
+        queryFn: () => api<ChamadoCompleto>(`/app/${app}/chamados/${numero}`),
     })
 
     const responder = useMutation({
         mutationFn: (v: { corpo: string; visibilidade: 'PUBLICA' | 'INTERNA' }) =>
-            api(`/${app}/chamados/${numero}/mensagens`, { metodo: 'POST', corpo: v }),
+            api(`/app/${app}/chamados/${numero}/mensagens`, { metodo: 'POST', corpo: v }),
         onSuccess: () => {
             setTexto('')
             setErro(null)
@@ -41,7 +41,7 @@ export function Chamado() {
 
     const evento = useMutation({
         mutationFn: (nome: string) =>
-            api(`/${app}/chamados/${numero}/eventos`, { metodo: 'POST', corpo: { evento: nome } }),
+            api(`/app/${app}/chamados/${numero}/eventos`, { metodo: 'POST', corpo: { evento: nome } }),
         onSuccess: () => {
             void fila.invalidateQueries({ queryKey: chave })
             void fila.invalidateQueries({ queryKey: ['fila', app] })

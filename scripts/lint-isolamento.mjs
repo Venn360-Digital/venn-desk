@@ -46,6 +46,8 @@ const DELEGADOS = [
     'ticketTag',
     'customField',
     'customFieldValue',
+    'healthState',
+    'healthEpisode',
 ]
 
 const METODOS = ['findFirst', 'findMany', 'findUnique', 'create', 'createMany', 'update', 'updateMany', 'upsert', 'delete', 'deleteMany', 'count', 'aggregate']

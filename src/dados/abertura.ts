@@ -25,6 +25,8 @@ export interface DadosDaAbertura {
     prioridade?: 'BAIXA' | 'NORMAL' | 'ALTA' | 'URGENTE'
     origem?: 'WIDGET' | 'SLACK' | 'MCP' | 'CONSOLE' | 'PORTAL' | 'EMAIL'
     contexto?: unknown
+    /** O defeito que agrupa este incidente, quando já se sabe qual é. */
+    problemId?: string
     /** Quem abriu: o próprio solicitante, ou o atendente em nome dele. */
     ator: string
 }
@@ -55,6 +57,7 @@ export async function abrirChamado(
                 prioridade: dados.prioridade ?? 'NORMAL',
                 status: 'NOVO',
                 nivel: 'N1',
+                ...(dados.problemId === undefined ? {} : { problemId: dados.problemId }),
                 ...(dados.contexto === undefined
                     ? {}
                     : { contexto: dados.contexto as Prisma.InputJsonValue }),

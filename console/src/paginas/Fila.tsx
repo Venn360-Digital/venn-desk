@@ -17,7 +17,7 @@ export function Fila() {
 
     const { data, isPending, error } = useQuery({
         queryKey: ['fila', app],
-        queryFn: () => api<{ chamados: ChamadoNaFila[] }>(`/${app}/fila`),
+        queryFn: () => api<{ chamados: ChamadoNaFila[] }>(`/app/${app}/fila`),
         refetchInterval: 20_000,
     })
 

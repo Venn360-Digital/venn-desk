@@ -20,3 +20,17 @@ export async function agentePorSlackId(
 ): Promise<Agent | null> {
     return cliente.agent.findFirst({ where: { slackId, ativo: true } })
 }
+
+/**
+ * Quem recebe alerta de indisponibilidade (seção 7, "alerta os responsáveis").
+ *
+ * Gestor e admin, humanos e ativos. Agente de nível 1 não entra: ele atende
+ * chamado, não decide sobre pane. E a IA não entra por construção — ela não lê
+ * e-mail, age pelo MCP.
+ */
+export async function responsaveisPorAlerta(cliente: PrismaClient): Promise<Agent[]> {
+    return cliente.agent.findMany({
+        where: { ativo: true, tipo: 'HUMANO', papel: { in: ['GESTOR', 'ADMIN'] } },
+        orderBy: { nome: 'asc' },
+    })
+}

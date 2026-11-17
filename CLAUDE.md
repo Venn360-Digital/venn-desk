@@ -32,6 +32,12 @@ e o Vite builda e roda nesta máquina — o que os apps não fazem mais.
 
 ## Regras absolutas
 
+- Nenhum `:parametro` na raiz de um espaço de rotas: use um segmento literal
+  antes dele (`/api/app/:app/…`, `/api/console/app/:app/…`). Um parâmetro nessa
+  posição captura todo primeiro segmento e torna as rotas literais vizinhas
+  inalcançáveis, sem erro de compilação. Verificado por
+  `scripts/lint-rotas.mjs` (ADR 0009).
+
 - Toda tabela de negócio carrega `app_id` e toda consulta filtra por ele.
   Teste de isolamento entre apps e entre tenants é obrigatório em cada rota.
 - Nenhuma ferramenta, rota ou credencial usada pela IA pode aprovar issue,

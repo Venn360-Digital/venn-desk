@@ -6,6 +6,7 @@
 # aprova.
 /scripts/ci-worker.mjs        @venn360
 /scripts/lint-isolamento.mjs  @venn360
+/scripts/lint-rotas.mjs       @venn360
 /src/dados/escopo.ts          @venn360
 /src/auth/                    @venn360
 /prisma/                      @venn360

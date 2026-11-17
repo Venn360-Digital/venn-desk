@@ -62,6 +62,13 @@ model App {
     chavePublicaJwk Json   @map("chave_publica_jwk")
     /// Repositório do app no GitHub, para os canais de engenharia (Fase 5).
     repositorio     String?
+
+    /// Endereço público do app, para o e-mail e a página de status apontarem.
+    urlApp   String? @map("url_app")
+    /// O que a verificação de saúde consulta a cada minuto (seção 7). Nulo
+    /// desliga a verificação daquele app — é como um app novo entra sem
+    /// disparar incidente antes de existir.
+    urlSaude String? @map("url_saude")
     canalSuporte    String? @map("canal_suporte")
     canalEngenharia String? @map("canal_engenharia")
 
@@ -95,6 +102,8 @@ model App {
     views       View[]
     tags        Tag[]
     customFields CustomField[]
+    healthState HealthState?
+    healthEpisodes HealthEpisode[]
 
     @@map("apps")
 }
@@ -447,9 +456,10 @@ model Problem {
     atualizadoEm DateTime  @updatedAt @map("atualizado_em")
     resolvidoEm  DateTime? @map("resolvido_em")
 
-    tickets   Ticket[]
-    engLinks  EngLink[]
-    approvals Approval[]
+    tickets        Ticket[]
+    engLinks       EngLink[]
+    approvals      Approval[]
+    healthEpisodes HealthEpisode[]
 
     @@index([appId, etapa])
     @@map("problems")
@@ -709,4 +719,70 @@ model CustomFieldValue {
 
     @@id([ticketId, fieldId])
     @@map("custom_field_values")
+}
+
+// ============================================
+// 8. SAÚDE DOS APPS (seção 7, contingência)
+// ============================================
+
+/**
+ * O veredito atual da verificação de saúde de um app. UMA linha por app.
+ *
+ * O histórico não mora aqui de propósito. Guardar cada sondagem daria 1.440
+ * linhas por app por dia para responder a uma pergunta que é sempre sobre
+ * INTERVALO — "desde quando está fora", "quanto tempo ficou fora em outubro".
+ * Então o estado corrente fica nesta linha, que é sobrescrita, e os intervalos
+ * de queda ficam em `health_episodes`, que só recebe escrita quando algo muda.
+ * Em regime normal a verificação escreve três UPDATEs por minuto e nada mais.
+ */
+model HealthState {
+    appId String @id @map("app_id")
+    app   App    @relation(fields: [appId], references: [id])
+
+    /// O último veredito JÁ CONFIRMADO — não a última sondagem. Uma falha
+    /// isolada não derruba isto; ver `falhasSeguidas`.
+    saudavel Boolean
+
+    /**
+     * Falhas consecutivas desde a última resposta boa.
+     *
+     * O incidente só abre na segunda (`LIMITE_DE_FALHAS`), porque uma sondagem
+     * sozinha não distingue "o app caiu" de "esta requisição caiu" — reinício
+     * de isolate, um deploy em andamento, perda de pacote. Abrir problema
+     * urgente e acordar gente a cada soluço de rede destrói a confiança no
+     * alerta, que é o único ativo que ele tem.
+     */
+    falhasSeguidas Int @default(0) @map("falhas_seguidas")
+
+    /// Desde quando está neste estado. É o que a página de status mostra.
+    desdeEm      DateTime  @map("desde_em")
+    verificadoEm DateTime  @map("verificado_em")
+    latenciaMs   Int?      @map("latencia_ms")
+    /// Resumo do que a sondagem viu. Status HTTP ou nome do erro, nunca corpo
+    /// da resposta: o corpo de um app em pane pode conter dado de cliente.
+    detalhe      String?
+
+    @@map("health_states")
+}
+
+/**
+ * Um intervalo de indisponibilidade. Abre quando a verificação confirma a
+ * queda, fecha na primeira resposta boa. É a fonte da página de status e do
+ * cálculo de disponibilidade.
+ */
+model HealthEpisode {
+    id    String @id @default(cuid())
+    appId String @map("app_id")
+    app   App    @relation(fields: [appId], references: [id])
+
+    iniciadoEm  DateTime  @map("iniciado_em")
+    terminadoEm DateTime? @map("terminado_em")
+    detalhe     String?
+
+    /// O problema urgente que este episódio abriu (seção 7).
+    problemId String?  @map("problem_id")
+    problem   Problem? @relation(fields: [problemId], references: [id])
+
+    @@index([appId, iniciadoEm])
+    @@map("health_episodes")
 }

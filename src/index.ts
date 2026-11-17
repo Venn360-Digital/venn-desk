@@ -8,6 +8,9 @@ import { criarCliente, descartarCliente } from './dados/cliente.ts'
 import { escopoDoApp } from './dados/escopo.ts'
 import { rotasDoSolicitante } from './rotas/solicitante.ts'
 import { rotasInternas } from './rotas/interna.ts'
+import { rotasDeStatus } from './rotas/status.ts'
+import { verificarSaude } from './saude/verificar.ts'
+import type { CaixaDeSaida } from './correio/enviar.ts'
 
 /**
  * O Worker do Venn Desk: API do solicitante, API interna, entrega de anexo e os
@@ -40,6 +43,7 @@ app.get('/api/saude', (c) => c.json({ ok: true, ambiente: c.env.AMBIENTE }))
 
 app.route('/', rotasDoSolicitante)
 app.route('/', rotasInternas)
+app.route('/', rotasDeStatus)
 
 /**
  * A entrega do anexo. Só o link assinado abre: a chave carrega o app e a
@@ -84,7 +88,44 @@ app.get('/arquivos/:chave{.+}', async (c) => {
 /** Fora da API, é o Console: uma SPA servida dos assets (ADR 0008). */
 app.get('*', (c) => c.env.ASSETS.fetch(c.req.raw))
 
-export default app
+/**
+ * O Worker exporta `fetch` E `scheduled` — o segundo é o Cron Trigger da
+ * verificação de saúde (seção 7), declarado em `wrangler.jsonc`.
+ *
+ * O cliente do Prisma é criado e descartado DENTRO do handler, como nas rotas:
+ * uma invocação agendada que termina sem `$disconnect()` deixa conexão
+ * pendurada no Neon, e esta roda 1.440 vezes por dia.
+ */
+export default {
+    fetch(requisicao: Request, env: Ambiente['Bindings'], ctx: ExecutionContext) {
+        return app.fetch(requisicao, env, ctx)
+    },
+
+    async scheduled(_controlador: unknown, env: Ambiente['Bindings'], _ctx: unknown) {
+        const cliente = criarCliente(env.DATABASE_URL)
+
+        try {
+            const vereditos = await verificarSaude(cliente, {
+                caixa: env.EMAIL as unknown as CaixaDeSaida | undefined,
+                remetente: {
+                    email: env.EMAIL_REMETENTE ?? 'suporte@mail.venn360.com',
+                    nome: 'Venn Desk · Alertas',
+                },
+                urlStatus: env.URL_STATUS,
+            })
+
+            /// Só o que mudou vira log. 1.440 execuções por dia escrevendo
+            /// "tudo bem" é o jeito de ninguém encontrar o dia em que não
+            /// estava.
+            const mudaram = vereditos.filter((v) => v.mudanca !== null)
+            if (mudaram.length > 0) {
+                console.log('[saude]', JSON.stringify(mudaram))
+            }
+        } finally {
+            await descartarCliente(cliente)
+        }
+    },
+}
 
 /// O Durable Object precisa ser exportado pelo módulo de entrada do Worker.
 export { SalaDoChamado } from './tempo-real/sala.ts'

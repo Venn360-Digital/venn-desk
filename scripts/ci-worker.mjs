@@ -13,6 +13,7 @@ import { spawnSync } from 'node:child_process'
 const ETAPAS = [
     ['Tipos', 'pnpm', ['run', 'typecheck']],
     ['Isolamento', 'node', ['scripts/lint-isolamento.mjs']],
+    ['Rotas', 'node', ['scripts/lint-rotas.mjs']],
     ['Provas', 'pnpm', ['run', 'test']],
 ]
 

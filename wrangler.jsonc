@@ -42,13 +42,20 @@
         }
     ],
 
+    // A verificação de saúde de cada app (seção 7, contingência). A cada
+    // minuto, que é o intervalo que o documento especifica — e o mínimo que a
+    // Cloudflare aceita. Em regime normal são três UPDATEs por execução.
+    "triggers": { "crons": ["* * * * *"] },
+
     "vars": {
         "AMBIENTE": "staging",
         // Subdomínio de envio dedicado (mail.venn360.com), já onboardado no
         // Email Sending com DKIM, SPF e DMARC p=reject próprios. Nunca o apex:
         // o MX de venn360.com é smtp.google.com e atende a caixa de entrada.
         "EMAIL_REMETENTE": "suporte@mail.venn360.com",
-        "URL_BASE": "https://venn-desk.andre-7ee.workers.dev"
+        "URL_BASE": "https://venn-desk.andre-7ee.workers.dev",
+        // A página de status mora FORA da Cloudflare, de propósito (seção 7).
+        "URL_STATUS": "https://status.venn360.com"
     },
 
     // DATABASE_URL entra por `wrangler secret put`, nunca aqui.
@@ -60,8 +67,10 @@
             "vars": {
                 "AMBIENTE": "producao",
                 "EMAIL_REMETENTE": "suporte@mail.venn360.com",
-                "URL_BASE": "https://desk.venn360.com"
+                "URL_BASE": "https://desk.venn360.com",
+                "URL_STATUS": "https://status.venn360.com"
             },
+            "triggers": { "crons": ["* * * * *"] },
             "assets": {
                 "directory": "./console/dist",
                 "binding": "ASSETS",

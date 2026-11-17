@@ -13,6 +13,8 @@ import { ErroDeDominio, ErroDeToken } from '../lib/erros.ts'
 import type { Ambiente } from '../lib/ambiente.ts'
 import type { Prisma } from '#prisma'
 import { comApp, comCliente, comSessaoDeAgente } from '../auth/middleware.ts'
+import { verificarSaude } from '../saude/verificar.ts'
+import type { CaixaDeSaida } from '../correio/enviar.ts'
 import { conferirSenha, criarSessao, podeAprovar, VALIDADE_DA_SESSAO_S } from '../auth/sessao-console.ts'
 
 /**
@@ -69,7 +71,24 @@ rotasInternas.post('/api/console/sessao', comCliente, async (c) => {
     return c.json({ agente: { nome: agente.nome, papel: agente.papel } })
 })
 
-rotasInternas.use('/api/console/:app/*', comCliente, comSessaoDeAgente, comApp)
+/**
+ * **Por que `/api/console/app/<slug>/…` e não `/api/console/<slug>/…`.**
+ *
+ * Pela MESMA razão que `src/rotas/solicitante.ts` usa `/api/app/<slug>`, e com
+ * a mesma consequência: um `:app` nessa posição captura qualquer primeiro
+ * segmento. Com o caminho curto, `/api/console/apps/odontobox` entrava aqui com
+ * `:app = "apps"`, e `/api/console/saude/verificar` com `:app = "saude"` — o
+ * middleware procurava um app chamado "apps", não achava, e respondia 404 antes
+ * de a rota certa ser alcançada. O `PATCH /api/console/apps/:slug` existia e
+ * era inalcançável.
+ *
+ * O primeiro achado (Fase 1) foi tratado consertando UM caminho. Este é o mesmo
+ * defeito reaparecendo no vizinho, o que diz que a regra não é "evite o nome
+ * `console`": é que **um prefixo com parâmetro na raiz de um espaço reserva o
+ * espaço inteiro**. Daí o segmento literal `app` em todos eles. Descoberto em
+ * 17/11/2026 pelo aceite da saúde.
+ */
+rotasInternas.use('/api/console/app/:app/*', comCliente, comSessaoDeAgente, comApp)
 
 const esquemaDaFila = z.object({
     status: z.string().optional(),
@@ -77,7 +96,7 @@ const esquemaDaFila = z.object({
 })
 
 /** A fila do app. Sem `status`, traz o que está em aberto. */
-rotasInternas.get('/api/console/:app/fila', async (c) => {
+rotasInternas.get('/api/console/app/:app/fila', async (c) => {
     const filtro = esquemaDaFila.parse(Object.fromEntries(new URL(c.req.url).searchParams))
 
     const status: Status[] =
@@ -122,7 +141,7 @@ async function chamadoDaFila(c: Context<Ambiente>) {
 }
 
 /** A tela do chamado: linha do tempo inteira, nota interna incluída. */
-rotasInternas.get('/api/console/:app/chamados/:numero', async (c) => {
+rotasInternas.get('/api/console/app/:app/chamados/:numero', async (c) => {
     const chamado = await chamadoDaFila(c)
     const escopo = c.get('escopo')
 
@@ -142,7 +161,7 @@ const esquemaDaMensagemInterna = z.object({
     visibilidade: z.enum(['PUBLICA', 'INTERNA']).default('INTERNA'),
 })
 
-rotasInternas.post('/api/console/:app/chamados/:numero/mensagens', async (c) => {
+rotasInternas.post('/api/console/app/:app/chamados/:numero/mensagens', async (c) => {
     const chamado = await chamadoDaFila(c)
     const agente = c.get('agente')
     const escopo = c.get('escopo')
@@ -206,7 +225,7 @@ const esquemaDoEvento = z.object({
     ]),
 })
 
-rotasInternas.post('/api/console/:app/chamados/:numero/eventos', async (c) => {
+rotasInternas.post('/api/console/app/:app/chamados/:numero/eventos', async (c) => {
     const chamado = await chamadoDaFila(c)
     const agente = c.get('agente')
 
@@ -248,7 +267,7 @@ const esquemaDaAlteracao = z.object({
     assigneeId: z.string().nullable().optional(),
 })
 
-rotasInternas.patch('/api/console/:app/chamados/:numero', async (c) => {
+rotasInternas.patch('/api/console/app/:app/chamados/:numero', async (c) => {
     const chamado = await chamadoDaFila(c)
     const agente = c.get('agente')
 
@@ -286,7 +305,7 @@ const esquemaEmNomeDoCliente = z.object({
  * nome dele. Fica registrado quem criou — é um chamado de origem CONSOLE, com o
  * ator sendo o agente, não o solicitante.
  */
-rotasInternas.post('/api/console/:app/chamados', async (c) => {
+rotasInternas.post('/api/console/app/:app/chamados', async (c) => {
     const agente = c.get('agente')
 
     const corpo = esquemaEmNomeDoCliente.safeParse(await c.req.json().catch(() => null))
@@ -334,9 +353,40 @@ const esquemaDoApp = z.object({
         .regex(/^[A-Za-z]+$/, 'só letras'),
     chavePublicaJwk: z.record(z.string(), z.unknown()),
     repositorio: z.string().trim().max(200).nullish(),
+    /// Endereço público do app e o que a verificação de saúde consulta. O
+    /// `url()` recusa caminho relativo de propósito: a sondagem sai do Worker
+    /// do Venn Desk, então endereço sem origem não alcança nada.
+    urlApp: z.string().trim().url().max(300).nullish(),
+    urlSaude: z.string().trim().url().max(300).nullish(),
     canalSuporte: z.string().trim().max(80).nullish(),
     canalEngenharia: z.string().trim().max(80).nullish(),
     modoSombra: z.boolean().optional(),
+})
+
+/**
+ * Roda a verificação de saúde agora, sem esperar o Cron Trigger.
+ *
+ * Existe por dois motivos práticos: o aceite precisa de um gatilho (não há como
+ * disparar um cron da Cloudflare de fora), e num incidente alguém vai querer
+ * reverificar sem esperar o próximo minuto. Só gestor e admin — ela envia
+ * e-mail de alerta e pode abrir problema.
+ */
+rotasInternas.post('/api/console/saude/verificar', comCliente, comSessaoDeAgente, async (c) => {
+    const agente = c.get('agente')
+    if (agente.papel === 'AGENTE') {
+        throw new ErroDeDominio('sem_permissao', 'Só gestor ou admin verifica saúde.', 403)
+    }
+
+    const vereditos = await verificarSaude(c.get('cliente'), {
+        caixa: c.env.EMAIL as unknown as CaixaDeSaida | undefined,
+        remetente: {
+            email: c.env.EMAIL_REMETENTE ?? 'suporte@mail.venn360.com',
+            nome: 'Venn Desk · Alertas',
+        },
+        urlStatus: c.env.URL_STATUS,
+    })
+
+    return c.json({ vereditos })
 })
 
 /** Quem está logado. É como a SPA do Console sabe se há sessão. */
@@ -364,6 +414,8 @@ rotasInternas.get('/api/console/apps', comCliente, comSessaoDeAgente, async (c) 
             nome: app.nome,
             prefixo: app.prefixo,
             repositorio: app.repositorio,
+            urlApp: app.urlApp,
+            urlSaude: app.urlSaude,
             canalSuporte: app.canalSuporte,
             canalEngenharia: app.canalEngenharia,
             modoSombra: app.modoSombra,

@@ -22,6 +22,8 @@ export interface DadosDoApp {
     prefixo: string
     chavePublicaJwk: Prisma.InputJsonValue
     repositorio?: string | null
+    urlApp?: string | null
+    urlSaude?: string | null
     canalSuporte?: string | null
     canalEngenharia?: string | null
     modoSombra?: boolean
@@ -42,6 +44,8 @@ export async function cadastrarApp(cliente: PrismaClient, dados: DadosDoApp): Pr
             chavePublicaJwk: dados.chavePublicaJwk,
             modoSombra: dados.modoSombra ?? true,
             ...(dados.repositorio === undefined ? {} : { repositorio: dados.repositorio }),
+            ...(dados.urlApp === undefined ? {} : { urlApp: dados.urlApp }),
+            ...(dados.urlSaude === undefined ? {} : { urlSaude: dados.urlSaude }),
             ...(dados.canalSuporte === undefined ? {} : { canalSuporte: dados.canalSuporte }),
             ...(dados.canalEngenharia === undefined
                 ? {}
@@ -62,6 +66,8 @@ export async function alterarApp(
     campos: {
         nome?: string | undefined
         repositorio?: string | null | undefined
+        urlApp?: string | null | undefined
+        urlSaude?: string | null | undefined
         canalSuporte?: string | null | undefined
         canalEngenharia?: string | null | undefined
         modoSombra?: boolean | undefined
@@ -72,6 +78,8 @@ export async function alterarApp(
     const data = {
         ...(campos.nome === undefined ? {} : { nome: campos.nome }),
         ...(campos.repositorio === undefined ? {} : { repositorio: campos.repositorio }),
+        ...(campos.urlApp === undefined ? {} : { urlApp: campos.urlApp }),
+        ...(campos.urlSaude === undefined ? {} : { urlSaude: campos.urlSaude }),
         ...(campos.canalSuporte === undefined ? {} : { canalSuporte: campos.canalSuporte }),
         ...(campos.canalEngenharia === undefined
             ? {}

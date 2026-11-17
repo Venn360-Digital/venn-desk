@@ -28,6 +28,8 @@ export interface Ambiente {
         EMAIL_REMETENTE?: string
         /** Origem para montar o link do chamado no e-mail. */
         URL_BASE?: string
+        /** A página de status, que mora fora da Cloudflare (seção 7). */
+        URL_STATUS?: string
         ABERTURA_RATE_LIMITER: RateLimit
         /** Uma sala por chamado, para o tempo real (Fase 3). */
         SALAS?: DurableObjectNamespace
