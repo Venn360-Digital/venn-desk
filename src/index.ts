@@ -12,6 +12,7 @@ import { rotasDeStatus } from './rotas/status.ts'
 import { rotasDoPortal } from './rotas/portal.ts'
 import { rotasDoSlack } from './rotas/slack.ts'
 import { verificarSaude } from './saude/verificar.ts'
+import { vigiarPrazos } from './sla/vigiar.ts'
 import type { CaixaDeSaida } from './correio/enviar.ts'
 
 /**
@@ -109,14 +110,22 @@ export default {
         const cliente = criarCliente(env.DATABASE_URL)
 
         try {
-            const vereditos = await verificarSaude(cliente, {
-                caixa: env.EMAIL as unknown as CaixaDeSaida | undefined,
-                remetente: {
-                    email: env.EMAIL_REMETENTE ?? 'suporte@mail.venn360.com',
-                    nome: 'Venn Desk · Alertas',
-                },
-                urlStatus: env.URL_STATUS,
-            })
+            /**
+             * Saúde e prazos no mesmo minuto, em paralelo: são leituras
+             * independentes, e encadeá-las faria a segunda esperar a primeira
+             * sondar três apps pela rede.
+             */
+            const [vereditos, estouros] = await Promise.all([
+                verificarSaude(cliente, {
+                    caixa: env.EMAIL as unknown as CaixaDeSaida | undefined,
+                    remetente: {
+                        email: env.EMAIL_REMETENTE ?? 'suporte@mail.venn360.com',
+                        nome: 'Venn Desk · Alertas',
+                    },
+                    urlStatus: env.URL_STATUS,
+                }),
+                vigiarPrazos(cliente),
+            ])
 
             /// Só o que mudou vira log. 1.440 execuções por dia escrevendo
             /// "tudo bem" é o jeito de ninguém encontrar o dia em que não
@@ -124,6 +133,9 @@ export default {
             const mudaram = vereditos.filter((v) => v.mudanca !== null)
             if (mudaram.length > 0) {
                 console.log('[saude]', JSON.stringify(mudaram))
+            }
+            if (estouros.length > 0) {
+                console.log('[sla]', JSON.stringify(estouros))
             }
         } finally {
             await descartarCliente(cliente)

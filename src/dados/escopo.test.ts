@@ -57,6 +57,8 @@ function conexaoFalsa(respostas: Record<string, unknown> = {}) {
         attachment: delegado('attachment'),
         tenant: delegado('tenant'),
         requester: delegado('requester'),
+        slaTimer: delegado('slaTimer'),
+        slaPolicy: delegado('slaPolicy'),
     } as unknown as Conexao
 
     return { conexao, chamadas }
@@ -195,6 +197,103 @@ describe('escopo por app', () => {
             expect(chamada.args['where']).toMatchObject({
                 appId_externalId: { appId: 'app-a' },
             })
+        }
+    })
+})
+
+describe('os relógios de SLA, pelo escopo', () => {
+    it('toda consulta de relógio carrega o appId', () => {
+        /// A mesma regra do resto do escopo, agora na família nova.
+        const { conexao, chamadas } = conexaoFalsa({
+            'ticket.findFirst': CHAMADO_A,
+            'slaTimer.findMany': [],
+        })
+
+        return escopoDoApp(conexao, 'app-a')
+            .chamados.aplicarEvento('chamado-1', 'responder_usuario', { ator: 'agent:1' })
+            .then(() => {
+                const doSla = chamadas.filter((c) => c.delegado === 'slaTimer')
+                expect(doSla.length).toBeGreaterThan(0)
+                for (const chamada of doSla) {
+                    expect((chamada.args['where'] as Record<string, unknown>)['appId']).toBe('app-a')
+                }
+            })
+    })
+
+    it('a mudança de status pausa o relógio que estava correndo', async () => {
+        /**
+         * `responder_usuario` leva a `AGUARDANDO_USUARIO`, que pausa (seção 6).
+         * A prova é que a escrita sai com `pausadoEm`, e não com um vencimento
+         * novo: empurrar o prazo na pausa dobraria o tempo.
+         */
+        const { conexao, chamadas } = conexaoFalsa({
+            'ticket.findFirst': CHAMADO_A,
+            'slaTimer.findMany': [
+                {
+                    id: 'relogio-1',
+                    meta: 'primeira_resposta',
+                    metaMin: 60,
+                    venceEm: new Date(Date.now() + 60 * 60_000),
+                    pausadoEm: null,
+                    violadoEm: null,
+                    cumpridoEm: null,
+                },
+            ],
+        })
+
+        await escopoDoApp(conexao, 'app-a').chamados.aplicarEvento(
+            'chamado-1',
+            'responder_usuario',
+            { ator: 'agent:1' }
+        )
+
+        const pausa = chamadas.find(
+            (c) => c.delegado === 'slaTimer' && c.metodo === 'updateMany'
+        )
+        const dados = pausa?.args['data'] as Record<string, unknown>
+
+        expect(dados['pausadoEm']).toBeInstanceOf(Date)
+        expect(dados).not.toHaveProperty('venceEm')
+    })
+
+    it('resposta pública de quem atende cumpre a primeira resposta', async () => {
+        const { conexao, chamadas } = conexaoFalsa({ 'ticket.findFirst': CHAMADO_A })
+
+        await escopoDoApp(conexao, 'app-a').mensagens.adicionar(
+            { ticketId: 'chamado-1', autor: 'HUMANO', corpo: 'oi' },
+            { ator: 'agent:1' }
+        )
+
+        const cumpriu = chamadas.find(
+            (c) =>
+                c.delegado === 'slaTimer' &&
+                c.metodo === 'updateMany' &&
+                (c.args['where'] as Record<string, unknown>)['meta'] === 'primeira_resposta'
+        )
+
+        expect(cumpriu).toBeDefined()
+        /// Idempotente: só cumpre o que ainda não foi cumprido.
+        expect((cumpriu?.args['where'] as Record<string, unknown>)['cumpridoEm']).toBe(null)
+    })
+
+    it('nota interna e rascunho da IA NÃO cumprem a primeira resposta', async () => {
+        /**
+         * O prazo mede se alguém respondeu a QUEM ABRIU. Nota interna é
+         * conversa entre nós, e rascunho em modo sombra ainda não saiu.
+         */
+        for (const dados of [
+            { autor: 'HUMANO' as const, corpo: 'x', visibilidade: 'INTERNA' as const },
+            { autor: 'IA' as const, corpo: 'x', rascunho: true },
+            { autor: 'USUARIO' as const, corpo: 'x' },
+        ]) {
+            const { conexao, chamadas } = conexaoFalsa({ 'ticket.findFirst': CHAMADO_A })
+
+            await escopoDoApp(conexao, 'app-a').mensagens.adicionar(
+                { ticketId: 'chamado-1', ...dados },
+                { ator: 'quem-seja' }
+            )
+
+            expect(chamadas.some((c) => c.delegado === 'slaTimer')).toBe(false)
         }
     })
 })

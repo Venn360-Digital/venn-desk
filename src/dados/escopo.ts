@@ -1,8 +1,18 @@
 import type { Prisma, PrismaClient } from '#prisma'
-import type { Attachment, HealthEpisode, HealthState, Problem, Ticket, TicketEvent, TicketMessage } from '#prisma'
+import type { Attachment, HealthEpisode, HealthState, Problem, SlaTimer, Ticket, TicketEvent, TicketMessage } from '#prisma'
 
 import { ErroDeDominio } from '../lib/erros.ts'
 import { transicionar, type Evento, type Status } from '../dominio/estados.ts'
+import {
+    aoMudarStatus,
+    metaEmMinutos,
+    METAS_PADRAO,
+    vencimentoDe,
+    type Meta,
+    type MetasEmMinutos,
+    type Prioridade,
+    type Relogio,
+} from '../dominio/sla.ts'
 
 /**
  * O escopo por app — a peça que faz o isolamento ser estrutural, e não
@@ -163,6 +173,25 @@ export interface EscopoDoApp {
         episodios(limite?: number): Promise<HealthEpisode[]>
     }
 
+    /**
+     * Os relógios de SLA (seções 4 e 5). A aritmética fica em
+     * `src/dominio/sla.ts`, pura e provada; aqui só se lê e se grava.
+     */
+    sla: {
+        /** As metas do app para uma prioridade: a política, ou o padrão. */
+        metasDe(prioridade: Prioridade): Promise<MetasEmMinutos>
+        /** Abre os relógios de um chamado recém-criado. */
+        abrir(ticketId: string, prioridade: Prioridade, agora: Date): Promise<SlaTimer[]>
+        doChamado(ticketId: string): Promise<SlaTimer[]>
+        /** Pausa ou retoma os relógios abertos conforme o status novo. */
+        aplicarStatus(ticketId: string, status: Status, agora: Date): Promise<void>
+        /** Marca a meta como cumprida. Só a primeira vez tem efeito. */
+        cumprir(ticketId: string, meta: Meta, agora: Date): Promise<boolean>
+        /** Relógios abertos cujo prazo já passou. A varredura do cão de guarda. */
+        vencidos(agora: Date, limite?: number): Promise<SlaTimer[]>
+        violar(id: string, agora: Date): Promise<boolean>
+    }
+
     eventos: {
         registrar(dados: {
             ticketId: string
@@ -172,6 +201,18 @@ export interface EscopoDoApp {
             depois?: unknown
         }): Promise<TicketEvent>
         doChamado(ticketId: string): Promise<TicketEvent[]>
+    }
+}
+
+/** A linha do banco vista como o relógio puro de `src/dominio/sla.ts`. */
+function paraRelogio(linha: SlaTimer): Relogio {
+    return {
+        meta: linha.meta as Meta,
+        metaMin: linha.metaMin,
+        venceEm: linha.venceEm,
+        pausadoEm: linha.pausadoEm,
+        violadoEm: linha.violadoEm,
+        cumpridoEm: linha.cumpridoEm,
     }
 }
 
@@ -318,6 +359,20 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                     },
                 })
 
+                /**
+                 * Os relógios seguem o status na MESMA transação da mudança.
+                 *
+                 * Fora dela, uma falha entre as duas escritas deixaria um
+                 * chamado aguardando o usuário com o relógio correndo — e a
+                 * violação apareceria depois, sem nada no histórico que
+                 * explicasse por quê.
+                 */
+                const esteEscopo = escopoDoApp(conexao, appId)
+                await esteEscopo.sla.aplicarStatus(id, destino, agora)
+                if (destino === 'RESOLVIDO') {
+                    await esteEscopo.sla.cumprir(id, 'resolucao', agora)
+                }
+
                 return reler(id, count)
             },
 
@@ -393,6 +448,28 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                         ...(dados.autorId === undefined ? {} : { autorId: dados.autorId }),
                     },
                 })
+
+                /**
+                 * A primeira resposta é cumprida por MENSAGEM, não por status.
+                 *
+                 * É o que o prazo mede: alguém respondeu a quem abriu. Nota
+                 * interna não conta — ela é conversa entre nós —, e rascunho
+                 * da IA em modo sombra também não: ele ainda não saiu. Medir
+                 * por status diria "cumprido" quando o atendente apenas assumiu
+                 * o chamado sem dizer nada ao cliente.
+                 */
+                const respondeuAoUsuario =
+                    (dados.autor === 'IA' || dados.autor === 'HUMANO') &&
+                    (dados.visibilidade ?? 'PUBLICA') === 'PUBLICA' &&
+                    (dados.rascunho ?? false) === false
+
+                if (respondeuAoUsuario) {
+                    await escopoDoApp(conexao, appId).sla.cumprir(
+                        dados.ticketId,
+                        'primeira_resposta',
+                        mensagem.criadoEm
+                    )
+                }
 
                 await conexao.ticketEvent.create({
                     data: {
@@ -582,6 +659,111 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                     orderBy: { iniciadoEm: 'desc' },
                     take: limite ?? 20,
                 })
+            },
+        },
+
+        sla: {
+            async metasDe(prioridade) {
+                const politica = await conexao.slaPolicy.findFirst({
+                    where: { appId, prioridade },
+                })
+
+                /// Sem política cadastrada, o padrão. É o que deixa um app novo
+                /// atender no mesmo dia (Fase 8) sem passar por cadastro.
+                if (politica === null) return METAS_PADRAO[prioridade]
+
+                return {
+                    primeiraRespostaMin: politica.primeiraRespostaMin,
+                    proximaRespostaMin: politica.proximaRespostaMin,
+                    resolucaoMin: politica.resolucaoMin,
+                }
+            },
+
+            async abrir(ticketId, prioridade, agora) {
+                const metas = await this.metasDe(prioridade)
+
+                /**
+                 * Dois relógios, não três. `proxima_resposta` nasce a cada
+                 * resposta do usuário, não na abertura — abrir junto o deixaria
+                 * vencendo sem que exista próxima resposta a dar.
+                 */
+                const quais: Meta[] = ['primeira_resposta', 'resolucao']
+
+                const criados: SlaTimer[] = []
+                for (const meta of quais) {
+                    const metaMin = metaEmMinutos(metas, meta)
+                    criados.push(
+                        await conexao.slaTimer.create({
+                            data: {
+                                appId,
+                                ticketId,
+                                meta,
+                                metaMin,
+                                venceEm: vencimentoDe(agora, metaMin),
+                            },
+                        })
+                    )
+                }
+
+                return criados
+            },
+
+            async doChamado(ticketId) {
+                return conexao.slaTimer.findMany({
+                    where: { appId, ticketId },
+                    orderBy: { venceEm: 'asc' },
+                })
+            },
+
+            async aplicarStatus(ticketId, status, agora) {
+                const relogios = await conexao.slaTimer.findMany({
+                    where: { appId, ticketId, cumpridoEm: null, violadoEm: null },
+                })
+
+                for (const linha of relogios) {
+                    const mudanca = aoMudarStatus(paraRelogio(linha), status, agora)
+                    if (mudanca === null) continue
+
+                    await conexao.slaTimer.updateMany({
+                        where: { id: linha.id, appId },
+                        data:
+                            mudanca.acao === 'pausar'
+                                ? { pausadoEm: mudanca.pausadoEm }
+                                : { pausadoEm: null, venceEm: mudanca.venceEm },
+                    })
+                }
+            },
+
+            async cumprir(ticketId, meta, agora) {
+                /// `cumpridoEm: null` no filtro é o que torna isto idempotente:
+                /// a segunda resposta pública não reescreve a hora da primeira.
+                const { count } = await conexao.slaTimer.updateMany({
+                    where: { appId, ticketId, meta, cumpridoEm: null, violadoEm: null },
+                    data: { cumpridoEm: agora },
+                })
+                return count > 0
+            },
+
+            async vencidos(agora, limite) {
+                return conexao.slaTimer.findMany({
+                    where: {
+                        appId,
+                        cumpridoEm: null,
+                        violadoEm: null,
+                        pausadoEm: null,
+                        venceEm: { lte: agora },
+                    },
+                    orderBy: { venceEm: 'asc' },
+                    take: limite ?? 50,
+                })
+            },
+
+            async violar(id, agora) {
+                const { count } = await conexao.slaTimer.updateMany({
+                    where: { id, appId, violadoEm: null, cumpridoEm: null },
+                    data: { violadoEm: agora },
+                })
+                return count === 1
             },
         },
 

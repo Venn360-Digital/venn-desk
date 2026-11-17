@@ -48,6 +48,8 @@ const DELEGADOS = [
     'customFieldValue',
     'healthState',
     'healthEpisode',
+    'slaPolicy',
+    'slaTimer',
 ]
 
 const METODOS = ['findFirst', 'findMany', 'findUnique', 'create', 'createMany', 'update', 'updateMany', 'upsert', 'delete', 'deleteMany', 'count', 'aggregate']

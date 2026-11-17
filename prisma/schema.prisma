@@ -610,6 +610,15 @@ model SlaTimer {
     ticket   Ticket @relation(fields: [ticketId], references: [id])
 
     meta       String
+    /**
+     * A meta original, em minutos.
+     *
+     * Redundante com `venceEm` menos o início? Não: `venceEm` ANDA quando o
+     * relógio pausa e retoma. Sem guardar a meta, "faltam 20% do prazo" deixa
+     * de ser calculável no primeiro chamado que esperou o usuário — e é
+     * justamente nesses que o aviso importa.
+     */
+    metaMin    Int       @map("meta_min")
     venceEm    DateTime  @map("vence_em")
     pausadoEm  DateTime? @map("pausado_em")
     violadoEm  DateTime? @map("violado_em")

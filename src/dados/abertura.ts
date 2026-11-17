@@ -1,6 +1,7 @@
 import type { Prisma, PrismaClient, Ticket } from '#prisma'
 
 import { escopoDoApp } from './escopo.ts'
+import type { Prioridade } from '../dominio/sla.ts'
 
 /**
  * A abertura do chamado — a única escrita que precisa de transação interativa.
@@ -77,6 +78,20 @@ export async function abrirChamado(
                 autorId: dados.requesterId,
             },
             { ator: dados.ator }
+        )
+
+        /**
+         * Os relógios nascem AQUI, dentro da transação da abertura.
+         *
+         * Criá-los depois abriria uma janela em que o chamado existe sem prazo
+         * nenhum — e é justamente nos primeiros minutos que o prazo de primeira
+         * resposta importa. Se a transação falhar, nem chamado nem relógio
+         * ficam para trás.
+         */
+        await escopo.sla.abrir(
+            chamado.id,
+            (dados.prioridade ?? 'NORMAL') as Prioridade,
+            chamado.criadoEm
         )
 
         await escopo.eventos.registrar({

@@ -14,6 +14,7 @@ import type { Ambiente } from '../lib/ambiente.ts'
 import type { Prisma } from '#prisma'
 import { comApp, comCliente, comSessaoDeAgente } from '../auth/middleware.ts'
 import { verificarSaude } from '../saude/verificar.ts'
+import { vigiarPrazos } from '../sla/vigiar.ts'
 import type { CaixaDeSaida } from '../correio/enviar.ts'
 import { conferirSenha, criarSessao, podeAprovar, VALIDADE_DA_SESSAO_S } from '../auth/sessao-console.ts'
 
@@ -387,6 +388,23 @@ rotasInternas.post('/api/console/saude/verificar', comCliente, comSessaoDeAgente
     })
 
     return c.json({ vereditos })
+})
+
+/**
+ * Roda a varredura de prazos agora, sem esperar o Cron Trigger.
+ *
+ * **Sem parâmetro de tempo, de propósito.** Seria cômodo aceitar um `agora` e
+ * deixar o aceite fabricar o futuro — e seria uma porta para marcar a fila
+ * inteira como violada com uma requisição. O aceite envelhece o relógio no
+ * banco, onde ele já tem acesso; a rota só olha o relógio de verdade.
+ */
+rotasInternas.post('/api/console/sla/vigiar', comCliente, comSessaoDeAgente, async (c) => {
+    const agente = c.get('agente')
+    if (agente.papel === 'AGENTE') {
+        throw new ErroDeDominio('sem_permissao', 'Só gestor ou admin varre prazos.', 403)
+    }
+
+    return c.json({ estouros: await vigiarPrazos(c.get('cliente')) })
 })
 
 /** Quem está logado. É como a SPA do Console sabe se há sessão. */
