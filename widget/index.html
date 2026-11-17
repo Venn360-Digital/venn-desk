@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Demonstração do widget — Venn Desk</title>
+        <style>
+            :root {
+                --background: #fff;
+                --foreground: #1a1a1a;
+                --primary: #2b6cb0;
+                --primary-foreground: #fff;
+                --border: #e2e8f0;
+                --radius: 0.6rem;
+                color-scheme: light;
+            }
+            body {
+                margin: 0;
+                font: 15px/1.6 ui-sans-serif, system-ui, sans-serif;
+                color: var(--foreground);
+                background: #f7f8fa;
+            }
+            .pagina { max-width: 46rem; margin: 0 auto; padding: 3rem 1.25rem; }
+            .falsa-tela { border: 1px solid var(--border); border-radius: var(--radius); background: #fff; padding: 1.25rem; }
+            h1 { font-size: 1.1rem; }
+            code { background: #eef1f5; padding: 0.1rem 0.3rem; border-radius: 0.25rem; font-size: 0.85em; }
+            button.erro { border: 1px solid #c53030; color: #c53030; background: #fff; border-radius: 0.4rem; padding: 0.4rem 0.7rem; cursor: pointer; }
+        </style>
+    </head>
+    <body>
+        <div class="pagina">
+            <div class="falsa-tela">
+                <h1>Tela de exemplo do app</h1>
+                <p>
+                    Esta página existe para ver o widget como um usuário o vê, com as
+                    variáveis de tema do app (<code>--primary</code>, <code>--border</code>,
+                    <code>--radius</code>) definidas aqui em cima — o widget as herda.
+                </p>
+                <p>
+                    O botão abaixo provoca um erro de JavaScript e uma requisição com falha,
+                    para você conferir que eles aparecem no contexto capturado do chamado.
+                </p>
+                <button class="erro" id="provocar">Provocar erro e falha de rede</button>
+            </div>
+        </div>
+        <div id="widget"></div>
+        <script type="module" src="/demo/main.tsx"></script>
+    </body>
+</html>

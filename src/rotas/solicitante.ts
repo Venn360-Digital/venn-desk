@@ -293,3 +293,132 @@ rotasDoSolicitante.get('/api/app/:app/chamados/:numero/anexos/:id', async (c) =>
         expiraEm,
     })
 })
+
+/**
+ * Quem sou eu, e o que o selo do widget mostra. É a primeira chamada que o
+ * widget faz: confirma que o token vale, devolve o nome para a saudação e os
+ * contadores do selo.
+ *
+ * **Por que polling e não SSE nesta fase.** A especificação lista SSE na
+ * Fase 2, com consulta periódica como reserva. Invertemos a ordem de
+ * propósito: o empurrão de verdade exige um Durable Object para fanout, e ele
+ * já chega na Fase 3 junto com o chat ao vivo. Fazer SSE agora significaria uma
+ * conexão aberta por usuário consultando o banco em laço — custo real — e
+ * depois jogar fora quando o DO existir. O widget consulta este endpoint a cada
+ * 20 s aberto e 60 s fechado, o que para um selo é indistinguível, e na Fase 3
+ * SSE e WebSocket passam a dividir o mesmo mecanismo.
+ */
+rotasDoSolicitante.get('/api/app/:app/eu', async (c) => {
+    const identidade = c.get('identidade')
+    const solicitante = c.get('solicitante')
+    const app = c.get('app')
+
+    const contadores = await c.get('escopo').contadores.doSolicitante(solicitante.requesterId)
+
+    return c.json({
+        usuario: {
+            nome: identidade.nome,
+            email: identidade.email,
+            veDaEmpresa: veOsChamadosDaEmpresa(identidade),
+        },
+        app: { slug: app.slug, nome: app.nome, prefixo: app.prefixo },
+        contadores,
+    })
+})
+
+/** Tipos que o widget pode enviar. Executável nenhum passa (seção 10). */
+const TIPOS_DE_ANEXO = [
+    'image/png',
+    'image/jpeg',
+    'image/webp',
+    'image/gif',
+    'application/pdf',
+    'video/mp4',
+    'video/webm',
+    'text/plain',
+] as const
+
+const TAMANHO_MAXIMO = 10 * 1024 * 1024
+
+/**
+ * Anexo do chamado. Vai direto para o R2, privado, e a chave carrega o app e o
+ * chamado — então o escopo vale também no armazenamento, não só no banco.
+ *
+ * O tipo é conferido pela LISTA, não por negação: recusar `.exe` e aceitar o
+ * resto deixaria passar tudo que ninguém pensou em listar. E o `Content-Type`
+ * que o navegador manda não é confiável, por isso o nome do arquivo também é
+ * verificado contra a extensão esperada.
+ */
+rotasDoSolicitante.post('/api/app/:app/chamados/:numero/anexos', async (c) => {
+    const chamado = await chamadoDoSolicitante(c)
+    const app = c.get('app')
+    const solicitante = c.get('solicitante')
+
+    const formulario = await c.req.formData().catch(() => null)
+
+    /**
+     * O tipo que `FormData.get` declara varia entre `@cloudflare/workers-types`
+     * e a lib do DOM, e nenhuma das duas descreve bem o que chega aqui em
+     * runtime. Então a conferência é por FORMA — tem nome, tipo, tamanho e
+     * `stream()` — e não por `instanceof File`, que não compila sobre a união
+     * declarada. Um campo de texto com o mesmo nome cai no `typeof !== object`.
+     */
+    const entrada: unknown = formulario?.get('arquivo')
+
+    const temForma =
+        typeof entrada === 'object' &&
+        entrada !== null &&
+        'size' in entrada &&
+        'type' in entrada &&
+        'name' in entrada &&
+        'stream' in entrada
+
+    if (!temForma) {
+        throw new ErroDeDominio('sem_arquivo', 'Nenhum arquivo foi enviado.', 400)
+    }
+
+    const arquivo = entrada as {
+        name: string
+        type: string
+        size: number
+        stream: () => ReadableStream
+    }
+
+    if (arquivo.size === 0 || arquivo.size > TAMANHO_MAXIMO) {
+        throw new ErroDeDominio('tamanho_invalido', 'O arquivo deve ter até 10 MB.', 413)
+    }
+
+    if (!(TIPOS_DE_ANEXO as readonly string[]).includes(arquivo.type)) {
+        throw new ErroDeDominio(
+            'tipo_recusado',
+            'Envie imagem, PDF, vídeo curto ou texto.',
+            415
+        )
+    }
+
+    /// A chave começa pelo slug do app: é o que a entrega de arquivo usa para
+    /// descobrir de quem é o anexo antes de conferir a assinatura.
+    const chave = `${app.slug}/${chamado.id}/${crypto.randomUUID()}`
+
+    await c.env.ANEXOS.put(chave, arquivo.stream(), {
+        httpMetadata: { contentType: arquivo.type },
+        customMetadata: { appId: app.id, ticketId: chamado.id },
+    })
+
+    const anexo = await c.get('escopo').anexos.registrar({
+        ticketId: chamado.id,
+        chave,
+        nome: arquivo.name.slice(0, 200),
+        tipo: arquivo.type,
+        tamanho: arquivo.size,
+    })
+
+    await c.get('escopo').eventos.registrar({
+        ticketId: chamado.id,
+        ator: `requester:${solicitante.requesterId}`,
+        evento: 'anexo',
+        depois: { nome: anexo.nome, tipo: anexo.tipo, tamanho: anexo.tamanho },
+    })
+
+    return c.json({ anexo: { id: anexo.chave, nome: anexo.nome, tamanho: anexo.tamanho } }, 201)
+})

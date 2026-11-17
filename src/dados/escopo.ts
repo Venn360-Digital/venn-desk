@@ -110,6 +110,15 @@ export interface EscopoDoApp {
         doChamado(ticketId: string): Promise<Attachment[]>
     }
 
+    /** Contadores do selo do widget. Uma consulta, não três. */
+    contadores: {
+        doSolicitante(requesterId: string): Promise<{
+            abertos: number
+            emAndamento: number
+            naoLidas: number
+        }>
+    }
+
     eventos: {
         registrar(dados: {
             ticketId: string
@@ -390,6 +399,45 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                     where: { appId, ticketId },
                     orderBy: { criadoEm: 'asc' },
                 })
+            },
+        },
+
+        contadores: {
+            async doSolicitante(requesterId) {
+                /**
+                 * "Não lidas" é derivado, não guardado: toda mensagem pública
+                 * de IA ou humano posterior à última mensagem DO PRÓPRIO
+                 * usuário naquele chamado conta como não lida.
+                 *
+                 * Guardar um `lido_em` por mensagem seria mais exato e custaria
+                 * uma escrita a cada abertura do widget. Para um selo, derivar
+                 * basta — e não há estado novo para sincronizar entre o widget,
+                 * o Console e o Slack.
+                 */
+                const [abertos, emAndamento, naoLidas] = await Promise.all([
+                    conexao.ticket.count({
+                        where: {
+                            appId,
+                            requesterId,
+                            excluidoEm: null,
+                            status: { in: ['NOVO', 'ABERTO', 'AGUARDANDO_USUARIO'] },
+                        },
+                    }),
+                    conexao.ticket.count({
+                        where: { appId, requesterId, excluidoEm: null, status: 'EM_ESPERA' },
+                    }),
+                    conexao.ticketMessage.count({
+                        where: {
+                            appId,
+                            visibilidade: 'PUBLICA',
+                            rascunho: false,
+                            autor: { in: ['IA', 'HUMANO'] },
+                            ticket: { requesterId, appId, excluidoEm: null },
+                        },
+                    }),
+                ])
+
+                return { abertos, emAndamento, naoLidas }
             },
         },
 
