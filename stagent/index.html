@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stagent360 · Status dos sistemas Venn360</title>
+<meta name="robots" content="noindex">
+<style>:root{color-scheme:light dark;--fundo:#fbfbfc;--papel:#fff;--borda:#e4e4e7;--texto:#18181b;--fraco:#71717a;--bom:#15803d;--bomFundo:#dcfce7;--ruim:#b91c1c;--ruimFundo:#fee2e2;--neutro:#52525b;--neutroFundo:#f4f4f5;--aviso:#92400e;--avisoFundo:#fef3c7}
+@media (prefers-color-scheme:dark){:root{--fundo:#09090b;--papel:#18181b;--borda:#27272a;--texto:#fafafa;--fraco:#a1a1aa;--bom:#4ade80;--bomFundo:#14321f;--ruim:#f87171;--ruimFundo:#3b1414;--neutro:#a1a1aa;--neutroFundo:#27272a;--aviso:#fbbf24;--avisoFundo:#3a2a09}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fundo);color:var(--texto);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.envelope{max-width:46rem;margin:0 auto;padding:3rem 1.25rem 4rem}
+h1{font-size:1.5rem;letter-spacing:-.01em;margin:0 0 .35rem}
+h2{font-size:1.05rem;margin:2.5rem 0 .75rem}
+.sub{color:var(--fraco);margin:0 0 2rem;font-size:.9rem}
+.cartao{background:var(--papel);border:1px solid var(--borda);border-radius:.7rem;padding:1rem 1.1rem;margin-bottom:.6rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.cartao .nome{font-weight:600;flex:1;min-width:9rem}
+.cartao .quando{color:var(--fraco);font-size:.8rem;width:100%}
+.pilula{font-size:.78rem;font-weight:600;padding:.2rem .6rem;border-radius:999px;white-space:nowrap;background:var(--neutroFundo);color:var(--neutro)}
+.pilula[data-estado=operacional]{background:var(--bomFundo);color:var(--bom)}
+.pilula[data-estado=fora_do_ar]{background:var(--ruimFundo);color:var(--ruim)}
+.faixa{background:var(--avisoFundo);color:var(--aviso);border:1px solid currentColor;border-radius:.6rem;padding:.8rem 1rem;margin-bottom:1.5rem;font-size:.88rem}
+a{color:inherit}
+.link{font-size:.82rem;color:var(--fraco);text-decoration:none;border-bottom:1px solid var(--borda)}
+.link:hover{color:var(--texto)}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{text-align:left;padding:.5rem .4rem;border-bottom:1px solid var(--borda)}
+th{color:var(--fraco);font-weight:500}
+form{background:var(--papel);border:1px solid var(--borda);border-radius:.7rem;padding:1.1rem}
+label{display:block;font-size:.82rem;color:var(--fraco);margin-bottom:.3rem}
+input{width:100%;padding:.55rem .7rem;border:1px solid var(--borda);border-radius:.45rem;background:var(--fundo);color:var(--texto);font-size:1rem}
+button{margin-top:.7rem;padding:.55rem 1rem;border:0;border-radius:.45rem;background:var(--texto);color:var(--fundo);font-size:.9rem;font-weight:600;cursor:pointer}
+button[disabled]{opacity:.55;cursor:default}
+.recado{margin-top:.7rem;font-size:.85rem;color:var(--fraco)}
+footer{margin-top:3rem;color:var(--fraco);font-size:.75rem}</style>
+</head>
+<body>
+<div class="envelope">
+<h1 data-t="titulo">Status dos sistemas Venn360</h1>
+<p class="sub" data-t="subtitulo">Esta página roda fora da infraestrutura dos aplicativos.</p>
+<div class="faixa" id="faixa" hidden></div>
+<div class="cartao" data-app="stagent">
+  <span class="nome">Stagent360</span>
+  <span class="pilula">Consultando…</span>
+  <a class="link" id="abrirApp" href="#" data-t="abrirApp" hidden>Abrir o aplicativo</a>
+  <span class="quando"></span>
+</div>
+
+<h2 data-t="historico">Histórico de indisponibilidade</h2>
+<p class="sub" id="semHistorico" data-t="semHistorico" hidden>Nenhuma indisponibilidade registrada.</p>
+<table id="tabela" hidden>
+  <thead><tr>
+    <th data-t="colunaInicio">Início</th>
+    <th data-t="colunaFim">Fim</th>
+    <th data-t="colunaDuracao">Duração</th>
+  </tr></thead>
+  <tbody id="episodios"></tbody>
+</table>
+
+<h2 data-t="afetadoTitulo">Também fui afetado</h2>
+<form id="afetado">
+  <p class="sub" data-t="afetadoTexto" style="margin:0 0 .8rem">Informe o e-mail que você usa no aplicativo. Se ele estiver cadastrado, abrimos um chamado em seu nome e avisamos quando o problema for resolvido.</p>
+  <label for="email" data-t="afetadoRotulo">Seu e-mail no aplicativo</label>
+  <input id="email" name="email" type="email" required autocomplete="email" inputmode="email">
+  <button type="submit" data-t="afetadoBotao">Avisar que fui afetado</button>
+  <p class="recado" id="recado" role="status" aria-live="polite"></p>
+</form>
+<footer>Venn360 · <a class="link" href="../">Todos os sistemas</a></footer>
+</div>
+<script>const API="https://venn-desk.andre-7ee.workers.dev"
+const T={"pt-BR":{"titulo":"Status dos sistemas Venn360","subtitulo":"Esta página roda fora da infraestrutura dos aplicativos.","operacional":"Operacional","fora":"Fora do ar","naoMedido":"Ainda não verificado","desconhecido":"Não foi possível verificar","desde":"desde","verificadoEm":"última verificação","semAlcance":"Não foi possível alcançar o Venn Desk. Enquanto este aviso aparecer, o estado abaixo pode estar desatualizado — e a falha pode ser maior que um aplicativo.","carregando":"Consultando…","verDetalhes":"Ver detalhes","voltar":"Todos os sistemas","historico":"Histórico de indisponibilidade","semHistorico":"Nenhuma indisponibilidade registrada.","colunaInicio":"Início","colunaFim":"Fim","colunaDuracao":"Duração","emAberto":"em aberto","duracao":"duração","afetadoTitulo":"Também fui afetado","afetadoTexto":"Informe o e-mail que você usa no aplicativo. Se ele estiver cadastrado, abrimos um chamado em seu nome e avisamos quando o problema for resolvido.","afetadoRotulo":"Seu e-mail no aplicativo","afetadoBotao":"Avisar que fui afetado","afetadoEnviando":"Enviando…","afetadoErro":"Não foi possível registrar agora. Tente novamente em um minuto.","abrirApp":"Abrir o aplicativo","rodape":"Página gerada em","minutos":"min","horas":"h"},"en":{"titulo":"Venn360 system status","subtitulo":"This page runs outside the applications’ infrastructure.","operacional":"Operational","fora":"Down","naoMedido":"Not checked yet","desconhecido":"Could not be checked","desde":"since","verificadoEm":"last check","semAlcance":"Venn Desk could not be reached. While this notice is showing, the state below may be out of date — and the failure may be larger than one application.","carregando":"Checking…","verDetalhes":"See details","voltar":"All systems","historico":"Downtime history","semHistorico":"No downtime recorded.","colunaInicio":"Start","colunaFim":"End","colunaDuracao":"Duration","emAberto":"ongoing","duracao":"duration","afetadoTitulo":"I was affected too","afetadoTexto":"Enter the email you use in the application. If it is registered, we open a ticket on your behalf and let you know when the problem is fixed.","afetadoRotulo":"Your email in the application","afetadoBotao":"Report that I was affected","afetadoEnviando":"Sending…","afetadoErro":"Could not register right now. Please try again in a minute.","abrirApp":"Open the application","rodape":"Page generated on","minutos":"min","horas":"h"},"es":{"titulo":"Estado de los sistemas Venn360","subtitulo":"Esta página funciona fuera de la infraestructura de las aplicaciones.","operacional":"Operativo","fora":"Fuera de servicio","naoMedido":"Aún no verificado","desconhecido":"No se pudo verificar","desde":"desde","verificadoEm":"última verificación","semAlcance":"No se pudo contactar con Venn Desk. Mientras aparezca este aviso, el estado de abajo puede estar desactualizado — y la falla puede ser mayor que una aplicación.","carregando":"Consultando…","verDetalhes":"Ver detalles","voltar":"Todos los sistemas","historico":"Historial de indisponibilidad","semHistorico":"Ninguna indisponibilidad registrada.","colunaInicio":"Inicio","colunaFim":"Fin","colunaDuracao":"Duración","emAberto":"en curso","duracao":"duración","afetadoTitulo":"También me afectó","afetadoTexto":"Indique el correo que usa en la aplicación. Si está registrado, abrimos un caso en su nombre y le avisamos cuando se resuelva el problema.","afetadoRotulo":"Su correo en la aplicación","afetadoBotao":"Avisar que me afectó","afetadoEnviando":"Enviando…","afetadoErro":"No se pudo registrar ahora. Inténtelo de nuevo en un minuto.","abrirApp":"Abrir la aplicación","rodape":"Página generada el","minutos":"min","horas":"h"}}
+const IDIOMAS=["pt-BR","en","es"]
+const MODO={"slug":"stagent"}
+
+/// pt-BR é o padrão, e "pt" de qualquer região cai nele.
+function idioma(){
+  for(const pedido of (navigator.languages||[navigator.language||'pt-BR'])){
+    const curto=String(pedido).toLowerCase()
+    if(curto.startsWith('pt'))return 'pt-BR'
+    if(curto.startsWith('es'))return 'es'
+    if(curto.startsWith('en'))return 'en'
+  }
+  return 'pt-BR'
+}
+const t=T[idioma()]
+document.documentElement.lang=idioma()
+
+for(const no of document.querySelectorAll('[data-t]')){
+  const chave=no.getAttribute('data-t')
+  if(t[chave]!==undefined)no.textContent=t[chave]
+}
+
+const dataHora=(iso)=>new Date(iso).toLocaleString(idioma(),{dateStyle:'short',timeStyle:'short'})
+function duracao(de,ate){
+  const ms=(ate?new Date(ate):new Date())-new Date(de)
+  const min=Math.max(1,Math.round(ms/60000))
+  return min<60?min+' '+t.minutos:(Math.floor(min/60)+' '+t.horas+' '+(min%60)+' '+t.minutos)
+}
+
+function pintar(slug,linha){
+  const cartao=document.querySelector('[data-app="'+slug+'"]')
+  if(!cartao)return
+  const pilula=cartao.querySelector('.pilula')
+  const quando=cartao.querySelector('.quando')
+  if(linha===null||linha===undefined){
+    pilula.dataset.estado='';pilula.textContent=t.desconhecido;quando.textContent='';return
+  }
+  if(linha.estado===null){
+    pilula.dataset.estado='';pilula.textContent=t.naoMedido;quando.textContent='';return
+  }
+  pilula.dataset.estado=linha.estado
+  pilula.textContent=linha.estado==='operacional'?t.operacional:t.fora
+  const partes=[]
+  if(linha.desdeEm)partes.push(t.desde+' '+dataHora(linha.desdeEm)+' ('+duracao(linha.desdeEm)+')')
+  if(linha.verificadoEm)partes.push(t.verificadoEm+' '+dataHora(linha.verificadoEm))
+  quando.textContent=partes.join(' · ')
+}
+
+function semAlcance(){
+  const faixa=document.getElementById('faixa')
+  faixa.textContent=t.semAlcance
+  faixa.hidden=false
+  for(const cartao of document.querySelectorAll('[data-app]'))pintar(cartao.dataset.app,null)
+}
+
+async function carregar(){
+  try{
+    /// 8 s: a página não pode ficar presa num fetch que nunca volta — o caso
+    /// de pane é justamente o fornecedor que aceita a conexão e não responde.
+    const r=await fetch(API+(MODO.slug?'/api/status/'+MODO.slug:'/api/status'),
+      {signal:AbortSignal.timeout(8000),cache:'no-store'})
+    if(!r.ok)throw new Error(r.status)
+    const d=await r.json()
+    document.getElementById('faixa').hidden=true
+    if(MODO.slug){pintar(MODO.slug,d);historico(d.episodios||[]);abrirApp(d.url)}
+    else for(const linha of d.apps||[])pintar(linha.app,linha)
+  }catch(e){semAlcance()}
+}
+
+function abrirApp(url){
+  const a=document.getElementById('abrirApp')
+  if(a&&url){a.href=url;a.hidden=false}
+}
+
+function historico(episodios){
+  const corpo=document.getElementById('episodios')
+  const vazio=document.getElementById('semHistorico')
+  if(!corpo)return
+  corpo.innerHTML=''
+  vazio.hidden=episodios.length>0
+  document.getElementById('tabela').hidden=episodios.length===0
+  for(const e of episodios){
+    const tr=document.createElement('tr')
+    const inicio=document.createElement('td');inicio.textContent=dataHora(e.iniciadoEm)
+    const fim=document.createElement('td')
+    fim.textContent=e.terminadoEm?dataHora(e.terminadoEm):t.emAberto
+    const dur=document.createElement('td');dur.textContent=duracao(e.iniciadoEm,e.terminadoEm)
+    tr.append(inicio,fim,dur);corpo.appendChild(tr)
+  }
+}
+
+const form=document.getElementById('afetado')
+if(form)form.addEventListener('submit',async(ev)=>{
+  ev.preventDefault()
+  const botao=form.querySelector('button')
+  const recado=document.getElementById('recado')
+  botao.disabled=true;botao.textContent=t.afetadoEnviando;recado.textContent=''
+  try{
+    const r=await fetch(API+'/api/status/'+MODO.slug+'/afetado',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email:form.elements.email.value}),
+      signal:AbortSignal.timeout(10000)})
+    const d=await r.json()
+    /// O recibo vem do servidor e é o MESMO para e-mail conhecido e
+    /// desconhecido. A página mostra o que recebeu, sem acrescentar juízo.
+    recado.textContent=d.mensagem||t.afetadoErro
+    if(r.ok)form.reset()
+  }catch(e){recado.textContent=t.afetadoErro}
+  finally{botao.disabled=false;botao.textContent=t.afetadoBotao}
+})
+
+carregar()
+/// Recarrega sozinha: num incidente a aba fica aberta, e um número velho na
+/// tela é pior do que nenhum.
+setInterval(carregar,60000)
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)carregar()})</script>
+</body>
+</html>
