@@ -26,6 +26,53 @@ import { comApp, comCliente } from '../auth/middleware.ts'
  */
 export const rotasDeStatus = new Hono<Ambiente>()
 
+/**
+ * CORS, só aqui e só para as origens da página de status.
+ *
+ * É necessário porque a página é servida de OUTRO fornecedor — é o ponto todo
+ * dela — e um navegador não deixa `github.io` ler `workers.dev` sem isto.
+ *
+ * **E é importante não confundir o que CORS faz.** Ele não protege o endpoint:
+ * qualquer cliente que não seja navegador ignora CORS, e a defesa do `/afetado`
+ * é outra (teto por e-mail no rate limiter, resposta idêntica para e-mail
+ * conhecido e desconhecido, nenhuma criação de usuário). O que a lista de
+ * origens faz é impedir que uma página de terceiro use o formulário em nome do
+ * visitante dela — e deixar visível, no código, de onde o formulário é servido.
+ */
+function origensPermitidas(env: Ambiente['Bindings']): string[] {
+    return (env.ORIGENS_DO_STATUS ?? '')
+        .split(',')
+        .map((o) => o.trim())
+        .filter((o) => o !== '')
+}
+
+rotasDeStatus.use('/api/status/*', async (c, next) => {
+    const origem = c.req.header('Origin')
+    const permitida = origem !== undefined && origensPermitidas(c.env).includes(origem)
+
+    /// O preflight responde sem tocar no banco: ele é feito antes do POST e
+    /// não precisa saber nada sobre o app.
+    if (c.req.method === 'OPTIONS') {
+        if (!permitida) return c.body(null, 403)
+        return c.body(null, 204, {
+            'Access-Control-Allow-Origin': origem,
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Max-Age': '86400',
+            Vary: 'Origin',
+        })
+    }
+
+    await next()
+
+    if (permitida) {
+        c.res.headers.set('Access-Control-Allow-Origin', origem)
+        /// Sem `Vary: Origin` a borda serviria a uma origem a resposta cacheada
+        /// da outra — e a resposta carrega o cabeçalho que autoriza.
+        c.res.headers.append('Vary', 'Origin')
+    }
+})
+
 rotasDeStatus.use('/api/status', comCliente)
 rotasDeStatus.use('/api/status/:app', comCliente, comApp)
 rotasDeStatus.use('/api/status/:app/afetado', comCliente, comApp)

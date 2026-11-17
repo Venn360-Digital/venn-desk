@@ -91,7 +91,7 @@ O Venn Desk fica no centro: recebe do widget, espelha no Slack e é o único cam
 | Worker: API, MCP, Bridge e os assets do Console | Hono, Zod, Prisma sobre Neon, Durable Object no chat ao vivo, Queues, Cron Triggers, R2 para anexos, Cloudflare Email Sending na saída, Vercel AI SDK no agente | Um ORM só na casa e o mesmo formato de portão de CI dos apps |
 | Console interno | Vite + React SPA com React Router, shadcn/ui, Tailwind v4, TanStack Query, React Hook Form e Zod | É interno, atrás de login, sem SEO nem SSR. E builda e roda nesta máquina (macOS 12), o que os apps não fazem mais |
 | Widget | Pacote source-only `packages/desk-widget` no `venn-saas`: React 19, shadcn/ui, Tailwind v4 com `@source` explícito no app, SSE nativo, captura de tela por import dinâmico | Quem builda é o app hospedeiro, e pacote interno não publica |
-| Página de status | Astro em build estático, hospedada no GitHub Pages | Fora da Cloudflare de propósito. O DNS continua compartilhado, então a independência é parcial |
+| Página de status | HTML estático gerado por script, sem dependências, na branch `gh-pages` do próprio repositório | Fora da Cloudflare de propósito. O DNS continua compartilhado, então a independência é parcial. Astro foi descartado para quatro páginas: ver ADR 0010 |
 
 **Plano Cloudflare: Workers Paid, contratado em 15/11/2026.** Exigido pelo e-mail a destinatário arbitrário, que é o caso do Venn Desk, e justificado pelo Workers Builds: 6.000 minutos e 6 builds simultâneos, contra 3.000 minutos e 1 build por vez no gratuito. Com os três apps e o Venn Desk publicando do mesmo lugar, uma fila de um build por vez seria o gargalo da Fase 5.
 

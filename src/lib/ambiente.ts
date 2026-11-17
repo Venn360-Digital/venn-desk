@@ -30,6 +30,8 @@ export interface Ambiente {
         URL_BASE?: string
         /** A página de status, que mora fora da Cloudflare (seção 7). */
         URL_STATUS?: string
+        /** Origens da página de status, separadas por vírgula. Só elas no CORS. */
+        ORIGENS_DO_STATUS?: string
         ABERTURA_RATE_LIMITER: RateLimit
         /** Uma sala por chamado, para o tempo real (Fase 3). */
         SALAS?: DurableObjectNamespace

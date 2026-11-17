@@ -37,7 +37,9 @@
         "typecheck:widget": "tsc --noEmit -p widget/tsconfig.json",
         "aceite:fase-3": "node scripts/aceite-fase-3.mjs",
         "aceite:saude": "node scripts/aceite-saude.mjs",
-        "lint:rotas": "node scripts/lint-rotas.mjs"
+        "lint:rotas": "node scripts/lint-rotas.mjs",
+        "status:montar": "node status/montar.mjs",
+        "status:publicar": "node scripts/publicar-status.mjs"
     },
     "dependencies": {
         "@neondatabase/serverless": "1.2.0",

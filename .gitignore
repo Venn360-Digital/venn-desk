@@ -16,3 +16,6 @@ src/gerado/
 
 # Chaves de desenvolvimento geradas pela semente. Nunca versionadas.
 .dev/
+
+# Build da página de status: o resultado vive na branch gh-pages.
+status/dist/

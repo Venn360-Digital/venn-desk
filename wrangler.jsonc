@@ -55,7 +55,14 @@
         "EMAIL_REMETENTE": "suporte@mail.venn360.com",
         "URL_BASE": "https://venn-desk.andre-7ee.workers.dev",
         // A página de status mora FORA da Cloudflare, de propósito (seção 7).
-        "URL_STATUS": "https://status.venn360.com"
+        "URL_STATUS": "https://venn360-digital.github.io/venn-desk/",
+        // As origens que podem ler a API de status pelo navegador. A do Pages
+        // vem primeiro porque é a que existe hoje; o domínio próprio entra
+        // quando o CNAME for apontado (DNS-only, sem passar pela Cloudflare).
+        // `localhost:4321` só no staging: é o preview local da página, e o
+        // CORS tem de deixá-lo ler para a página ser conferida antes de
+        // publicada. Fora da lista de produção, de propósito.
+        "ORIGENS_DO_STATUS": "https://venn360-digital.github.io,https://status.venn360.com,http://localhost:4321"
     },
 
     // DATABASE_URL entra por `wrangler secret put`, nunca aqui.
@@ -68,7 +75,12 @@
                 "AMBIENTE": "producao",
                 "EMAIL_REMETENTE": "suporte@mail.venn360.com",
                 "URL_BASE": "https://desk.venn360.com",
-                "URL_STATUS": "https://status.venn360.com"
+                // Até o CNAME de status.venn360.com existir (DNS-only, sem
+                // passar pela Cloudflare — proxiar devolveria a página para
+                // dentro do fornecedor do qual ela foge), o alerta urgente
+                // aponta para a URL do Pages, que existe.
+                "URL_STATUS": "https://venn360-digital.github.io/venn-desk/",
+                "ORIGENS_DO_STATUS": "https://venn360-digital.github.io,https://status.venn360.com"
             },
             "triggers": { "crons": ["* * * * *"] },
             "assets": {

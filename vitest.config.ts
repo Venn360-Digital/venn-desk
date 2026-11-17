@@ -14,6 +14,9 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
     test: {
         environment: 'node',
-        include: ['src/**/*.test.ts'],
+        /// `status/` entra junto: o gerador da página é puro — escreve
+        /// arquivo e devolve string — e a prova de que ele não assa veredito
+        /// nenhum no HTML vale tanto quanto a da máquina de estados.
+        include: ['src/**/*.test.ts', 'status/**/*.test.ts'],
     },
 })
