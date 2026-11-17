@@ -72,5 +72,11 @@
     "prisma": {
         "//seed": "Node 24 roda .ts nativamente, então a semente não precisa de tsx.",
         "seed": "node prisma/seed.ts"
+    },
+    "pnpm": {
+        "//overrides": "deepmerge-ts: GHSA de severidade alta (esgotamento de pilha ao mesclar grafos recursivos), corrigido em 8.0.0. Chega como dependência indireta de @prisma/config, que é a CLI do Prisma — NÃO entra no bundle do Worker, medido com `wrangler deploy --dry-run` em 17/11/2026: a palavra deepmerge não aparece em arquivo nenhum do bundle, e o tamanho não muda com ou sem o override. O risco real aqui é nulo (a config mesclada é a nossa, não entrada de terceiro). O override existe para o alerta fechar e para o repositório não normalizar conviver com alerta alto. Remover quando o Prisma subir a dependência sozinho.",
+        "overrides": {
+            "deepmerge-ts": "^8.0.2"
+        }
     }
 }
