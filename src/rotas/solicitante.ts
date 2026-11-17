@@ -8,6 +8,7 @@ import { prioridadeSugerida, type Impacto } from '../dominio/prioridade.ts'
 import { assinar, VALIDADE_DO_LINK_S } from '../lib/assinatura.ts'
 import { ErroDeDominio } from '../lib/erros.ts'
 import type { Ambiente } from '../lib/ambiente.ts'
+import { avisarPorEmail } from '../correio/avisar.ts'
 import { comApp, comCliente, comTokenDoApp } from '../auth/middleware.ts'
 import { veOsChamadosDaEmpresa } from '../auth/token-app.ts'
 
@@ -125,6 +126,14 @@ rotasDoSolicitante.post('/api/app/:app/chamados', async (c) => {
                   },
               }),
         ator: `requester:${solicitante.requesterId}`,
+    })
+
+    avisarPorEmail(c, 'abertura', {
+        id: chamado.id,
+        numero: chamado.numero,
+        assunto: chamado.assunto,
+        requesterId: chamado.requesterId,
+        contexto: chamado.contexto,
     })
 
     return c.json({ chamado: paraOWidget(chamado, c.get('app').prefixo) }, 201)

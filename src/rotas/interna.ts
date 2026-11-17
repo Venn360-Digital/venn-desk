@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { abrirChamado } from '../dados/abertura.ts'
 import { agentePorEmail } from '../dados/agentes.ts'
 import { alterarApp, appsAtivos, cadastrarApp } from '../dados/apps.ts'
+import { avisarPorEmail } from '../correio/avisar.ts'
 import { formatarNumero } from '../dominio/numero.ts'
 import type { Status } from '../dominio/estados.ts'
 import { ErroDeDominio, ErroDeToken } from '../lib/erros.ts'
@@ -170,6 +171,17 @@ rotasInternas.post('/api/console/:app/chamados/:numero/mensagens', async (c) => 
               })
             : chamado
 
+    /// Só resposta pública avisa. Nota interna, não (seção 7).
+    if (corpo.data.visibilidade === 'PUBLICA') {
+        avisarPorEmail(c, 'atualizacao', {
+            id: chamado.id,
+            numero: chamado.numero,
+            assunto: chamado.assunto,
+            requesterId: chamado.requesterId,
+            contexto: chamado.contexto,
+        })
+    }
+
     return c.json({ mensagem, status: chamadoFinal.status }, 201)
 })
 
@@ -195,6 +207,21 @@ rotasInternas.post('/api/console/:app/chamados/:numero/eventos', async (c) => {
     const atualizado = await c
         .get('escopo')
         .chamados.aplicarEvento(chamado.id, corpo.data.evento, { ator: `agent:${agente.id}` })
+
+    /**
+     * Encerramento avisa; escalar e assumir não. "Foi para a engenharia" é
+     * movimento interno, e a etapa já aparece no widget — mandar e-mail a cada
+     * passo treina a pessoa a ignorar a caixa.
+     */
+    if (atualizado.status === 'RESOLVIDO' || atualizado.status === 'FECHADO') {
+        avisarPorEmail(c, 'encerramento', {
+            id: atualizado.id,
+            numero: atualizado.numero,
+            assunto: atualizado.assunto,
+            requesterId: atualizado.requesterId,
+            contexto: atualizado.contexto,
+        })
+    }
 
     return c.json({ status: atualizado.status })
 })

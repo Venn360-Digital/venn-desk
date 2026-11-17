@@ -65,6 +65,8 @@ export interface EscopoDoApp {
             papelNoTenant: string
             plano?: string
         }): Promise<{ tenantId: string; requesterId: string }>
+        /** Para quem o aviso por e-mail vai. Nunca vem do corpo da requisição. */
+        porId(id: string): Promise<{ nome: string; email: string } | null>
     }
 
     chamados: {
@@ -193,6 +195,14 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 })
 
                 return { tenantId: tenant.id, requesterId: requester.id }
+            },
+
+            async porId(id) {
+                const achado = await conexao.requester.findFirst({
+                    where: { id, appId },
+                    select: { nome: true, email: true },
+                })
+                return achado
             },
         },
 

@@ -36,7 +36,12 @@
     ],
 
     "vars": {
-        "AMBIENTE": "staging"
+        "AMBIENTE": "staging",
+        // Subdomínio de envio dedicado (mail.venn360.com), já onboardado no
+        // Email Sending com DKIM, SPF e DMARC p=reject próprios. Nunca o apex:
+        // o MX de venn360.com é smtp.google.com e atende a caixa de entrada.
+        "EMAIL_REMETENTE": "suporte@mail.venn360.com",
+        "URL_BASE": "https://venn-desk.andre-7ee.workers.dev"
     },
 
     // DATABASE_URL entra por `wrangler secret put`, nunca aqui.
@@ -45,7 +50,11 @@
     "env": {
         "producao": {
             "name": "venn-desk-producao",
-            "vars": { "AMBIENTE": "producao" },
+            "vars": {
+                "AMBIENTE": "producao",
+                "EMAIL_REMETENTE": "suporte@mail.venn360.com",
+                "URL_BASE": "https://desk.venn360.com"
+            },
             "assets": {
                 "directory": "./console/dist",
                 "binding": "ASSETS",

@@ -23,7 +23,11 @@ export interface Ambiente {
         ANEXOS: R2Bucket
         /** Os assets do Console (SPA do Vite). */
         ASSETS: Fetcher
-        EMAIL: SendEmail
+        EMAIL?: SendEmail
+        /** Remetente dos avisos. Subdomínio de envio, com DKIM. */
+        EMAIL_REMETENTE?: string
+        /** Origem para montar o link do chamado no e-mail. */
+        URL_BASE?: string
         ABERTURA_RATE_LIMITER: RateLimit
     }
     Variables: {
