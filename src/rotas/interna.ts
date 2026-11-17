@@ -9,6 +9,13 @@ import { avisarPorEmail } from '../correio/avisar.ts'
 import { publicarNaSala } from '../tempo-real/publicar.ts'
 import { formatarNumero } from '../dominio/numero.ts'
 import type { Status } from '../dominio/estados.ts'
+import {
+    METAS_PADRAO,
+    resumoDoChamado,
+    type Meta,
+    type Prioridade,
+    type Relogio,
+} from '../dominio/sla.ts'
 import { ErroDeDominio, ErroDeToken } from '../lib/erros.ts'
 import type { Ambiente } from '../lib/ambiente.ts'
 import type { Prisma } from '#prisma'
@@ -94,6 +101,8 @@ rotasInternas.use('/api/console/app/:app/*', comCliente, comSessaoDeAgente, comA
 const esquemaDaFila = z.object({
     status: z.string().optional(),
     limite: z.coerce.number().int().min(1).max(200).optional(),
+    /// A visão "SLA em risco" da seção 5, sem precisar de visões salvas.
+    sla: z.enum(['em_risco', 'estourado']).optional(),
 })
 
 /** A fila do app. Sem `status`, traz o que está em aberto. */
@@ -112,18 +121,106 @@ rotasInternas.get('/api/console/app/:app/fila', async (c) => {
 
     const prefixo = c.get('app').prefixo
 
+    /**
+     * Os relógios de TODOS os chamados numa consulta só, e o resumo calculado
+     * aqui. A fila recarrega a cada 20 segundos: uma consulta por linha viraria
+     * dezenas por recarga, e a tela mais usada seria a mais cara.
+     */
+    const agora = new Date()
+    const relogios = await c.get('escopo').sla.deChamados(chamados.map((ch) => ch.id))
+    const porChamado = new Map<string, Relogio[]>()
+    for (const linha of relogios) {
+        const lista = porChamado.get(linha.ticketId) ?? []
+        lista.push({
+            meta: linha.meta as Meta,
+            metaMin: linha.metaMin,
+            venceEm: linha.venceEm,
+            pausadoEm: linha.pausadoEm,
+            violadoEm: linha.violadoEm,
+            cumpridoEm: linha.cumpridoEm,
+        })
+        porChamado.set(linha.ticketId, lista)
+    }
+
+    const linhas = chamados.map((chamado) => ({
+        numero: formatarNumero(prefixo, chamado.numero),
+        assunto: chamado.assunto,
+        status: chamado.status,
+        tipo: chamado.tipo,
+        prioridade: chamado.prioridade,
+        nivel: chamado.nivel,
+        assigneeId: chamado.assigneeId,
+        atualizadoEm: chamado.atualizadoEm,
+        sla: resumoDoChamado(porChamado.get(chamado.id) ?? [], agora),
+    }))
+
+    /// `estourado` junta vencido e violado: para quem olha a fila é a mesma
+    /// coisa — o prazo passou. A diferença é só se a varredura já marcou.
+    const filtrados =
+        filtro.sla === undefined
+            ? linhas
+            : linhas.filter((linha) =>
+                  filtro.sla === 'em_risco'
+                      ? linha.sla?.estado === 'em_risco'
+                      : linha.sla?.estado === 'vencido' || linha.sla?.estado === 'violado'
+              )
+
+    return c.json({ chamados: filtrados })
+})
+
+const esquemaDaPolitica = z.object({
+    primeiraRespostaMin: z.coerce.number().int().min(1).max(60 * 24 * 30),
+    proximaRespostaMin: z.coerce.number().int().min(1).max(60 * 24 * 30),
+    resolucaoMin: z.coerce.number().int().min(1).max(60 * 24 * 90),
+})
+
+/** As metas do app, com o padrão aparecendo onde não há política própria. */
+rotasInternas.get('/api/console/app/:app/sla', async (c) => {
+    const cadastradas = await c.get('escopo').sla.politicas()
+
     return c.json({
-        chamados: chamados.map((chamado) => ({
-            numero: formatarNumero(prefixo, chamado.numero),
-            assunto: chamado.assunto,
-            status: chamado.status,
-            tipo: chamado.tipo,
-            prioridade: chamado.prioridade,
-            nivel: chamado.nivel,
-            assigneeId: chamado.assigneeId,
-            atualizadoEm: chamado.atualizadoEm,
-        })),
+        prioridades: (['URGENTE', 'ALTA', 'NORMAL', 'BAIXA'] as Prioridade[]).map(
+            (prioridade) => ({
+                prioridade,
+                /// `propria: false` é informação, não detalhe: o atendente
+                /// precisa saber se está vendo a política do app ou o padrão.
+                propria: cadastradas[prioridade] !== undefined,
+                ...(cadastradas[prioridade] ?? METAS_PADRAO[prioridade]),
+            })
+        ),
     })
+})
+
+rotasInternas.put('/api/console/app/:app/sla/:prioridade', async (c) => {
+    const agente = c.get('agente')
+    if (agente.papel === 'AGENTE') {
+        throw new ErroDeDominio('sem_permissao', 'Agente não altera metas de SLA.', 403)
+    }
+
+    const prioridade = c.req.param('prioridade').toUpperCase()
+    if (!['URGENTE', 'ALTA', 'NORMAL', 'BAIXA'].includes(prioridade)) {
+        throw new ErroDeDominio('prioridade_invalida', 'Prioridade desconhecida.', 400)
+    }
+
+    const corpo = esquemaDaPolitica.safeParse(await c.req.json().catch(() => null))
+    if (!corpo.success) {
+        throw new ErroDeDominio('metas_invalidas', 'Metas em minutos, inteiras e positivas.', 400)
+    }
+
+    if (corpo.data.primeiraRespostaMin >= corpo.data.resolucaoMin) {
+        /// Recusado e não "corrigido": uma meta de primeira resposta maior que
+        /// a de resolução é erro de digitação, e adivinhar qual dos dois o
+        /// gestor quis trocar seria pior que devolver o erro.
+        throw new ErroDeDominio(
+            'metas_incoerentes',
+            'A primeira resposta tem de ser menor que a resolução.',
+            400
+        )
+    }
+
+    await c.get('escopo').sla.definirPolitica(prioridade as Prioridade, corpo.data)
+
+    return c.json({ prioridade, ...corpo.data, propria: true })
 })
 
 /** Carrega o chamado pelo número, dentro do escopo do app. */

@@ -159,3 +159,51 @@ export function aoMudarStatus(
 export function pedeCaoDeGuarda(relogio: Relogio, agora: Date): boolean {
     return relogio.meta === 'primeira_resposta' && estadoDoRelogio(relogio, agora) === 'vencido'
 }
+
+/**
+ * O que a fila mostra numa linha: o relógio mais urgente do chamado.
+ *
+ * Um chamado tem dois ou três relógios, e a fila tem uma coluna. Mostrar todos
+ * não cabe; mostrar o primeiro da lista esconderia justamente o que estourou.
+ * Então ganha o mais urgente — e "urgente" aqui é uma ordem explícita de
+ * estados, não a data mais próxima: um relógio violado há uma semana importa
+ * mais que um em dia que vence em cinco minutos.
+ */
+const URGENCIA: Record<EstadoDoRelogio, number> = {
+    violado: 0,
+    vencido: 1,
+    em_risco: 2,
+    em_dia: 3,
+    pausado: 4,
+    cumprido: 5,
+}
+
+export interface ResumoDeSla {
+    estado: EstadoDoRelogio
+    meta: Meta
+    venceEm: Date
+}
+
+export function resumoDoChamado(relogios: Relogio[], agora: Date): ResumoDeSla | null {
+    let melhor: ResumoDeSla | null = null
+    let melhorUrgencia = Number.POSITIVE_INFINITY
+
+    for (const relogio of relogios) {
+        const estado = estadoDoRelogio(relogio, agora)
+        const urgencia = URGENCIA[estado]
+
+        /// Empate de estado: vence o que vence antes.
+        const ganha =
+            urgencia < melhorUrgencia ||
+            (urgencia === melhorUrgencia &&
+                melhor !== null &&
+                relogio.venceEm.getTime() < melhor.venceEm.getTime())
+
+        if (ganha) {
+            melhorUrgencia = urgencia
+            melhor = { estado, meta: relogio.meta, venceEm: relogio.venceEm }
+        }
+    }
+
+    return melhor
+}

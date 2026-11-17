@@ -8,6 +8,7 @@ import { Fila } from './paginas/Fila.tsx'
 import { Chamado } from './paginas/Chamado.tsx'
 import { Apps } from './paginas/Apps.tsx'
 import { Portal } from './paginas/Portal.tsx'
+import { Sla } from './paginas/Sla.tsx'
 import { Vazio } from './componentes/ui.tsx'
 
 /**
@@ -83,6 +84,7 @@ function Dentro({ agente, aoSair }: { agente: Agente; aoSair: () => void }) {
                         {apps.map((app) => (
                             <AbaDoApp key={app.slug} slug={app.slug} nome={app.nome} />
                         ))}
+                        <AbaDeMetas apps={apps} />
                         <Link to="/apps" className="text-tinta-fraca hover:text-tinta">
                             Apps
                         </Link>
@@ -108,6 +110,7 @@ function Dentro({ agente, aoSair }: { agente: Agente; aoSair: () => void }) {
                     />
                     <Route path="/app/:app" element={<Fila />} />
                     <Route path="/app/:app/chamados/:numero" element={<Chamado />} />
+                    <Route path="/app/:app/sla" element={<Sla papel={agente.papel} />} />
                     <Route path="/apps" element={<Apps papel={agente.papel} />} />
                     <Route path="*" element={<Vazio>Página não encontrada.</Vazio>} />
                 </Routes>
@@ -118,13 +121,40 @@ function Dentro({ agente, aoSair }: { agente: Agente; aoSair: () => void }) {
 
 function AbaDoApp({ slug, nome }: { slug: string; nome: string }) {
     const local = useLocation()
-    const ativo = local.pathname.startsWith(`/app/${slug}`)
+    /// A aba do app NÃO acende em `/app/<slug>/sla`: lá quem acende é "Metas".
+    const ativo =
+        local.pathname.startsWith(`/app/${slug}`) && !local.pathname.endsWith('/sla')
     return (
         <Link
             to={`/app/${slug}`}
             className={ativo ? 'font-medium text-destaque' : 'text-tinta-fraca hover:text-tinta'}
         >
             {nome}
+        </Link>
+    )
+}
+
+/**
+ * "Metas" leva ao SLA do app que está aberto. Fora de um app, ao primeiro —
+ * não há meta sem app a que ela pertença.
+ */
+function AbaDeMetas({ apps }: { apps: AppCadastrado[] }) {
+    const local = useLocation()
+    const doCaminho = /^\/app\/([^/]+)/.exec(local.pathname)?.[1]
+    const slug = doCaminho ?? apps[0]?.slug
+
+    if (slug === undefined) return null
+
+    return (
+        <Link
+            to={`/app/${slug}/sla`}
+            className={
+                local.pathname.endsWith('/sla')
+                    ? 'font-medium text-destaque'
+                    : 'text-tinta-fraca hover:text-tinta'
+            }
+        >
+            Metas
         </Link>
     )
 }

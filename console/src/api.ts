@@ -56,6 +56,12 @@ export interface AppCadastrado {
     chaveCadastrada: boolean
 }
 
+export interface ResumoDeSla {
+    estado: 'cumprido' | 'violado' | 'pausado' | 'vencido' | 'em_risco' | 'em_dia'
+    meta: 'primeira_resposta' | 'proxima_resposta' | 'resolucao'
+    venceEm: string
+}
+
 export interface ChamadoNaFila {
     numero: string
     assunto: string
@@ -65,6 +71,17 @@ export interface ChamadoNaFila {
     nivel: string
     assigneeId: string | null
     atualizadoEm: string
+    /// `null` em chamado aberto antes dos relógios existirem.
+    sla: ResumoDeSla | null
+}
+
+export interface MetaDeSla {
+    prioridade: 'URGENTE' | 'ALTA' | 'NORMAL' | 'BAIXA'
+    /** Falso quando o app ainda usa o padrão embutido. */
+    propria: boolean
+    primeiraRespostaMin: number
+    proximaRespostaMin: number
+    resolucaoMin: number
 }
 
 export interface Mensagem {

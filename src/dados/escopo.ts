@@ -183,6 +183,15 @@ export interface EscopoDoApp {
         /** Abre os relógios de um chamado recém-criado. */
         abrir(ticketId: string, prioridade: Prioridade, agora: Date): Promise<SlaTimer[]>
         doChamado(ticketId: string): Promise<SlaTimer[]>
+        /**
+         * Os relógios de VÁRIOS chamados, numa consulta só.
+         *
+         * A fila tem dezenas de linhas e é recarregada a cada 20 segundos.
+         * Buscar relógio por chamado daria uma consulta por linha a cada
+         * recarga — o jeito clássico de uma tela útil virar a consulta mais
+         * cara do sistema.
+         */
+        deChamados(ticketIds: string[]): Promise<SlaTimer[]>
         /** Pausa ou retoma os relógios abertos conforme o status novo. */
         aplicarStatus(ticketId: string, status: Status, agora: Date): Promise<void>
         /** Marca a meta como cumprida. Só a primeira vez tem efeito. */
@@ -190,6 +199,10 @@ export interface EscopoDoApp {
         /** Relógios abertos cujo prazo já passou. A varredura do cão de guarda. */
         vencidos(agora: Date, limite?: number): Promise<SlaTimer[]>
         violar(id: string, agora: Date): Promise<boolean>
+        /** As políticas cadastradas do app, por prioridade. */
+        politicas(): Promise<Record<string, MetasEmMinutos>>
+        /** Grava a política de uma prioridade. Vale do próximo chamado em diante. */
+        definirPolitica(prioridade: Prioridade, metas: MetasEmMinutos): Promise<void>
     }
 
     eventos: {
@@ -715,6 +728,14 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 })
             },
 
+            async deChamados(ticketIds) {
+                if (ticketIds.length === 0) return []
+                return conexao.slaTimer.findMany({
+                    where: { appId, ticketId: { in: ticketIds } },
+                    orderBy: { venceEm: 'asc' },
+                })
+            },
+
             async aplicarStatus(ticketId, status, agora) {
                 const relogios = await conexao.slaTimer.findMany({
                     where: { appId, ticketId, cumpridoEm: null, violadoEm: null },
@@ -764,6 +785,35 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                     data: { violadoEm: agora },
                 })
                 return count === 1
+            },
+
+            async politicas() {
+                const linhas = await conexao.slaPolicy.findMany({ where: { appId } })
+                const porPrioridade: Record<string, MetasEmMinutos> = {}
+
+                for (const linha of linhas) {
+                    porPrioridade[linha.prioridade] = {
+                        primeiraRespostaMin: linha.primeiraRespostaMin,
+                        proximaRespostaMin: linha.proximaRespostaMin,
+                        resolucaoMin: linha.resolucaoMin,
+                    }
+                }
+
+                return porPrioridade
+            },
+
+            async definirPolitica(prioridade, metas) {
+                /**
+                 * **Não mexe em relógio já aberto.** Encurtar a meta e aplicar
+                 * ao que está correndo violaria chamados retroativamente, por
+                 * uma decisão tomada depois de eles existirem. A política nova
+                 * vale do próximo chamado em diante.
+                 */
+                await conexao.slaPolicy.upsert({
+                    where: { appId_prioridade: { appId, prioridade } },
+                    create: { appId, prioridade, ...metas },
+                    update: metas,
+                })
             },
         },
 

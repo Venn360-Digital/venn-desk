@@ -8,6 +8,7 @@ import {
     metaEmMinutos,
     pedeCaoDeGuarda,
     restanteMs,
+    resumoDoChamado,
     vencimentoDe,
     type Relogio,
 } from './sla.ts'
@@ -209,5 +210,57 @@ describe('o cão de guarda', () => {
 
     it('a fração de risco é a declarada', () => {
         expect(FRACAO_DE_RISCO).toBe(0.2)
+    })
+})
+
+describe('o resumo que a fila mostra', () => {
+    const r = (ajustes: Partial<Relogio>): Relogio => relogio(ajustes)
+
+    it('sem relógio, sem resumo', () => {
+        expect(resumoDoChamado([], T0)).toBe(null)
+    })
+
+    it('o violado vence o que vence antes', () => {
+        /**
+         * "Urgente" é uma ordem de estados, não a data mais próxima: um relógio
+         * violado há uma semana importa mais que um em dia que vence em cinco
+         * minutos. Sem isso, a fila esconderia justamente o que estourou.
+         */
+        const resumo = resumoDoChamado(
+            [
+                r({ meta: 'resolucao', violadoEm: minutos(-7 * 24 * 60), venceEm: minutos(-9999) }),
+                r({ meta: 'primeira_resposta', venceEm: minutos(5) }),
+            ],
+            T0
+        )
+
+        expect(resumo?.estado).toBe('violado')
+        expect(resumo?.meta).toBe('resolucao')
+    })
+
+    it('em risco vence em dia, e em dia vence pausado', () => {
+        const emRisco = r({ meta: 'primeira_resposta', metaMin: 60, venceEm: minutos(5) })
+        const emDia = r({ meta: 'resolucao', metaMin: 240, venceEm: minutos(200) })
+        const pausado = r({ meta: 'proxima_resposta', pausadoEm: T0 })
+
+        expect(resumoDoChamado([emDia, emRisco], T0)?.estado).toBe('em_risco')
+        expect(resumoDoChamado([pausado, emDia], T0)?.estado).toBe('em_dia')
+    })
+
+    it('empate de estado: vence o que vence antes', () => {
+        const cedo = r({ meta: 'primeira_resposta', venceEm: minutos(10) })
+        const tarde = r({ meta: 'resolucao', venceEm: minutos(300) })
+
+        expect(resumoDoChamado([tarde, cedo], T0)?.meta).toBe('primeira_resposta')
+        expect(resumoDoChamado([cedo, tarde], T0)?.meta).toBe('primeira_resposta')
+    })
+
+    it('tudo cumprido some do radar, mas ainda responde', () => {
+        const resumo = resumoDoChamado(
+            [r({ cumpridoEm: minutos(1) }), r({ meta: 'resolucao', cumpridoEm: minutos(2) })],
+            T0
+        )
+
+        expect(resumo?.estado).toBe('cumprido')
     })
 })
