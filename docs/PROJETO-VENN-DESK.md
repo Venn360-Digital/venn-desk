@@ -258,6 +258,12 @@ O app nunca envia o cookie de sessão ao Venn Desk, e o Venn Desk nunca lê o ba
 
 ### Contingência: app fora do ar
 
+**Ambientes (18/11/2026).** Produção no ar em `https://desk.venn360.com`
+(Worker `venn-desk-producao`, banco próprio na Neon, fila própria, domínio
+criado pelo `custom_domain` do wrangler). Staging em
+`https://venn-desk.andre-7ee.workers.dev`. Os dois com `DATABASE_URL` no papel
+`venn_desk_app`, de menor privilégio.
+
 **Estado em 17/11/2026.** Os itens 1, 2 e 4 estão no ar e provados contra o
 Worker publicado (`pnpm aceite:saude`, `pnpm aceite:portal`). O item 3 está no
 ar. O que falta do item 1 é a postagem no canal de engenharia, que depende da

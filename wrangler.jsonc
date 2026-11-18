@@ -114,6 +114,14 @@
     "env": {
         "producao": {
             "name": "venn-desk-producao",
+            // O domínio próprio. `custom_domain: true` faz o wrangler criar o
+            // registro na zona venn360.com no deploy — é o caminho oficial, e
+            // evita um CNAME escrito à mão que ninguém lembra de onde veio.
+            //
+            // Isto É proxiado pela Cloudflare, e tudo bem: o Console e a API
+            // SÃO a Cloudflare. Quem não pode passar por ela é a página de
+            // status (ver ADR 0010).
+            "routes": [{ "pattern": "desk.venn360.com", "custom_domain": true }],
             "vars": {
                 "AMBIENTE": "producao",
                 "EMAIL_REMETENTE": "suporte@mail.venn360.com",
