@@ -839,7 +839,7 @@ rotasInternas.post('/api/console/app/:app/chamados/:numero/atender', async (c) =
     try {
         resultado = await atender({
             modelo: createAnthropic({ apiKey: chave })(
-                c.env.MODELO_DO_AGENTE ?? 'claude-opus-5'
+                c.env.MODELO_DO_AGENTE ?? 'claude-sonnet-5'
             ),
             esforco: (c.env.ESFORCO_DO_AGENTE ?? 'high') as 'high',
             contexto: {
@@ -852,8 +852,8 @@ rotasInternas.post('/api/console/app/:app/chamados/:numero/atender', async (c) =
             },
             numero: chamado.numero,
             tarifa: {
-                entradaPorMilhao: Number(c.env.TARIFA_ENTRADA_POR_MILHAO ?? '15'),
-                saidaPorMilhao: Number(c.env.TARIFA_SAIDA_POR_MILHAO ?? '75'),
+                entradaPorMilhao: Number(c.env.TARIFA_ENTRADA_POR_MILHAO ?? '3'),
+                saidaPorMilhao: Number(c.env.TARIFA_SAIDA_POR_MILHAO ?? '15'),
             },
         })
     } catch (erro) {

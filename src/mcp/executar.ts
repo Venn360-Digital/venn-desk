@@ -4,6 +4,7 @@ import type { EscopoDoApp } from '../dados/escopo.ts'
 import { ErroDeDominio } from '../lib/erros.ts'
 import { formatarNumero } from '../dominio/numero.ts'
 import { grupoNoWidget, type Status } from '../dominio/estados.ts'
+import { parecidos, termosDe } from '../dominio/busca.ts'
 import { ferramentaPorNome, type Escopo } from './ferramentas.ts'
 
 /**
@@ -219,7 +220,7 @@ async function buscarChamados(
     ctx: Contexto,
     dados: Record<string, unknown>
 ): Promise<Resultado> {
-    const texto = (dados['texto'] as string).toLowerCase()
+    const texto = dados['texto'] as string
     const incluirFechados = dados['incluirFechados'] === true
     const limite = (dados['limite'] as number | undefined) ?? 10
 
@@ -228,24 +229,39 @@ async function buscarChamados(
         : ['NOVO', 'ABERTO', 'AGUARDANDO_USUARIO', 'EM_ESPERA']
 
     /**
-     * A busca é por assunto e feita AQUI, sobre o que o escopo devolveu.
+     * A comparação acontece AQUI, sobre o que o escopo já devolveu.
      *
-     * Uma busca textual no banco entraria com o termo do modelo numa cláusula
-     * — e o termo vem de um texto que pode ter sido escrito para isso. Filtrar
+     * Uma busca textual no banco entraria com o termo do modelo numa cláusula —
+     * e o termo vem de um texto que pode ter sido escrito para isso. Comparar
      * depois é mais lento e não tem como vazar para fora do app.
+     *
+     * **Casa por palavra, não por substring.** A primeira versão exigia o
+     * trecho literal no assunto, e isso falha no caso mais comum do suporte:
+     * duas pessoas descrevem o mesmo problema com palavras diferentes. O
+     * resultado medido foi o agente buscando CINCO vezes no mesmo chamado sem
+     * achar nada — o maior desperdício de tokens do atendimento. Ver
+     * `src/dominio/busca.ts`.
      */
     const candidatos = await ctx.escopoDoApp.chamados.listar({ status, limite: 200 })
-    const achados = candidatos
-        .filter((c) => c.assunto.toLowerCase().includes(texto))
-        .slice(0, limite)
+    const achados = parecidos(candidatos, texto, limite)
 
-    if (achados.length === 0) return { texto: `Nenhum chamado com "${texto}" no assunto.` }
+    if (achados.length === 0) {
+        /// Diz o que foi procurado DE FATO: se os termos viraram nada, o modelo
+        /// precisa saber que o problema foi a busca, não a ausência de casos.
+        const termos = termosDe(texto)
+        return {
+            texto:
+                termos.length === 0
+                    ? `"${texto}" não tem nenhuma palavra buscável. Use palavras do problema.`
+                    : `Nenhum chamado parecido com [${termos.join(', ')}]. Não há caso anterior: siga sem ele.`,
+        }
+    }
 
     return {
         texto: achados
             .map(
-                (c) =>
-                    `${formatarNumero(ctx.app.prefixo, c.numero)} · ${c.status} · ${c.prioridade} · ${comoDado('assunto', c.assunto)}`
+                ({ item, nota }) =>
+                    `${formatarNumero(ctx.app.prefixo, item.numero)} · ${item.status} · ${item.prioridade} · ${Math.round(nota * 100)}% de semelhança · ${comoDado('assunto', item.assunto)}`
             )
             .join('\n'),
     }

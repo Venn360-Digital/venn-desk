@@ -65,9 +65,13 @@
         "ORIGENS_DO_STATUS": "https://venn360-digital.github.io,https://status.venn360.com,http://localhost:4321",
         // O modelo do agente, trocável sem publicar código.
         //
-        // Opus 5 por decisão do produto (18/11/2026): o chamado deve ser
-        // respondido com excelência, e token não é a restrição.
-        "MODELO_DO_AGENTE": "claude-opus-5",
+        // Sonnet 5 (18/11/2026). O Opus foi medido em chamado real e custou
+        // ~8x — US$ 1,18 contra US$ 0,14 — sem diferença de desfecho que
+        // justificasse: nos dois casos o agente diagnosticou, respondeu e
+        // escalou certo. O que o Opus deu de melhor foi redação; o que decidiu
+        // o atendimento foi a ferramenta devolver bom contexto, e isso o
+        // Sonnet tem igual.
+        "MODELO_DO_AGENTE": "claude-sonnet-5",
         // Quanto o agente pensa antes de agir: low, medium, high, xhigh, max.
         //
         // `high` por padrão. `xhigh` e `max` existem e melhoram julgamento
@@ -76,9 +80,9 @@
         "ESFORCO_DO_AGENTE": "medium",
         // Tarifa SÓ para estimar custo na trilha. Não decide nada: quem corta
         // o atendimento é o teto de passos e de tokens.
-        // Tarifa do Opus, só para a estimativa da trilha.
-        "TARIFA_ENTRADA_POR_MILHAO": "15",
-        "TARIFA_SAIDA_POR_MILHAO": "75"
+        // Tarifa do Sonnet, só para a estimativa da trilha.
+        "TARIFA_ENTRADA_POR_MILHAO": "3",
+        "TARIFA_SAIDA_POR_MILHAO": "15"
     },
 
     // DATABASE_URL entra por `wrangler secret put`, nunca aqui.

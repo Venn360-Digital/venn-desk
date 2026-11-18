@@ -65,8 +65,10 @@ export const FERRAMENTAS: Ferramenta[] = [
         nome: 'buscar_chamados',
         titulo: 'Procurar chamados parecidos',
         descricao:
-            'Procura chamados do mesmo app por texto do assunto e por status. Serve para ' +
-            'achar duplicados e casos já resolvidos antes de responder.',
+            'Procura chamados parecidos do mesmo app. Casa por PALAVRA, com acento e ' +
+            'plural dobrados — descreva o problema com as palavras dele ("usuário novo não ' +
+            'vê a agenda") em vez de tentar o título exato. Se não achar, não há caso ' +
+            'anterior: siga sem ele, não tente de novo com sinônimos.',
         argumentos: z.object({
             texto: z.string().trim().min(2).max(120).describe('Trecho do assunto.'),
             incluirFechados: z.boolean().optional().describe('Padrão: só os em aberto.'),
