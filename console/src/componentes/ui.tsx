@@ -22,9 +22,9 @@ export function Botao({
     desabilitado?: boolean
 }) {
     const estilos = {
-        solido: 'bg-destaque text-white hover:opacity-90',
-        leve: 'border border-borda bg-white text-tinta hover:bg-fundo',
-        perigo: 'border border-urgente text-urgente hover:bg-urgente/5',
+        solido: 'bg-destaque text-white hover:bg-destaque-forte',
+        leve: 'border border-borda bg-superficie text-tinta hover:bg-superficie-2',
+        perigo: 'border border-urgente text-urgente hover:bg-urgente-fundo',
     }[variante]
 
     return (
@@ -60,37 +60,67 @@ export function Campo({
                 value={valor}
                 required={requerido}
                 onChange={(e) => onChange(e.target.value)}
-                className="w-full rounded-md border border-borda bg-white px-3 py-2 text-sm outline-none focus:border-destaque"
+                className="w-full rounded-sm border border-borda bg-superficie px-3 py-2 text-sm text-tinta outline-none focus:border-destaque"
             />
         </label>
     )
 }
 
+/**
+ * Os pares cor/fundo vêm prontos da marca (`--vds-*-bg`), em vez de serem
+ * derivados com transparência.
+ *
+ * `bg-urgente/10` parecia equivalente e não é: sobre fundo escuro, 10% de uma
+ * cor clara dá um cinza lavado, e o par que a marca entrega já foi escolhido
+ * para funcionar nos dois temas.
+ */
 const CORES: Record<string, string> = {
-    NOVO: 'bg-destaque/10 text-destaque',
-    ABERTO: 'bg-destaque/10 text-destaque',
-    AGUARDANDO_USUARIO: 'bg-atencao/15 text-atencao',
-    EM_ESPERA: 'bg-atencao/15 text-atencao',
-    RESOLVIDO: 'bg-calmo/15 text-calmo',
-    FECHADO: 'bg-tinta/10 text-tinta-fraca',
-    URGENTE: 'bg-urgente/10 text-urgente',
-    ALTA: 'bg-atencao/15 text-atencao',
-    NORMAL: 'bg-tinta/5 text-tinta-fraca',
-    BAIXA: 'bg-tinta/5 text-tinta-fraca',
+    NOVO: 'bg-informe-fundo text-informe',
+    ABERTO: 'bg-informe-fundo text-informe',
+    AGUARDANDO_USUARIO: 'bg-atencao-fundo text-atencao',
+    EM_ESPERA: 'bg-atencao-fundo text-atencao',
+    RESOLVIDO: 'bg-calmo-fundo text-calmo',
+    FECHADO: 'bg-superficie-3 text-tinta-fraca',
+    URGENTE: 'bg-urgente-fundo text-urgente',
+    ALTA: 'bg-atencao-fundo text-atencao',
+    NORMAL: 'bg-superficie-3 text-tinta-fraca',
+    BAIXA: 'bg-superficie-3 text-tinta-fraca',
+}
+
+/**
+ * O rótulo é escrito, não derivado do enum.
+ *
+ * `AGUARDANDO_USUARIO.toLowerCase().replace(/_/g,' ')` dava "aguardando
+ * usuario" — sem acento, porque o enum do banco não tem. Derivar texto de
+ * identificador economiza um mapa e entrega português errado na tela.
+ */
+const ROTULOS: Record<string, string> = {
+    NOVO: 'novo',
+    ABERTO: 'aberto',
+    AGUARDANDO_USUARIO: 'aguardando usuário',
+    EM_ESPERA: 'em espera',
+    RESOLVIDO: 'resolvido',
+    FECHADO: 'fechado',
+    URGENTE: 'urgente',
+    ALTA: 'alta',
+    NORMAL: 'normal',
+    BAIXA: 'baixa',
 }
 
 export function Selo({ children }: { children: string }) {
-    const cor = CORES[children] ?? 'bg-tinta/5 text-tinta-fraca'
+    const cor = CORES[children] ?? 'bg-superficie-3 text-tinta-fraca'
     return (
-        <span className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${cor}`}>
-            {children.toLowerCase().replace(/_/g, ' ')}
+        <span
+            className={`inline-block rounded-xs px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap ${cor}`}
+        >
+            {ROTULOS[children] ?? children.toLowerCase().replace(/_/g, ' ')}
         </span>
     )
 }
 
 export function Aviso({ children }: { children: ReactNode }) {
     return (
-        <p className="rounded-md border border-urgente/30 bg-urgente/5 px-3 py-2 text-sm text-urgente">
+        <p className="rounded-sm border border-urgente/30 bg-urgente-fundo px-3 py-2 text-sm text-urgente">
             {children}
         </p>
     )

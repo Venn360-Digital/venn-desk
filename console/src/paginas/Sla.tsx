@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 
-import { api, type MetaDeSla } from '../api.ts'
+import { api, type AppCadastrado, type MetaDeSla } from '../api.ts'
 import { Aviso, Botao, Selo, Vazio } from '../componentes/ui.tsx'
 
 /**
@@ -39,14 +39,29 @@ function emPalavras(min: number): string {
 }
 
 export function Sla({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
-    const { app } = useParams<{ app: string }>()
+    const { app: daRota } = useParams<{ app: string }>()
     const fila = useQueryClient()
+
+    /**
+     * As metas são POR APP, e a fila deixou de ser. Como não há mais um app
+     * "atual" na navegação, a escolha mora aqui dentro — e cai no primeiro
+     * quando a rota não traz nenhum, para `/metas` nunca ser uma tela vazia
+     * pedindo um clique antes de mostrar qualquer coisa.
+     */
+    const { data: cadastro } = useQuery({
+        queryKey: ['apps'],
+        queryFn: () => api<{ apps: AppCadastrado[] }>('/apps'),
+        staleTime: 5 * 60_000,
+    })
+    const apps = cadastro?.apps ?? []
+    const app = daRota ?? apps[0]?.slug
     const [editando, setEditando] = useState<MetaDeSla['prioridade'] | null>(null)
     const [erro, setErro] = useState<string | null>(null)
 
     const { data, isPending } = useQuery({
         queryKey: ['sla', app],
         queryFn: () => api<{ prioridades: MetaDeSla[] }>(`/app/${app}/sla`),
+        enabled: app !== undefined,
     })
 
     const salvar = useMutation({
@@ -73,8 +88,23 @@ export function Sla({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
 
     return (
         <div className="space-y-4">
+            <nav className="flex flex-wrap gap-1">
+                {apps.map((a) => (
+                    <Link
+                        key={a.slug}
+                        to={`/metas/${a.slug}`}
+                        className={
+                            a.slug === app
+                                ? 'rounded-sm bg-tinta px-3 py-1.5 text-xs font-medium text-fundo'
+                                : 'rounded-sm border border-borda bg-superficie px-3 py-1.5 text-xs text-tinta-fraca transition hover:text-tinta'
+                        }
+                    >
+                        {a.nome}
+                    </Link>
+                ))}
+            </nav>
+
             <header>
-                <h1 className="text-base font-semibold">Metas de atendimento</h1>
                 <p className="mt-1 text-xs text-tinta-fraca">
                     O relógio pausa enquanto o chamado aguarda o usuário. Em espera na
                     engenharia não pausa: o tempo é nosso. Metas novas valem do próximo

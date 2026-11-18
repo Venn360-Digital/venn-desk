@@ -9,13 +9,14 @@ import type { ResumoDeSla } from '../api.ts'
  * sugeriria que está.
  */
 
+/// Os pares vêm da marca; ver o comentário em `ui.tsx`.
 const CORES: Record<ResumoDeSla['estado'], string> = {
-    violado: 'bg-urgente/10 text-urgente',
-    vencido: 'bg-urgente/10 text-urgente',
-    em_risco: 'bg-atencao/15 text-atencao',
-    em_dia: 'bg-calmo/15 text-calmo',
-    pausado: 'bg-tinta/5 text-tinta-fraca',
-    cumprido: 'bg-tinta/5 text-tinta-fraca',
+    violado: 'bg-urgente-fundo text-urgente',
+    vencido: 'bg-urgente-fundo text-urgente',
+    em_risco: 'bg-atencao-fundo text-atencao',
+    em_dia: 'bg-calmo-fundo text-calmo',
+    pausado: 'bg-superficie-3 text-tinta-fraca',
+    cumprido: 'bg-superficie-3 text-tinta-fraca',
 }
 
 const ROTULOS: Record<ResumoDeSla['estado'], string> = {
@@ -33,10 +34,29 @@ const METAS: Record<ResumoDeSla['meta'], string> = {
     resolucao: 'resolução',
 }
 
+/**
+ * Acima de dois dias a contagem vira DIAS.
+ *
+ * "há 104 h 59 min" é tecnicamente certo e ilegível: ninguém converte isso de
+ * cabeça, e a fila é lida de relance. Abaixo de uma hora, minutos; abaixo de
+ * dois dias, horas; daí em diante, dias.
+ */
 function falta(iso: string): string {
     const ms = new Date(iso).getTime() - Date.now()
     const min = Math.round(Math.abs(ms) / 60_000)
-    const texto = min < 60 ? `${min} min` : `${Math.floor(min / 60)} h ${min % 60} min`
+
+    let texto: string
+    if (min < 60) texto = `${min} min`
+    else if (min < 48 * 60) {
+        const h = Math.floor(min / 60)
+        const resto = min % 60
+        texto = resto === 0 ? `${h} h` : `${h} h ${resto} min`
+    } else {
+        const d = Math.floor(min / (24 * 60))
+        const h = Math.round((min % (24 * 60)) / 60)
+        texto = h === 0 ? `${d} dias` : `${d} d ${h} h`
+    }
+
     return ms >= 0 ? `faltam ${texto}` : `há ${texto}`
 }
 

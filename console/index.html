@@ -1,9 +1,28 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="system">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Venn Desk — Console</title>
+        <link rel="icon" href="/logomarca/emblema-64.png" />
+        <meta name="theme-color" content="#111117" />
+        <title>Venn Desk</title>
+        <!--
+          O tema é resolvido ANTES de a página pintar.
+
+          Resolvido no React, o primeiro quadro sairia claro e a tela piscaria
+          branca antes de virar escura — o que num Console aberto o dia inteiro
+          é um soco a cada recarga. Esta é a mesma ideia do `ThemeBootstrap.tsx`
+          que veio com a marca, reescrita sem o `next/script`.
+        -->
+        <script>
+            try {
+                var t = localStorage.getItem('venn360-theme')
+                document.documentElement.dataset.theme =
+                    t === 'light' || t === 'dark' ? t : 'system'
+            } catch (_) {
+                document.documentElement.dataset.theme = 'system'
+            }
+        </script>
     </head>
     <body>
         <div id="raiz"></div>

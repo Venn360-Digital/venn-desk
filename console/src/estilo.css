@@ -1,27 +1,108 @@
 @import 'tailwindcss';
+@import './tokens-da-marca.css';
 
 /**
- * Os tokens do Console. Poucos de propósito: é tela interna, de trabalho, e a
- * leitura rápida de uma fila importa mais que personalidade visual. A paleta
- * por app vem do cadastro (campo `tema`) e entra na Fase 7, quando houver
- * multimarca de verdade na operação.
+ * A marca Venn360 no Console.
+ *
+ * Os valores não moram aqui: moram em `tokens-da-marca.css`, que é o arquivo
+ * entregue pela marca, copiado sem edição. Este arquivo só AMARRA os utilitários
+ * do Tailwind àqueles tokens. A consequência prática é que uma revisão da marca
+ * é substituir um arquivo, e não caçar cor espalhada por componente.
+ *
+ * **A direção é monocromática.** O estudo visual é explícito: "predominância
+ * monocromática, cores pontuais por frente" e "a cor sinaliza a frente, não
+ * substitui a hierarquia monocromática". Numa fila de suporte isso é exatamente
+ * o que se quer — cinza para a estrutura, e cor só onde ela significa algo:
+ * prazo estourado, prazo em risco, prioridade urgente. Uma tabela onde cada
+ * coluna tem a sua cor é uma tabela onde nenhuma cor é vista.
+ *
+ * **O azul, o laranja e o roxo são das FRENTES** (TI, Marketing, Sistemas), não
+ * dos três produtos. Usá-los para distinguir Odontobox de Conecta torceria o
+ * sistema da marca para dizer outra coisa. A coluna do app é neutra.
  */
 @theme {
-    --color-tinta: oklch(0.21 0.02 260);
-    --color-tinta-fraca: oklch(0.52 0.02 260);
-    --color-borda: oklch(0.91 0.01 260);
-    --color-fundo: oklch(0.985 0.002 260);
-    --color-destaque: oklch(0.55 0.17 258);
-    --color-urgente: oklch(0.56 0.19 25);
-    --color-atencao: oklch(0.72 0.16 70);
-    --color-calmo: oklch(0.62 0.13 160);
-}
+    /* Superfícies e texto — todo o peso visual da tela. */
+    --color-fundo: var(--vds-bg);
+    --color-superficie: var(--vds-surface);
+    --color-superficie-2: var(--vds-surface-2);
+    --color-superficie-3: var(--vds-surface-3);
+    --color-tinta: var(--vds-text);
+    --color-tinta-fraca: var(--vds-text-muted);
+    --color-tinta-sutil: var(--vds-text-subtle);
+    --color-borda: var(--vds-border);
+    --color-borda-forte: var(--vds-border-strong);
 
-html {
-    color-scheme: light;
+    /* A cor de ação. `--vds-ti` é o azul da frente de TI, que é a família a */
+    /* que uma ferramenta interna de suporte pertence. */
+    --color-destaque: var(--vds-ti);
+    --color-destaque-forte: var(--vds-ti-strong);
+    --color-destaque-suave: var(--vds-ti-soft);
+
+    /* Estado. Estes são os únicos lugares onde cor aparece em volume. */
+    --color-urgente: var(--vds-danger);
+    --color-urgente-fundo: var(--vds-danger-bg);
+    --color-atencao: var(--vds-warning);
+    --color-atencao-fundo: var(--vds-warning-bg);
+    --color-calmo: var(--vds-success);
+    --color-calmo-fundo: var(--vds-success-bg);
+    --color-informe: var(--vds-info);
+    --color-informe-fundo: var(--vds-info-bg);
+
+    --radius-xs: var(--vds-radius-xs);
+    --radius-sm: var(--vds-radius-sm);
+    --radius-md: var(--vds-radius-md);
+    --radius-lg: var(--vds-radius-lg);
+
+    --shadow-marca-sm: var(--vds-shadow-sm);
+    --shadow-marca-md: var(--vds-shadow-md);
 }
 
 body {
     @apply bg-fundo text-tinta antialiased;
     font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    margin: 0;
+}
+
+/**
+ * O anel de foco vem da marca e vale para tudo.
+ *
+ * Um Console é operado no teclado — a fila é percorrida com Tab muito mais do
+ * que com o mouse —, então o foco visível não é acessibilidade "a mais": é a
+ * forma principal de navegar.
+ */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--vds-focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--vds-radius-xs);
+}
+
+/**
+ * A marca troca de arquivo conforme o tema, e não de filtro.
+ *
+ * O material avisa: "os arquivos têm fundo incorporado; não redesenhar nem
+ * remover o fundo por limiar automático". Então nada de `invert()` nem de
+ * `mix-blend-mode` — são duas imagens, cada uma para o fundo a que pertence.
+ */
+.marca-clara {
+    display: block;
+}
+.marca-escura {
+    display: none;
+}
+
+:root[data-theme='dark'] .marca-clara,
+:root[data-theme='dark'] .marca-escura {
+    display: none;
+}
+:root[data-theme='dark'] .marca-escura {
+    display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root[data-theme='system'] .marca-clara {
+        display: none;
+    }
+    :root[data-theme='system'] .marca-escura {
+        display: block;
+    }
 }

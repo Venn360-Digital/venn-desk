@@ -83,17 +83,31 @@ export interface ResumoDeSla {
     venceEm: string
 }
 
+export type Prioridade = 'BAIXA' | 'NORMAL' | 'ALTA' | 'URGENTE'
+
 export interface ChamadoNaFila {
     numero: string
+    sequencial: number
     assunto: string
+    app: { slug: string; nome: string; prefixo: string }
+    /** A unidade que opera — o `Workspace` dos apps. */
+    empresa: { id: string; nome: string; plano: string | null }
+    /** Quem contrata. Nulo enquanto o app não mandar `account_id`. */
+    conta: { id: string; nome: string } | null
     status: string
     tipo: string
-    prioridade: string
+    prioridade: Prioridade
     nivel: string
     assigneeId: string | null
     atualizadoEm: string
     /// `null` em chamado aberto antes dos relógios existirem.
     sla: ResumoDeSla | null
+}
+
+export interface OpcoesDeFiltro {
+    apps: { slug: string; nome: string; prefixo: string }[]
+    empresas: { id: string; nome: string; app: string }[]
+    contas: { id: string; nome: string; app: string }[]
 }
 
 export interface MetaDeSla {
