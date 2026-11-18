@@ -64,11 +64,21 @@
         // publicada. Fora da lista de produção, de propósito.
         "ORIGENS_DO_STATUS": "https://venn360-digital.github.io,https://status.venn360.com,http://localhost:4321",
         // O modelo do agente, trocável sem publicar código.
-        "MODELO_DO_AGENTE": "claude-sonnet-5",
+        //
+        // Opus 5 por decisão do produto (18/11/2026): o chamado deve ser
+        // respondido com excelência, e token não é a restrição.
+        "MODELO_DO_AGENTE": "claude-opus-5",
+        // Quanto o agente pensa antes de agir: low, medium, high, xhigh, max.
+        //
+        // `high` por padrão. `xhigh` e `max` existem e melhoram julgamento
+        // difícil, mas cobram em LATÊNCIA — e num suporte a resposta que
+        // demora dois minutos já é outra experiência para quem espera.
+        "ESFORCO_DO_AGENTE": "high",
         // Tarifa SÓ para estimar custo na trilha. Não decide nada: quem corta
         // o atendimento é o teto de passos e de tokens.
-        "TARIFA_ENTRADA_POR_MILHAO": "3",
-        "TARIFA_SAIDA_POR_MILHAO": "15"
+        // Tarifa do Opus, só para a estimativa da trilha.
+        "TARIFA_ENTRADA_POR_MILHAO": "15",
+        "TARIFA_SAIDA_POR_MILHAO": "75"
     },
 
     // DATABASE_URL entra por `wrangler secret put`, nunca aqui.

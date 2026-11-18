@@ -43,6 +43,8 @@ export interface Ambiente {
         ANTHROPIC_API_KEY?: string
         /** O modelo do agente. Em `vars`, para trocar sem publicar código. */
         MODELO_DO_AGENTE?: string
+        /** Quanto o agente pensa: `low`, `medium`, `high`, `xhigh` ou `max`. */
+        ESFORCO_DO_AGENTE?: string
         /**
          * A tarifa usada SÓ para estimar custo na trilha de auditoria. Ela não
          * decide nada: quem corta o atendimento é o teto de passos e de tokens

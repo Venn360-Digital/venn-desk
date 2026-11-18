@@ -739,24 +739,48 @@ rotasInternas.post('/api/console/app/:app/chamados/:numero/atender', async (c) =
     const chamado = await chamadoDaFila(c)
     const app = c.get('app')
 
-    const resultado = await atender({
-        modelo: createAnthropic({ apiKey: chave })(
-            c.env.MODELO_DO_AGENTE ?? 'claude-sonnet-5'
-        ),
-        contexto: {
-            cliente: c.get('cliente'),
-            escopoDoApp: c.get('escopo'),
-            app,
-            /// Pelo Console, o agente atende como SUPORTE: as ferramentas de
-            /// engenharia são do canal de engenharia, não de um botão.
-            escopo: 'SUPORTE',
-        },
-        numero: chamado.numero,
-        tarifa: {
-            entradaPorMilhao: Number(c.env.TARIFA_ENTRADA_POR_MILHAO ?? '3'),
-            saidaPorMilhao: Number(c.env.TARIFA_SAIDA_POR_MILHAO ?? '15'),
-        },
-    })
+    /**
+     * A falha do provedor é DITA, e não engolida.
+     *
+     * Esta rota é de gestor e admin, e o que vem da API do Claude — modelo
+     * inexistente, chave sem permissão, parâmetro recusado — é exatamente o que
+     * quem opera precisa ler para consertar. A regra da seção 10, de não vazar
+     * detalhe interno, protege o CLIENTE; aqui do outro lado está quem mantém o
+     * sistema, e esconder o motivo só transforma dez minutos de conserto numa
+     * caçada. O que continua fora é rastro de pilha e qualquer coisa do banco.
+     */
+    let resultado
+    try {
+        resultado = await atender({
+            modelo: createAnthropic({ apiKey: chave })(
+                c.env.MODELO_DO_AGENTE ?? 'claude-opus-5'
+            ),
+            esforco: (c.env.ESFORCO_DO_AGENTE ?? 'high') as 'high',
+            contexto: {
+                cliente: c.get('cliente'),
+                escopoDoApp: c.get('escopo'),
+                app,
+                /// Pelo Console, o agente atende como SUPORTE: as ferramentas
+                /// de engenharia são do canal de engenharia, não de um botão.
+                escopo: 'SUPORTE',
+            },
+            numero: chamado.numero,
+            tarifa: {
+                entradaPorMilhao: Number(c.env.TARIFA_ENTRADA_POR_MILHAO ?? '15'),
+                saidaPorMilhao: Number(c.env.TARIFA_SAIDA_POR_MILHAO ?? '75'),
+            },
+        })
+    } catch (erro) {
+        const nome = erro instanceof Error ? erro.name : 'erro'
+        const detalhe = erro instanceof Error ? erro.message : String(erro)
+        console.error('[agente] falhou:', nome, detalhe)
+
+        throw new ErroDeDominio(
+            'agente_falhou',
+            `O agente não concluiu (${nome}): ${detalhe.slice(0, 400)}`,
+            502
+        )
+    }
 
     return c.json({
         fim: resultado.fim,

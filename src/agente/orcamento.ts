@@ -27,14 +27,20 @@ export interface Teto {
 }
 
 /**
- * O padrão: 12 passos e 200 mil tokens por chamado.
+ * O padrão: 30 passos e 1 milhão de tokens por chamado.
  *
- * Doze passos cobrem o caminho completo — ler, buscar parecidos, classificar,
- * anotar, responder — com folga para uma correção de rota, e cortam o laço bem
- * antes de ele custar caro. Duzentos mil tokens é mais que qualquer chamado
- * real: quem chega lá está relendo o mesmo chamado em círculo.
+ * **Este teto não existe para economizar.** A decisão do produto (18/11/2026) é
+ * que o chamado seja respondido com excelência, e token não é a restrição. O
+ * que ele existe para impedir é o LAÇO: um agente que relê o mesmo chamado em
+ * círculo não melhora a resposta, só não termina — e um chamado que nunca
+ * termina é pior para o cliente do que um respondido de forma mediana.
+ *
+ * Por isso os números são generosos e ainda assim finitos. Trinta passos é
+ * muito mais do que qualquer caminho útil (ler, buscar, classificar, anotar,
+ * responder, escalar cabe em sete) e ainda corta quem se perdeu. Um milhão de
+ * tokens é ordem de grandeza acima do maior chamado plausível.
  */
-export const TETO_PADRAO: Teto = { passos: 12, tokens: 200_000 }
+export const TETO_PADRAO: Teto = { passos: 30, tokens: 1_000_000 }
 
 export interface Consumo {
     passos: number

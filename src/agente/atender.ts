@@ -40,6 +40,21 @@ export interface PedidoDeAtendimento {
     /** Para a trilha. O cálculo de custo não decide nada, só registra. */
     tarifa: Tarifa
     teto?: Teto
+    /**
+     * Quanto o modelo deve pensar antes de agir.
+     *
+     * É a alavanca de qualidade do Opus 5: separar um chamado de uso mal
+     * explicado de um defeito de verdade é exatamente o julgamento que melhora
+     * com raciocínio. O custo é proporcional à dificuldade — num "esqueci a
+     * senha" quase não pesa.
+     *
+     * **A forma mudou com o modelo.** O Opus 5 recusa o `thinking.enabled` com
+     * orçamento em tokens que o Sonnet aceitava, e pede `effort`. A API disse
+     * isso com todas as letras — `"thinking.type.enabled" is not supported for
+     * this model` — e é por isso que a rota de admin passou a mostrar o erro do
+     * provedor em vez de engoli-lo.
+     */
+    esforco?: 'low' | 'medium' | 'high' | 'xhigh' | 'max'
 }
 
 export interface Atendimento {
@@ -96,6 +111,9 @@ export async function atender(pedido: PedidoDeAtendimento): Promise<Atendimento>
     const resposta = await generateText({
         model: pedido.modelo,
         system: instrucoes,
+        ...(pedido.esforco === undefined
+            ? {}
+            : { providerOptions: { anthropic: { effort: pedido.esforco } } }),
         /**
          * O chamado NÃO é colado aqui.
          *
