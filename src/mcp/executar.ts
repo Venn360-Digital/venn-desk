@@ -25,6 +25,19 @@ export interface Contexto {
     escopoDoApp: EscopoDoApp
     app: App
     escopo: Escopo
+    /**
+     * O que já aconteceu NESTE atendimento.
+     *
+     * Existe por um motivo só, e medido: o modelo busca casos parecidos, não
+     * acha, e tenta de novo com sinônimos — quatro, cinco vezes no mesmo
+     * chamado. A instrução pedindo para não insistir ajuda e não resolve,
+     * porque cada chamada chega à ferramenta sem memória da anterior. Com o
+     * contador, a própria ferramenta pode dizer "já procuramos, não há".
+     *
+     * Opcional: pelo MCP, cada chamada é uma sessão à parte e não há o que
+     * lembrar. Quem a preenche é o laço do agente.
+     */
+    memoria?: { buscas: number }
 }
 
 export interface Resultado {
@@ -242,6 +255,28 @@ async function buscarChamados(
      * achar nada — o maior desperdício de tokens do atendimento. Ver
      * `src/dominio/busca.ts`.
      */
+    if (ctx.memoria !== undefined) {
+        ctx.memoria.buscas += 1
+
+        /**
+         * Na quarta busca, a ferramenta para de procurar e diz por quê.
+         *
+         * Três tentativas já cobriram o assunto por ângulos diferentes; da
+         * quarta em diante o modelo está trocando sinônimos, não procurando. E
+         * é a FERRAMENTA que corta, não a instrução, porque a instrução já
+         * pedia isso e não bastou — cada chamada chega sem memória da anterior,
+         * e quem tem a memória é quem pode encerrar o assunto.
+         */
+        if (ctx.memoria.buscas > 3) {
+            return {
+                texto:
+                    `Você já buscou ${ctx.memoria.buscas - 1} vezes neste atendimento. ` +
+                    `Não há chamado anterior parecido — isto é uma resposta, não uma falha. ` +
+                    `Siga com o que você já sabe.`,
+            }
+        }
+    }
+
     const candidatos = await ctx.escopoDoApp.chamados.listar({ status, limite: 200 })
     const achados = parecidos(candidatos, texto, limite)
 

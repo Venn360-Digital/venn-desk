@@ -32,6 +32,7 @@ export interface DadosDoApp {
     canalSuporte?: string | null
     canalEngenharia?: string | null
     modoSombra?: boolean
+    atendimentoAutomatico?: boolean
     tema?: Prisma.InputJsonValue
 }
 
@@ -76,6 +77,7 @@ export async function alterarApp(
         canalSuporte?: string | null | undefined
         canalEngenharia?: string | null | undefined
         modoSombra?: boolean | undefined
+        atendimentoAutomatico?: boolean | undefined
         chavePublicaJwk?: Prisma.InputJsonValue | undefined
         tema?: Prisma.InputJsonValue | undefined
     }
@@ -90,6 +92,9 @@ export async function alterarApp(
             ? {}
             : { canalEngenharia: campos.canalEngenharia }),
         ...(campos.modoSombra === undefined ? {} : { modoSombra: campos.modoSombra }),
+        ...(campos.atendimentoAutomatico === undefined
+            ? {}
+            : { atendimentoAutomatico: campos.atendimentoAutomatico }),
         ...(campos.chavePublicaJwk === undefined
             ? {}
             : { chavePublicaJwk: campos.chavePublicaJwk }),

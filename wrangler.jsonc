@@ -32,6 +32,29 @@
     // cliente — é isto que exige o plano Workers Paid.
     "send_email": [{ "name": "EMAIL" }],
 
+    // A fila do atendimento automático (seção 3, "Queues para tarefa longa").
+    //
+    // O agente leva dezenas de segundos; prendê-lo na requisição do widget
+    // faria o cliente esperar a IA para ver "chamado criado". A fila separa as
+    // duas coisas: a abertura responde na hora, o atendimento acontece depois.
+    //
+    // `max_batch_size: 1` de propósito: cada chamado é um atendimento inteiro,
+    // com teto próprio, e juntar dois numa invocação faria o segundo herdar o
+    // tempo gasto pelo primeiro. `max_retries: 2` porque falha de modelo
+    // costuma ser transitória, e três tentativas de um atendimento que não
+    // completa já é dinheiro suficiente para parar e deixar para um humano.
+    "queues": {
+        "producers": [{ "queue": "venn-desk-atendimento", "binding": "ATENDIMENTO" }],
+        "consumers": [
+            {
+                "queue": "venn-desk-atendimento",
+                "max_batch_size": 1,
+                "max_batch_timeout": 5,
+                "max_retries": 2
+            }
+        ]
+    },
+
     // Teto de abertura por usuário e por tenant (seção 5). Em Workers um `Map`
     // em memória não conta nada: cada isolate teria o próprio contador.
     "ratelimits": [
@@ -100,7 +123,11 @@
                 // dentro do fornecedor do qual ela foge), o alerta urgente
                 // aponta para a URL do Pages, que existe.
                 "URL_STATUS": "https://venn360-digital.github.io/venn-desk/",
-                "ORIGENS_DO_STATUS": "https://venn360-digital.github.io,https://status.venn360.com"
+                "ORIGENS_DO_STATUS": "https://venn360-digital.github.io,https://status.venn360.com",
+                "MODELO_DO_AGENTE": "claude-sonnet-5",
+                "ESFORCO_DO_AGENTE": "medium",
+                "TARIFA_ENTRADA_POR_MILHAO": "3",
+                "TARIFA_SAIDA_POR_MILHAO": "15"
             },
             "triggers": { "crons": ["* * * * *"] },
             "assets": {
@@ -111,6 +138,26 @@
             "r2_buckets": [
                 { "binding": "ANEXOS", "bucket_name": "venn-desk-anexos-producao" }
             ],
+            // Fila PRÓPRIA. Compartilhar a de staging faria um chamado de
+            // teste ser atendido pelo Worker de produção, com o banco de
+            // produção — e um aceite meu viraria gasto e escrita no ambiente
+            // do cliente.
+            "queues": {
+                "producers": [
+                    { "queue": "venn-desk-atendimento-producao", "binding": "ATENDIMENTO" }
+                ],
+                "consumers": [
+                    {
+                        "queue": "venn-desk-atendimento-producao",
+                        "max_batch_size": 1,
+                        "max_batch_timeout": 5,
+                        "max_retries": 2
+                    }
+                ]
+            },
+            // As mesmas chaves do agente. O modelo e o esforço são decisão de
+            // produto e valem nos dois ambientes.
+            "//vars-do-agente": "MODELO_DO_AGENTE, ESFORCO_DO_AGENTE e as tarifas entram abaixo",
             "durable_objects": {
                 "bindings": [{ "name": "SALAS", "class_name": "SalaDoChamado" }]
             },

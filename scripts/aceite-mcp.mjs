@@ -68,7 +68,7 @@ async function abrirHostil(slug) {
     const agora = Math.floor(Date.now() / 1000)
     const t = await new SignJWT({
         app: slug, tenant_id: `ws-mcp-${marca}`, tenant_nome: 'Clínica do Aceite',
-        user_id: `u-${marca}`, nome: 'Eva Hostil', email: `eva-${marca}@exemplo.com.br`, papel: 'member',
+        user_id: `u-${marca}`, nome: 'Eva Hostil', email: `eva-${marca}@exemplo.invalid`, papel: 'member',
     }).setProtectedHeader({ alg: 'Ed25519' }).setAudience('venn-desk')
       .setIssuedAt(agora).setExpirationTime(agora + 300).sign(await importJWK(jwk, 'Ed25519'))
 
@@ -152,7 +152,7 @@ async function main() {
     texto.startsWith('Chamado ')
         ? ok('a resposta começa pelo nosso cabeçalho, não pelo texto dele')
         : nao('a resposta não começa pelo cabeçalho')
-    !texto.includes('e-mail') && !texto.includes('@exemplo.com.br')
+    !texto.includes('e-mail') && !texto.includes('@exemplo.invalid')
         ? ok('o e-mail do solicitante NÃO vai para o modelo')
         : nao('o e-mail vazou para o modelo')
 

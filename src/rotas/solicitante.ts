@@ -11,6 +11,7 @@ import type { Ambiente } from '../lib/ambiente.ts'
 import { avisarPorEmail } from '../correio/avisar.ts'
 import { publicarNaSala } from '../tempo-real/publicar.ts'
 import { comApp, comCliente, comTokenDoApp } from '../auth/middleware.ts'
+import { enfileirarAtendimento } from '../agente/fila.ts'
 import { veOsChamadosDaEmpresa } from '../auth/token-app.ts'
 
 /**
@@ -136,6 +137,26 @@ rotasDoSolicitante.post('/api/app/:app/chamados', async (c) => {
         requesterId: chamado.requesterId,
         contexto: chamado.contexto,
     })
+
+    /**
+     * O atendimento automático entra pela FILA, e em `waitUntil`.
+     *
+     * Chamar o agente aqui faria o cliente esperar dezenas de segundos para
+     * ver "chamado criado" — e o widget pareceria travado justamente quando a
+     * pessoa já está irritada com outra coisa. Enfileirar é instantâneo e o
+     * `waitUntil` tira até isso do caminho da resposta.
+     *
+     * A chave é por app e nasce DESLIGADA: nenhum produto começa a gastar
+     * sozinho porque alguém publicou um deploy.
+     */
+    if (c.get('app').atendimentoAutomatico) {
+        c.executionCtx.waitUntil(
+            enfileirarAtendimento(c.env.ATENDIMENTO, {
+                appId: c.get('app').id,
+                numero: chamado.numero,
+            })
+        )
+    }
 
     return c.json({ chamado: paraOWidget(chamado, c.get('app').prefixo) }, 201)
 })

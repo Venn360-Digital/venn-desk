@@ -14,6 +14,7 @@ import { rotasDoSlack } from './rotas/slack.ts'
 import { rotasDoMcp } from './rotas/mcp.ts'
 import { verificarSaude } from './saude/verificar.ts'
 import { vigiarPrazos } from './sla/vigiar.ts'
+import { consumirAtendimentos, type LoteDaFila } from './agente/fila.ts'
 import type { CaixaDeSaida } from './correio/enviar.ts'
 
 /**
@@ -106,6 +107,17 @@ app.get('*', (c) => c.env.ASSETS.fetch(c.req.raw))
 export default {
     fetch(requisicao: Request, env: Ambiente['Bindings'], ctx: ExecutionContext) {
         return app.fetch(requisicao, env, ctx)
+    },
+
+    /**
+     * O consumidor da fila do atendimento automático.
+     *
+     * Um chamado por invocação (`max_batch_size: 1` em `wrangler.jsonc`): cada
+     * atendimento é inteiro, com teto próprio, e juntar dois faria o segundo
+     * herdar o tempo gasto pelo primeiro.
+     */
+    async queue(lote: LoteDaFila, env: Ambiente['Bindings']) {
+        await consumirAtendimentos(lote, env)
     },
 
     async scheduled(_controlador: unknown, env: Ambiente['Bindings'], _ctx: unknown) {

@@ -112,7 +112,7 @@ async function main() {
     const marca = Date.now()
 
     console.log('— quem o portal reconhece —')
-    const email = `portal-${marca}@exemplo.com.br`
+    const email = `portal-${marca}@exemplo.invalid`
     const t = await tokenDoApp(APP, `portal-${marca}`, email, 'Dora Portal')
     const eu = await fetch(`${BASE}/api/app/${APP}/eu`, { headers: { Authorization: `Bearer ${t}` } })
     eu.ok ? ok('solicitante criado pelo token do app') : nao(`/eu devolveu ${eu.status}`)

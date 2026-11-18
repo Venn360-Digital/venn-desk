@@ -751,6 +751,7 @@ const esquemaDoApp = z.object({
     canalSuporte: z.string().trim().max(80).nullish(),
     canalEngenharia: z.string().trim().max(80).nullish(),
     modoSombra: z.boolean().optional(),
+    atendimentoAutomatico: z.boolean().optional(),
 })
 
 /**
@@ -1005,6 +1006,7 @@ rotasInternas.get('/api/console/apps', comCliente, comSessaoDeAgente, async (c) 
             canalSuporte: app.canalSuporte,
             canalEngenharia: app.canalEngenharia,
             modoSombra: app.modoSombra,
+            atendimentoAutomatico: app.atendimentoAutomatico,
             proximoNumero: app.proximoNumero,
             /// A chave pública não é segredo, mas não serve à tela: só a
             /// impressão digital, para conferir que é a esperada.

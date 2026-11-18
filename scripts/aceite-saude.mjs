@@ -186,7 +186,7 @@ async function main() {
         : nao(`desconhecido devolveu ${JSON.stringify(desconhecido)}`)
 
     /// Vira conhecido do jeito que o app torna alguém conhecido: um token.
-    const email = `bia-${Date.now()}@exemplo.com.br`
+    const email = `bia-${Date.now()}@exemplo.invalid`
     const t = await tokenDoApp(COBAIA, `saude-${Date.now()}`, email)
     const eu = await fetch(`${BASE}/api/app/${COBAIA}/eu`, {
         headers: { Authorization: `Bearer ${t}` },

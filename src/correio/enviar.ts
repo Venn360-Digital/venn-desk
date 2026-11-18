@@ -72,7 +72,41 @@ async function avisadoHaPouco(pedido: PedidoDeEmail): Promise<boolean> {
     return Date.now() - new Date(ultimo.criadoEm).getTime() < JANELA_DE_AGRUPAMENTO_MS
 }
 
-export async function enviarAviso(pedido: PedidoDeEmail): Promise<'enviado' | 'agrupado' | 'sem_caixa' | 'falhou'> {
+/**
+ * Domínios que existem para NÃO receber e-mail.
+ *
+ * `.invalid`, `.test`, `.example` e `.localhost` são reservados por norma
+ * (RFC 2606 e 6761) e nunca resolvem. `example.com`, `example.org` e
+ * `example.net` idem.
+ *
+ * Isto não é zelo de etiqueta: aceite e demonstração geram endereços
+ * fabricados, e mandá-los para fora significa o nosso domínio de envio
+ * tentando entregar a servidor de terceiro, colecionando bounce. Bounce em
+ * volume é o que destrói a reputação de um domínio novo — e o
+ * `mail.venn360.com` é novo. Foi assim que o limite diário estourou em
+ * 18/11/2026, com os endereços dos aceites.
+ */
+const RESERVADOS = /@([^@]*\.)?(invalid|test|example|localhost)$|@example\.(com|org|net)$/i
+
+export function ehEnderecoDeTeste(email: string): boolean {
+    return RESERVADOS.test(email.trim().toLowerCase())
+}
+
+export async function enviarAviso(pedido: PedidoDeEmail): Promise<'enviado' | 'agrupado' | 'sem_caixa' | 'descartado' | 'falhou'> {
+    /**
+     * O corte acontece ANTES de tudo, inclusive do agrupamento: um endereço
+     * reservado nunca deve chegar ao binding, nem em dia nenhum.
+     */
+    if (ehEnderecoDeTeste(pedido.destinatario.email)) {
+        await pedido.escopo.eventos.registrar({
+            ticketId: pedido.chamado.id,
+            ator: 'sistema',
+            evento: `email:${pedido.momento}:descartado`,
+            depois: { motivo: 'endereço de domínio reservado' },
+        })
+        return 'descartado'
+    }
+
     if (await avisadoHaPouco(pedido)) {
         /**
          * Não é só pular: o próximo aviso leva TODAS as mensagens desde o

@@ -247,6 +247,20 @@ export interface EscopoDoApp {
         metasDe(prioridade: Prioridade): Promise<MetasEmMinutos>
         /** Abre os relógios de um chamado recém-criado. */
         abrir(ticketId: string, prioridade: Prioridade, agora: Date): Promise<SlaTimer[]>
+        /**
+         * Abre um relógio de uma meta específica, se já não houver um correndo.
+         *
+         * Serve a dois casos que o `abrir` da criação não cobre: a PRÓXIMA
+         * resposta, que nasce quando o cliente volta a falar, e a resolução de
+         * um chamado REABERTO — cujo relógio original foi cumprido, e cumprido
+         * é final.
+         */
+        abrirSeNaoHouver(
+            ticketId: string,
+            meta: Meta,
+            prioridade: Prioridade,
+            agora: Date
+        ): Promise<SlaTimer | null>
         doChamado(ticketId: string): Promise<SlaTimer[]>
         /**
          * Os relógios de VÁRIOS chamados, numa consulta só.
@@ -512,6 +526,28 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                     await esteEscopo.sla.cumprir(id, 'resolucao', agora)
                 }
 
+                /**
+                 * Reabriu: a resolução ganha um relógio NOVO.
+                 *
+                 * O anterior foi cumprido, e cumprido é final — reabrir não
+                 * desfaz o fato de que houve uma resolução. Mas o chamado
+                 * voltou a estar aberto, e sem relógio novo ele ficaria
+                 * correndo sem prazo até alguém reparar.
+                 */
+                const reabriu =
+                    (atual.status === 'RESOLVIDO' || atual.status === 'FECHADO') &&
+                    destino !== 'RESOLVIDO' &&
+                    destino !== 'FECHADO'
+
+                if (reabriu) {
+                    await esteEscopo.sla.abrirSeNaoHouver(
+                        id,
+                        'resolucao',
+                        atual.prioridade as Prioridade,
+                        agora
+                    )
+                }
+
                 return reler(id, count)
             },
 
@@ -621,10 +657,44 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                     (dados.visibilidade ?? 'PUBLICA') === 'PUBLICA' &&
                     (dados.rascunho ?? false) === false
 
+                const esteEscopoDeMensagem = escopoDoApp(conexao, appId)
+
                 if (respondeuAoUsuario) {
-                    await escopoDoApp(conexao, appId).sla.cumprir(
+                    await esteEscopoDeMensagem.sla.cumprir(
                         dados.ticketId,
                         'primeira_resposta',
+                        mensagem.criadoEm
+                    )
+                    /// Respondeu: a bola volta para o cliente e o relógio da
+                    /// próxima resposta, se estava correndo, foi cumprido.
+                    await esteEscopoDeMensagem.sla.cumprir(
+                        dados.ticketId,
+                        'proxima_resposta',
+                        mensagem.criadoEm
+                    )
+                }
+
+                /**
+                 * O cliente voltou a falar: nasce o relógio da PRÓXIMA
+                 * resposta.
+                 *
+                 * Sem ele, um chamado já respondido uma vez ficava sem prazo
+                 * nenhum correndo — a fila mostrava "cumprido" num chamado
+                 * aberto, que se lê como "nada a fazer". É a meta que a seção 5
+                 * sempre previu e que faltava ligar.
+                 *
+                 * Só a mensagem PÚBLICA conta, e só quando já houve resposta:
+                 * na abertura quem vale é a primeira resposta.
+                 */
+                if (
+                    dados.autor === 'USUARIO' &&
+                    (dados.visibilidade ?? 'PUBLICA') === 'PUBLICA' &&
+                    chamado.primeiraRespostaEm !== null
+                ) {
+                    await esteEscopoDeMensagem.sla.abrirSeNaoHouver(
+                        dados.ticketId,
+                        'proxima_resposta',
+                        chamado.prioridade as Prioridade,
                         mensagem.criadoEm
                     )
                 }
@@ -1033,6 +1103,28 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 }
 
                 return criados
+            },
+
+            async abrirSeNaoHouver(ticketId, meta, prioridade, agora) {
+                /// "Correndo" é não cumprido e não violado. Um relógio desta
+                /// meta já encerrado não impede o próximo ciclo de começar.
+                const correndo = await conexao.slaTimer.findFirst({
+                    where: { appId, ticketId, meta, cumpridoEm: null, violadoEm: null },
+                })
+                if (correndo !== null) return null
+
+                const metas = await this.metasDe(prioridade)
+                const metaMin = metaEmMinutos(metas, meta)
+
+                return conexao.slaTimer.create({
+                    data: {
+                        appId,
+                        ticketId,
+                        meta,
+                        metaMin,
+                        venceEm: vencimentoDe(agora, metaMin),
+                    },
+                })
             },
 
             async doChamado(ticketId) {

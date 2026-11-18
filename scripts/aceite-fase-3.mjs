@@ -24,7 +24,7 @@ async function token(slug, usuario) {
         tenant_id: 'tenant-tempo-real',
         user_id: usuario,
         nome: 'Ana Tempo Real',
-        email: 'ana@exemplo.com.br',
+        email: 'ana@exemplo.invalid',
         papel: 'member',
     })
         .setProtectedHeader({ alg: 'Ed25519' })

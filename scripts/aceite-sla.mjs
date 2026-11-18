@@ -123,7 +123,7 @@ const varrer = (cab) =>
 
 async function abrirChamado(prioridadeDesejada) {
     const marca = Date.now()
-    const t = await tokenDoApp(`sla-${marca}`, `caio-${marca}@exemplo.com.br`)
+    const t = await tokenDoApp(`sla-${marca}`, `caio-${marca}@exemplo.invalid`)
     const criado = await fetch(`${BASE}/api/app/${APP}/chamados`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' },
@@ -271,6 +271,62 @@ async function main() {
     dele?.meta === 'resolucao' && dele?.caoDeGuarda === false
         ? ok('resolução vencida: violação sem cão de guarda')
         : nao(`esperado violação sem cão: ${JSON.stringify(dele)}`)
+
+    console.log('\n— a próxima resposta —')
+    /**
+     * O relógio que faltava. Um chamado já respondido ficava SEM prazo
+     * nenhum correndo quando o cliente voltava a falar — a fila mostrava
+     * "cumprido" num chamado aberto, que se lê como "nada a fazer".
+     */
+    const f = await abrirChamado('so_eu')
+    const semProxima = (await relogios(f.id)).some((r) => r.meta === 'proxima_resposta')
+    semProxima ? nao('proxima_resposta nasceu cedo demais') : ok('na abertura NÃO existe próxima resposta')
+
+    await fetch(`${BASE}/api/console/app/${APP}/chamados/${f.numero}/mensagens`, {
+        method: 'POST',
+        headers: { ...cab, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ corpo: 'Oi, pode detalhar?', visibilidade: 'PUBLICA' }),
+    })
+    await fetch(`${BASE}/api/app/${APP}/chamados/${f.numero}/mensagens`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${f.token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ corpo: 'Detalhando: acontece toda manhã.' }),
+    })
+    const comProxima = (await relogios(f.id)).find((r) => r.meta === 'proxima_resposta')
+    comProxima && comProxima.cumprido_em === null
+        ? ok('o cliente voltou a falar: próxima resposta correndo')
+        : nao(`sem relógio de próxima resposta: ${JSON.stringify(comProxima)}`)
+
+    await fetch(`${BASE}/api/console/app/${APP}/chamados/${f.numero}/mensagens`, {
+        method: 'POST',
+        headers: { ...cab, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ corpo: 'Obrigado, vou verificar.', visibilidade: 'PUBLICA' }),
+    })
+    const cumprida = (await relogios(f.id)).find((r) => r.meta === 'proxima_resposta')
+    cumprida?.cumprido_em
+        ? ok('respondemos de novo: próxima resposta cumprida')
+        : nao('a próxima resposta não foi cumprida')
+
+    console.log('\n— reabrir ganha relógio novo —')
+    await fetch(`${BASE}/api/console/app/${APP}/chamados/${f.numero}/eventos`, {
+        method: 'POST',
+        headers: { ...cab, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ evento: 'resolver' }),
+    })
+    const resolvidos = (await relogios(f.id)).filter((r) => r.meta === 'resolucao')
+    resolvidos.every((r) => r.cumprido_em !== null)
+        ? ok('resolvido: o relógio da resolução foi cumprido')
+        : nao('a resolução não foi cumprida')
+
+    await fetch(`${BASE}/api/app/${APP}/chamados/${f.numero}/mensagens`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${f.token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ corpo: 'Voltou a acontecer.' }),
+    })
+    const aposReabrir = (await relogios(f.id)).filter((r) => r.meta === 'resolucao')
+    aposReabrir.length === 2 && aposReabrir.some((r) => r.cumprido_em === null)
+        ? ok('reaberto: relógio NOVO de resolução, sem desfazer o cumprido')
+        : nao(`relógios de resolução após reabrir: ${JSON.stringify(aposReabrir.map((r) => r.cumprido_em))}`)
 
     console.log('\n— quem pode varrer —')
     const semSessao = await fetch(`${BASE}/api/console/sla/vigiar`, { method: 'POST' })

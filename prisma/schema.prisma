@@ -75,6 +75,18 @@ model App {
     /// Modo sombra: a resposta da IA sai como rascunho até alguém aprovar.
     /// Liga e desliga por app, a qualquer momento (seção 4).
     modoSombra Boolean @default(true) @map("modo_sombra")
+
+    /**
+     * O agente atende sozinho os chamados novos deste app?
+     *
+     * Chave SEPARADA do modo sombra, e desligada por padrão, porque as duas
+     * respondem a perguntas diferentes: o modo sombra decide se a resposta SAI
+     * sem revisão; esta decide se a IA é ACIONADA. Um app pode querer a IA
+     * trabalhando com tudo em rascunho (o caminho recomendado de entrada), e
+     * nenhum app deve começar a gastar sozinho porque alguém publicou um
+     * deploy.
+     */
+    atendimentoAutomatico Boolean @default(false) @map("atendimento_automatico")
     /// Tema e textos do widget: cores, posição do botão, vocabulário do nicho.
     tema       Json?
 

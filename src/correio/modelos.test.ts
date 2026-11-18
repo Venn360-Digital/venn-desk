@@ -56,3 +56,42 @@ describe('modelos de e-mail', () => {
         expect(html).not.toMatch(/anexo|attachment/i)
     })
 })
+
+describe('endereço de domínio reservado', () => {
+    it('reconhece os domínios que existem para NÃO receber', async () => {
+        const { ehEnderecoDeTeste } = await import('./enviar.ts')
+
+        /**
+         * RFC 2606 e 6761. Não é etiqueta: aceite e demonstração geram
+         * endereços fabricados, e mandá-los para fora faz o nosso domínio de
+         * envio colecionar bounce em servidor de terceiro — que é o que
+         * destrói a reputação de um domínio novo. Foi assim que o limite
+         * diário estourou em 18/11/2026.
+         */
+        for (const reservado of [
+            'ana@exemplo.invalid',
+            'ana@qualquer.test',
+            'ana@example.com',
+            'ana@example.org',
+            'ana@algo.localhost',
+            'ANA@EXEMPLO.INVALID',
+        ]) {
+            expect(ehEnderecoDeTeste(reservado), reservado).toBe(true)
+        }
+    })
+
+    it('deixa passar endereço de verdade', async () => {
+        const { ehEnderecoDeTeste } = await import('./enviar.ts')
+
+        for (const real of [
+            'andre@venn360.com',
+            'ana@clinicasorriso.com.br',
+            /// Note: `exemplo.com.br` é domínio REAL de terceiro. Ele passa —
+            /// e é por isso que os aceites deixaram de usá-lo.
+            'ana@exemplo.com.br',
+            'contato@test-drive.com',
+        ]) {
+            expect(ehEnderecoDeTeste(real), real).toBe(false)
+        }
+    })
+})

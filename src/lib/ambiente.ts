@@ -53,6 +53,8 @@ export interface Ambiente {
         TARIFA_ENTRADA_POR_MILHAO?: string
         TARIFA_SAIDA_POR_MILHAO?: string
         ABERTURA_RATE_LIMITER: RateLimit
+        /** A fila do atendimento automático. Ausente em ambiente sem Queues. */
+        ATENDIMENTO?: Fila
         /** Uma sala por chamado, para o tempo real (Fase 3). */
         SALAS?: DurableObjectNamespace
     }
@@ -64,6 +66,11 @@ export interface Ambiente {
         solicitante: { tenantId: string; requesterId: string }
         agente: Agente
     }
+}
+
+/** O produtor da fila. Só o que usamos. */
+export interface Fila {
+    send(mensagem: unknown): Promise<void>
 }
 
 /** O que o Workers entrega no binding de rate limit. */

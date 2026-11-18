@@ -68,7 +68,14 @@ export interface Atendimento {
 }
 
 export async function atender(pedido: PedidoDeAtendimento): Promise<Atendimento> {
-    const { contexto } = pedido
+    /**
+     * A memória do atendimento é criada AQUI, uma por chamada de `atender`.
+     *
+     * É o que permite à ferramenta de busca saber que já foi chamada. Criá-la
+     * fora duraria entre atendimentos e faria o segundo chamado herdar o
+     * cansaço do primeiro.
+     */
+    const contexto: Contexto = { ...pedido.contexto, memoria: { buscas: 0 } }
     const teto = pedido.teto ?? TETO_PADRAO
     const catalogo = ferramentasDoEscopo(contexto.escopo)
     const numeroLegivel = formatarNumero(contexto.app.prefixo, pedido.numero)

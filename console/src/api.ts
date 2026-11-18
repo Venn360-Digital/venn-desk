@@ -73,6 +73,7 @@ export interface AppCadastrado {
     canalSuporte: string | null
     canalEngenharia: string | null
     modoSombra: boolean
+    atendimentoAutomatico: boolean
     proximoNumero: number
     chaveCadastrada: boolean
 }

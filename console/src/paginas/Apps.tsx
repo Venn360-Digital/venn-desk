@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api, type AppCadastrado } from '../api.ts'
-import { Botao, Selo, Vazio } from '../componentes/ui.tsx'
+import { Botao, Vazio } from '../componentes/ui.tsx'
 
 /**
  * O cadastro de apps. Na Fase 1 ele lê e alterna o modo sombra; incluir app
@@ -12,6 +12,25 @@ import { Botao, Selo, Vazio } from '../componentes/ui.tsx'
  * O modo sombra está aqui porque é a chave que decide se a resposta da IA sai
  * sozinha. Ela precisa ser visível e desligável numa tela, não num banco.
  */
+/** Uma chave ligada/desligada, legível de relance. */
+function Chave({ ligada, rotulo }: { ligada: boolean; rotulo: string }) {
+    return (
+        <span
+            className={`inline-flex items-center gap-1.5 rounded-xs px-1.5 py-0.5 text-[11px] font-medium ${
+                ligada ? 'bg-calmo-fundo text-calmo' : 'bg-superficie-3 text-tinta-fraca'
+            }`}
+        >
+            <span
+                aria-hidden
+                className={`inline-block h-1.5 w-1.5 rounded-full ${
+                    ligada ? 'bg-calmo' : 'bg-tinta-sutil'
+                }`}
+            />
+            {rotulo}
+        </span>
+    )
+}
+
 export function Apps({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
     const fila = useQueryClient()
     const { data, isPending } = useQuery({
@@ -20,8 +39,16 @@ export function Apps({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
     })
 
     const alternar = useMutation({
-        mutationFn: (v: { slug: string; modoSombra: boolean }) =>
-            api(`/apps/${v.slug}`, { metodo: 'PATCH', corpo: { modoSombra: v.modoSombra } }),
+        mutationFn: (v: { slug: string; modoSombra?: boolean; atendimentoAutomatico?: boolean }) =>
+            api(`/apps/${v.slug}`, {
+                metodo: 'PATCH',
+                corpo: {
+                    ...(v.modoSombra === undefined ? {} : { modoSombra: v.modoSombra }),
+                    ...(v.atendimentoAutomatico === undefined
+                        ? {}
+                        : { atendimentoAutomatico: v.atendimentoAutomatico }),
+                },
+            }),
         onSuccess: () => void fila.invalidateQueries({ queryKey: ['apps'] }),
     })
 
@@ -35,10 +62,18 @@ export function Apps({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
                     <header className="flex flex-wrap items-center gap-2">
                         <h2 className="font-medium">{app.nome}</h2>
                         <span className="font-mono text-xs text-tinta-fraca">{app.prefixo}</span>
-                        {app.modoSombra ? <Selo>ALTA</Selo> : <Selo>RESOLVIDO</Selo>}
-                        <span className="text-xs text-tinta-fraca">
-                            {app.modoSombra ? 'modo sombra ligado' : 'envio automático'}
-                        </span>
+                        <Chave
+                            ligada={app.atendimentoAutomatico}
+                            rotulo={
+                                app.atendimentoAutomatico
+                                    ? 'IA atende sozinha'
+                                    : 'IA só por botão'
+                            }
+                        />
+                        <Chave
+                            ligada={!app.modoSombra}
+                            rotulo={app.modoSombra ? 'resposta em rascunho' : 'resposta sai direto'}
+                        />
                     </header>
 
                     <dl className="mt-3 grid gap-x-6 gap-y-1 text-xs sm:grid-cols-2">
@@ -67,16 +102,47 @@ export function Apps({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
                     </dl>
 
                     {papel !== 'AGENTE' && (
-                        <div className="mt-3">
+                        <div className="mt-3 flex flex-wrap gap-2">
                             <Botao
                                 variante="leve"
                                 desabilitado={alternar.isPending}
-                                onClick={() => alternar.mutate({ slug: app.slug, modoSombra: !app.modoSombra })}
+                                onClick={() =>
+                                    alternar.mutate({
+                                        slug: app.slug,
+                                        atendimentoAutomatico: !app.atendimentoAutomatico,
+                                    })
+                                }
                             >
-                                {app.modoSombra ? 'Ligar envio automático' : 'Voltar ao modo sombra'}
+                                {app.atendimentoAutomatico
+                                    ? 'Desligar atendimento automático'
+                                    : 'Ligar atendimento automático'}
+                            </Botao>
+                            <Botao
+                                variante="leve"
+                                desabilitado={alternar.isPending}
+                                onClick={() =>
+                                    alternar.mutate({ slug: app.slug, modoSombra: !app.modoSombra })
+                                }
+                            >
+                                {app.modoSombra
+                                    ? 'Deixar a resposta sair sem revisão'
+                                    : 'Voltar ao modo sombra'}
                             </Botao>
                         </div>
                     )}
+
+                    {/*
+                      As duas chaves respondem perguntas diferentes, e a ordem
+                      recomendada é esta: ligar o atendimento com o modo sombra
+                      ainda ligado, ver os rascunhos, e só então deixar a
+                      resposta sair. A tela diz isso para ninguém ligar as duas
+                      no mesmo clique sem pensar.
+                    */}
+                    {papel !== 'AGENTE' && app.atendimentoAutomatico && !app.modoSombra ? (
+                        <p className="mt-2 text-xs text-atencao">
+                            A IA atende e responde sem revisão humana neste app.
+                        </p>
+                    ) : null}
                 </article>
             ))}
         </div>
