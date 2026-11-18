@@ -62,11 +62,17 @@
         // `localhost:4321` só no staging: é o preview local da página, e o
         // CORS tem de deixá-lo ler para a página ser conferida antes de
         // publicada. Fora da lista de produção, de propósito.
-        "ORIGENS_DO_STATUS": "https://venn360-digital.github.io,https://status.venn360.com,http://localhost:4321"
+        "ORIGENS_DO_STATUS": "https://venn360-digital.github.io,https://status.venn360.com,http://localhost:4321",
+        // O modelo do agente, trocável sem publicar código.
+        "MODELO_DO_AGENTE": "claude-sonnet-5",
+        // Tarifa SÓ para estimar custo na trilha. Não decide nada: quem corta
+        // o atendimento é o teto de passos e de tokens.
+        "TARIFA_ENTRADA_POR_MILHAO": "3",
+        "TARIFA_SAIDA_POR_MILHAO": "15"
     },
 
     // DATABASE_URL entra por `wrangler secret put`, nunca aqui.
-    "//secrets": "DATABASE_URL, SEGREDO_SESSAO, SEGREDO_LINKS, SLACK_SIGNING_SECRET, SLACK_BOT_TOKEN",
+    "//secrets": "DATABASE_URL, SEGREDO_SESSAO, SEGREDO_LINKS, SLACK_SIGNING_SECRET, SLACK_BOT_TOKEN, ANTHROPIC_API_KEY",
 
     "env": {
         "producao": {

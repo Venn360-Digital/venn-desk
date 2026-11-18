@@ -79,6 +79,17 @@ model App {
     tema       Json?
 
     /**
+     * Instruções do agente de atendimento, por app (Fase 4).
+     *
+     * O que é COMUM a todos os apps mora no código (`src/agente/instrucoes.ts`)
+     * e não aqui: as regras de escalonamento obrigatório e a proibição de
+     * prometer prazo não podem depender de alguém ter preenchido um campo.
+     * Este campo é o que muda de produto para produto — vocabulário do nicho,
+     * o que existe no app, o que nunca prometer.
+     */
+    instrucoesDoAgente String? @map("instrucoes_do_agente")
+
+    /**
      * A sequência do número do chamado, por app.
      *
      * Mora numa coluna e não numa SEQUENCE do Postgres porque a numeração é por

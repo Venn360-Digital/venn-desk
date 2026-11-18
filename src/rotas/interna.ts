@@ -32,6 +32,8 @@ import {
     VALIDADE_DA_SESSAO_S,
 } from '../auth/sessao-console.ts'
 import { chavesDoApp, criarChave, revogarChave, TAMANHO_DO_PREFIXO } from '../dados/mcp.ts'
+import { createAnthropic } from '@ai-sdk/anthropic'
+import { atender } from '../agente/atender.ts'
 
 /**
  * A API interna — o que o Console consome, e o que a ponte do Slack vai chamar
@@ -706,6 +708,64 @@ rotasInternas.post('/api/console/sla/vigiar', comCliente, comSessaoDeAgente, asy
     }
 
     return c.json({ estouros: await vigiarPrazos(c.get('cliente')) })
+})
+
+/**
+ * Põe o agente para atender um chamado, agora.
+ *
+ * **Sob demanda, e não automático ainda.** O disparo automático na abertura é o
+ * passo seguinte e precisa de fila (Queues) para não prender a resposta do
+ * widget no tempo do modelo. Começar pelo botão permite medir o comportamento
+ * em chamados reais, com alguém olhando, antes de soltá-lo sozinho — que é o
+ * mesmo motivo pelo qual o modo sombra existe.
+ */
+rotasInternas.post('/api/console/app/:app/chamados/:numero/atender', async (c) => {
+    const agente = c.get('agente')
+    if (agente.papel === 'AGENTE') {
+        throw new ErroDeDominio('sem_permissao', 'Só gestor ou admin aciona a IA.', 403)
+    }
+
+    const chave = c.env.ANTHROPIC_API_KEY
+    if (chave === undefined || chave === '') {
+        /// Falha fechada e com o motivo: sem chave o agente não existe, e
+        /// dizer isso claramente poupa a caçada por um erro de modelo.
+        throw new ErroDeDominio(
+            'agente_nao_configurado',
+            'O agente não está configurado: falta ANTHROPIC_API_KEY no Worker.',
+            503
+        )
+    }
+
+    const chamado = await chamadoDaFila(c)
+    const app = c.get('app')
+
+    const resultado = await atender({
+        modelo: createAnthropic({ apiKey: chave })(
+            c.env.MODELO_DO_AGENTE ?? 'claude-sonnet-5'
+        ),
+        contexto: {
+            cliente: c.get('cliente'),
+            escopoDoApp: c.get('escopo'),
+            app,
+            /// Pelo Console, o agente atende como SUPORTE: as ferramentas de
+            /// engenharia são do canal de engenharia, não de um botão.
+            escopo: 'SUPORTE',
+        },
+        numero: chamado.numero,
+        tarifa: {
+            entradaPorMilhao: Number(c.env.TARIFA_ENTRADA_POR_MILHAO ?? '3'),
+            saidaPorMilhao: Number(c.env.TARIFA_SAIDA_POR_MILHAO ?? '15'),
+        },
+    })
+
+    return c.json({
+        fim: resultado.fim,
+        chamadas: resultado.chamadas,
+        consumo: resultado.consumo,
+        /// O texto final NÃO é resposta ao cliente — só a ferramenta fala com
+        /// ele. Vai para a tela como "o que a IA concluiu".
+        conclusao: resultado.ultimaFala,
+    })
 })
 
 const esquemaDaChaveMcp = z.object({

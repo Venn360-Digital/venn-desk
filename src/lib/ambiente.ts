@@ -39,6 +39,17 @@ export interface Ambiente {
         SLACK_SIGNING_SECRET?: string
         /** Token do bot (`xoxb-…`), para a metade que POSTA. Também segredo. */
         SLACK_BOT_TOKEN?: string
+        /** Chave da API do Claude, para o agente de atendimento. Segredo. */
+        ANTHROPIC_API_KEY?: string
+        /** O modelo do agente. Em `vars`, para trocar sem publicar código. */
+        MODELO_DO_AGENTE?: string
+        /**
+         * A tarifa usada SÓ para estimar custo na trilha de auditoria. Ela não
+         * decide nada: quem corta o atendimento é o teto de passos e de tokens
+         * (ver `src/agente/orcamento.ts`).
+         */
+        TARIFA_ENTRADA_POR_MILHAO?: string
+        TARIFA_SAIDA_POR_MILHAO?: string
         ABERTURA_RATE_LIMITER: RateLimit
         /** Uma sala por chamado, para o tempo real (Fase 3). */
         SALAS?: DurableObjectNamespace
