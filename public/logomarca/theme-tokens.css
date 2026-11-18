@@ -1,0 +1,64 @@
+/* Venn360 — initial design tokens from DESIGN.md v0.5
+   Validate contrast and visual match before production release. */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #FFFFFF;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #F6F6F8;
+  --color-text: #111117;
+  --color-text-muted: #555663;
+  --color-border: #E1E1E8;
+  --color-inverse: #111117;
+  --color-inverse-text: #FFFFFF;
+
+  --color-ti-action: #1F56B5;
+  --color-ti-action-text: #FFFFFF;
+  --color-ti-accent: #12C7EE;
+  --color-ti-soft: #EAF5FF;
+
+  --color-mkt-action: #B94712;
+  --color-mkt-action-text: #FFFFFF;
+  --color-mkt-accent: #F87932;
+  --color-mkt-soft: #FFF0E5;
+
+  --color-sis-action: #7132B8;
+  --color-sis-action-text: #FFFFFF;
+  --color-sis-accent: #B64CF0;
+  --color-sis-soft: #F3E8FF;
+  --color-int-gradient: linear-gradient(115deg, #F87932 0%, #E84F54 32%, #1F56B5 64%, #8E35D4 100%);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #050510;
+  --color-surface: #0D0D1B;
+  --color-surface-raised: #151525;
+  --color-text: #F7F7FA;
+  --color-text-muted: #B9BAC7;
+  --color-border: #2D2D3D;
+  --color-inverse: #FFFFFF;
+  --color-inverse-text: #111117;
+
+  --color-ti-action: #6EA7FF;
+  --color-ti-action-text: #050510;
+  --color-ti-accent: #12C7EE;
+  --color-ti-soft: #12253C;
+
+  --color-mkt-action: #FF9A5F;
+  --color-mkt-action-text: #050510;
+  --color-mkt-accent: #F87932;
+  --color-mkt-soft: #3B2118;
+
+  --color-sis-action: #C68AFF;
+  --color-sis-action-text: #050510;
+  --color-sis-accent: #B64CF0;
+  --color-sis-soft: #2B1C3A;
+  --color-int-gradient: linear-gradient(115deg, #F87932 0%, #E84F70 32%, #3087E8 64%, #B64CF0 100%);
+}
+
+/* Apply a category class to badges, card borders, section accents and contextual CTAs. */
+.area-ti { --area-action: var(--color-ti-action); --area-accent: var(--color-ti-accent); --area-soft: var(--color-ti-soft); }
+.area-mkt { --area-action: var(--color-mkt-action); --area-accent: var(--color-mkt-accent); --area-soft: var(--color-mkt-soft); }
+.area-sis { --area-action: var(--color-sis-action); --area-accent: var(--color-sis-accent); --area-soft: var(--color-sis-soft); }
+.area-int { --area-action: var(--color-inverse); --area-accent: var(--color-int-gradient); --area-soft: var(--color-surface-raised); }

@@ -73,14 +73,29 @@ export const comTokenDoApp = createMiddleware<Ambiente>(async (c, next) => {
      * atualizados — e é o que a seção 7 exige para o portal de contingência
      * reconhecer um e-mail conhecido quando o app estiver fora do ar.
      */
+    /**
+     * Tudo o que o token trouxe é repassado — e o que ele não trouxe não vira
+     * campo.
+     *
+     * Esta montagem campo a campo já escondeu um defeito: quando as claims de
+     * conta entraram, elas foram declaradas no token e no escopo, e NÃO aqui.
+     * O token mandava `account_id`, o Venn Desk respondia 200, e a conta
+     * simplesmente não existia no banco — sem erro em lugar nenhum. Medido em
+     * 18/11/2026. Por isso o nome do tenant agora cai para o id em vez de ser
+     * o id: a origem de cada campo fica visível.
+     */
     const solicitante = await c.get('escopo').solicitantes.garantir({
         tenantExternalId: identidade.tenantExternalId,
-        tenantNome: identidade.tenantExternalId,
+        tenantNome: identidade.tenantNome ?? identidade.tenantExternalId,
         requesterExternalId: identidade.requesterExternalId,
         nome: identidade.nome,
         email: identidade.email,
         papelNoTenant: identidade.papelNoTenant,
         ...(identidade.plano === undefined ? {} : { plano: identidade.plano }),
+        ...(identidade.contaExternalId === undefined
+            ? {}
+            : { contaExternalId: identidade.contaExternalId }),
+        ...(identidade.contaNome === undefined ? {} : { contaNome: identidade.contaNome }),
     })
 
     c.set('identidade', identidade)

@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { abrirChamado } from '../dados/abertura.ts'
 import { agentePorEmail } from '../dados/agentes.ts'
 import { alterarApp, appsAtivos, cadastrarApp } from '../dados/apps.ts'
+import { escopoDoApp } from '../dados/escopo.ts'
 import { avisarPorEmail } from '../correio/avisar.ts'
 import { publicarNaSala } from '../tempo-real/publicar.ts'
 import { formatarNumero } from '../dominio/numero.ts'
@@ -97,6 +98,171 @@ rotasInternas.post('/api/console/sessao', comCliente, async (c) => {
  * 17/11/2026 pelo aceite da saúde.
  */
 rotasInternas.use('/api/console/app/:app/*', comCliente, comSessaoDeAgente, comApp)
+
+const esquemaDaFilaUnica = z.object({
+    app: z.string().optional(),
+    empresa: z.string().optional(),
+    conta: z.string().optional(),
+    status: z.string().optional(),
+    prioridade: z.string().optional(),
+    numero: z.string().optional(),
+    sla: z.enum(['em_risco', 'estourado']).optional(),
+    limite: z.coerce.number().int().min(1).max(200).optional(),
+})
+
+/** `ODB-1042`, `odb-1042`, `1042` e `  1042 ` dão todos 1042. */
+function numeroPedido(bruto: string | undefined): number | undefined {
+    if (bruto === undefined) return undefined
+    const digitos = bruto.replace(/\D+/g, '')
+    if (digitos === '') return undefined
+    const numero = Number(digitos)
+    return Number.isSafeInteger(numero) && numero > 0 ? numero : undefined
+}
+
+/**
+ * A fila ÚNICA, com os três apps na mesma tabela.
+ *
+ * **Ela não fura a regra do `app_id`.** A seção 6 exige que toda consulta
+ * filtre por app, e a garantia disso é `escopoDoApp` (ver o cabeçalho de
+ * `src/dados/escopo.ts`). Então a fila não faz uma consulta sem escopo: ela faz
+ * UMA POR APP, cada uma escopada, e junta os resultados aqui. São três
+ * consultas em vez de uma, em paralelo, e o isolamento continua estrutural —
+ * não há caminho no código por onde um chamado de um app apareça na lista de
+ * outro.
+ *
+ * A alternativa seria um `findMany` sem `appId`, mais rápido e o primeiro
+ * buraco na garantia que sustenta o resto do sistema. Com três apps, a conta
+ * não fecha a favor dela.
+ */
+rotasInternas.get('/api/console/fila', comCliente, comSessaoDeAgente, async (c) => {
+    const filtro = esquemaDaFilaUnica.parse(Object.fromEntries(new URL(c.req.url).searchParams))
+    const cliente = c.get('cliente')
+
+    const todos = await appsAtivos(cliente)
+    const apps = filtro.app === undefined ? todos : todos.filter((a) => a.slug === filtro.app)
+
+    const status =
+        filtro.status === undefined
+            ? ['NOVO', 'ABERTO', 'AGUARDANDO_USUARIO', 'EM_ESPERA']
+            : filtro.status.split(',')
+    const prioridade = filtro.prioridade?.split(',') as
+        | ('BAIXA' | 'NORMAL' | 'ALTA' | 'URGENTE')[]
+        | undefined
+    const numero = numeroPedido(filtro.numero)
+    const agora = new Date()
+
+    /// Teto POR APP, e não global: cortar no total faria o app que respondeu
+    /// primeiro engolir a cota dos outros, e a fila esconderia um produto
+    /// inteiro sem dizer.
+    const porApp = Math.min(filtro.limite ?? 50, 200)
+
+    const lotes = await Promise.all(
+        apps.map(async (app) => {
+            const escopo = escopoDoApp(cliente, app.id)
+
+            const chamados = await escopo.chamados.listarParaFila({
+                status: status as Status[],
+                ...(prioridade === undefined ? {} : { prioridade }),
+                ...(numero === undefined ? {} : { numero }),
+                ...(filtro.empresa === undefined ? {} : { tenantId: filtro.empresa }),
+                ...(filtro.conta === undefined ? {} : { accountId: filtro.conta }),
+                limite: porApp,
+            })
+
+            const relogios = await escopo.sla.deChamados(chamados.map((ch) => ch.id))
+            const porChamado = new Map<string, Relogio[]>()
+            for (const linha of relogios) {
+                const lista = porChamado.get(linha.ticketId) ?? []
+                lista.push({
+                    meta: linha.meta as Meta,
+                    metaMin: linha.metaMin,
+                    venceEm: linha.venceEm,
+                    pausadoEm: linha.pausadoEm,
+                    violadoEm: linha.violadoEm,
+                    cumpridoEm: linha.cumpridoEm,
+                })
+                porChamado.set(linha.ticketId, lista)
+            }
+
+            return chamados.map((chamado) => ({
+                numero: formatarNumero(app.prefixo, chamado.numero),
+                sequencial: chamado.numero,
+                assunto: chamado.assunto,
+                app: { slug: app.slug, nome: app.nome, prefixo: app.prefixo },
+                empresa: {
+                    id: chamado.tenant.id,
+                    nome: chamado.tenant.nome,
+                    plano: chamado.tenant.plano,
+                },
+                conta: chamado.tenant.account,
+                status: chamado.status,
+                tipo: chamado.tipo,
+                prioridade: chamado.prioridade,
+                nivel: chamado.nivel,
+                assigneeId: chamado.assigneeId,
+                atualizadoEm: chamado.atualizadoEm,
+                sla: resumoDoChamado(porChamado.get(chamado.id) ?? [], agora),
+            }))
+        })
+    )
+
+    const linhas = lotes
+        .flat()
+        .filter((linha) =>
+            filtro.sla === undefined
+                ? true
+                : filtro.sla === 'em_risco'
+                  ? linha.sla?.estado === 'em_risco'
+                  : linha.sla?.estado === 'vencido' || linha.sla?.estado === 'violado'
+        )
+        .sort(
+            (a: { atualizadoEm: Date }, b: { atualizadoEm: Date }) =>
+                b.atualizadoEm.getTime() - a.atualizadoEm.getTime()
+        )
+
+    return c.json({ chamados: linhas })
+})
+
+/**
+ * O que os seletores de filtro oferecem.
+ *
+ * Numa chamada só, e não três: a tela monta os seletores de uma vez, e pedir
+ * app por app faria o primeiro aparecer preenchido enquanto os outros ainda
+ * giram.
+ */
+rotasInternas.get('/api/console/filtros', comCliente, comSessaoDeAgente, async (c) => {
+    const cliente = c.get('cliente')
+    const apps = await appsAtivos(cliente)
+
+    const porApp = await Promise.all(
+        apps.map(async (app) => {
+            const escopo = escopoDoApp(cliente, app.id)
+            const [empresas, contas] = await Promise.all([
+                escopo.empresas.listar(),
+                escopo.contas.listar(),
+            ])
+            return { app, empresas, contas }
+        })
+    )
+
+    return c.json({
+        apps: apps.map((app) => ({ slug: app.slug, nome: app.nome, prefixo: app.prefixo })),
+        empresas: porApp.flatMap(({ app, empresas }) =>
+            empresas.map((e: { id: string; nome: string }) => ({
+                id: e.id,
+                nome: e.nome,
+                app: app.slug,
+            }))
+        ),
+        contas: porApp.flatMap(({ app, contas }) =>
+            contas.map((ct: { id: string; nome: string }) => ({
+                id: ct.id,
+                nome: ct.nome,
+                app: app.slug,
+            }))
+        ),
+    })
+})
 
 const esquemaDaFila = z.object({
     status: z.string().optional(),

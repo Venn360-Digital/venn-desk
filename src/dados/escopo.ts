@@ -58,8 +58,19 @@ export interface DadosDaMensagem {
 export interface FiltroDeLista {
     requesterId?: string
     tenantId?: string
+    accountId?: string
     status?: Status[]
+    prioridade?: ('BAIXA' | 'NORMAL' | 'ALTA' | 'URGENTE')[]
+    /** O número do chamado dentro do app, sem o prefixo. */
+    numero?: number
     limite?: number
+}
+
+/** O chamado como a fila precisa dele: com a empresa e a conta já resolvidas. */
+export type ChamadoNaFila = Ticket & {
+    tenant: { id: string; nome: string; plano: string | null } & {
+        account: { id: string; nome: string } | null
+    }
 }
 
 export interface EscopoDoApp {
@@ -74,6 +85,9 @@ export interface EscopoDoApp {
             email: string
             papelNoTenant: string
             plano?: string
+            /** A conta acima da empresa, quando o app a informa. */
+            contaExternalId?: string
+            contaNome?: string
         }): Promise<{ tenantId: string; requesterId: string }>
         /** Para quem o aviso por e-mail vai. Nunca vem do corpo da requisição. */
         porId(id: string): Promise<{ nome: string; email: string } | null>
@@ -93,6 +107,14 @@ export interface EscopoDoApp {
         porId(id: string): Promise<Ticket | null>
         porNumero(numero: number): Promise<Ticket | null>
         listar(filtro: FiltroDeLista): Promise<Ticket[]>
+        /**
+         * A mesma lista, com empresa e conta no mesmo ida-e-volta.
+         *
+         * Separada de `listar` porque o widget não precisa disso e pagaria o
+         * join à toa — e porque a fila do Console, que recarrega sozinha, não
+         * pode resolver o nome da empresa chamado a chamado.
+         */
+        listarParaFila(filtro: FiltroDeLista): Promise<ChamadoNaFila[]>
         /** Aplica um evento da máquina de estados e grava a trilha. */
         aplicarEvento(
             id: string,
@@ -139,6 +161,15 @@ export interface EscopoDoApp {
             emAndamento: number
             naoLidas: number
         }>
+    }
+
+    /** Para os seletores de filtro da fila. Nome e id, nada mais. */
+    empresas: {
+        listar(limite?: number): Promise<{ id: string; nome: string }[]>
+    }
+
+    contas: {
+        listar(limite?: number): Promise<{ id: string; nome: string }[]>
     }
 
     problemas: {
@@ -217,6 +248,26 @@ export interface EscopoDoApp {
     }
 }
 
+/**
+ * A cláusula `where` da fila, uma só para as duas listagens.
+ *
+ * O `appId` entra SEMPRE e primeiro, como em todo o escopo. Os demais filtros
+ * são opcionais e se somam — `undefined` não vira cláusula, para um filtro
+ * vazio não virar "where false".
+ */
+function ondeDaFila(appId: string, filtro: FiltroDeLista) {
+    return {
+        appId,
+        excluidoEm: null,
+        ...(filtro.requesterId === undefined ? {} : { requesterId: filtro.requesterId }),
+        ...(filtro.tenantId === undefined ? {} : { tenantId: filtro.tenantId }),
+        ...(filtro.accountId === undefined ? {} : { tenant: { accountId: filtro.accountId } }),
+        ...(filtro.status === undefined ? {} : { status: { in: filtro.status } }),
+        ...(filtro.prioridade === undefined ? {} : { prioridade: { in: filtro.prioridade } }),
+        ...(filtro.numero === undefined ? {} : { numero: filtro.numero }),
+    }
+}
+
 /** A linha do banco vista como o relógio puro de `src/dominio/sla.ts`. */
 function paraRelogio(linha: SlaTimer): Relogio {
     return {
@@ -254,6 +305,33 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
 
         solicitantes: {
             async garantir(identidade) {
+                /**
+                 * A conta vem ANTES da empresa, porque a empresa aponta para
+                 * ela. Sem `contaExternalId` nada é criado e o vínculo fica
+                 * nulo — é o caso do app que ainda não manda a claim.
+                 */
+                const conta =
+                    identidade.contaExternalId === undefined
+                        ? null
+                        : await conexao.account.upsert({
+                              where: {
+                                  appId_externalId: {
+                                      appId,
+                                      externalId: identidade.contaExternalId,
+                                  },
+                              },
+                              create: {
+                                  appId,
+                                  externalId: identidade.contaExternalId,
+                                  nome: identidade.contaNome ?? identidade.contaExternalId,
+                              },
+                              update: {
+                                  ...(identidade.contaNome === undefined
+                                      ? {}
+                                      : { nome: identidade.contaNome }),
+                              },
+                          })
+
                 const tenant = await conexao.tenant.upsert({
                     where: { appId_externalId: { appId, externalId: identidade.tenantExternalId } },
                     create: {
@@ -261,12 +339,16 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                         externalId: identidade.tenantExternalId,
                         nome: identidade.tenantNome,
                         ...(identidade.plano === undefined ? {} : { plano: identidade.plano }),
+                        ...(conta === null ? {} : { accountId: conta.id }),
                     },
                     /// O nome e o plano vêm do app a cada token: o app é a fonte
                     /// da verdade, e o Desk acompanha sem precisar de sincronismo.
                     update: {
                         nome: identidade.tenantNome,
                         ...(identidade.plano === undefined ? {} : { plano: identidade.plano }),
+                        /// Só liga; nunca DESliga. Um token sem a claim não
+                        /// pode apagar o vínculo que outro já estabeleceu.
+                        ...(conta === null ? {} : { accountId: conta.id }),
                     },
                 })
 
@@ -320,17 +402,27 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 return conexao.ticket.findFirst({ where: { appId, numero, excluidoEm: null } })
             },
 
+            async listarParaFila(filtro) {
+                return conexao.ticket.findMany({
+                    where: ondeDaFila(appId, filtro),
+                    include: {
+                        tenant: {
+                            select: {
+                                id: true,
+                                nome: true,
+                                plano: true,
+                                account: { select: { id: true, nome: true } },
+                            },
+                        },
+                    },
+                    orderBy: { atualizadoEm: 'desc' },
+                    take: filtro.limite ?? 50,
+                })
+            },
+
             async listar(filtro) {
                 return conexao.ticket.findMany({
-                    where: {
-                        appId,
-                        excluidoEm: null,
-                        ...(filtro.requesterId === undefined
-                            ? {}
-                            : { requesterId: filtro.requesterId }),
-                        ...(filtro.tenantId === undefined ? {} : { tenantId: filtro.tenantId }),
-                        ...(filtro.status === undefined ? {} : { status: { in: filtro.status } }),
-                    },
+                    where: ondeDaFila(appId, filtro),
                     orderBy: { atualizadoEm: 'desc' },
                     take: Math.min(filtro.limite ?? 50, 200),
                 })
@@ -589,6 +681,28 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 ])
 
                 return { abertos, emAndamento, naoLidas }
+            },
+        },
+
+        empresas: {
+            async listar(limite) {
+                return conexao.tenant.findMany({
+                    where: { appId },
+                    select: { id: true, nome: true },
+                    orderBy: { nome: 'asc' },
+                    take: limite ?? 500,
+                })
+            },
+        },
+
+        contas: {
+            async listar(limite) {
+                return conexao.account.findMany({
+                    where: { appId },
+                    select: { id: true, nome: true },
+                    orderBy: { nome: 'asc' },
+                    take: limite ?? 500,
+                })
             },
         },
 

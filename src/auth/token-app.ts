@@ -40,21 +40,38 @@ const TOLERANCIA_S = 5
 const esquemaDasClaims = z.object({
     app: z.string().min(1),
     tenant_id: z.string().min(1),
+    /**
+     * O NOME da empresa/workspace. Opcional pela mesma razão das claims de
+     * conta — mas sem ele a fila mostra o id no lugar do nome, que é o que
+     * acontecia antes desta claim existir.
+     */
+    tenant_nome: z.string().min(1).optional(),
     user_id: z.string().min(1),
     nome: z.string().min(1),
     email: z.string().email(),
     papel: z.string().min(1).default('member'),
     plano: z.string().min(1).optional(),
+    /**
+     * A conta acima da empresa, quando o app a informa (`Account → Workspace`
+     * nos apps). OPCIONAIS: o app que ainda não as manda continua funcionando,
+     * e o chamado fica sem conta até ele mandar. Exigi-las travaria o Venn
+     * Desk na instalação do widget nos três apps.
+     */
+    account_id: z.string().min(1).optional(),
+    account_nome: z.string().min(1).optional(),
 })
 
 export interface IdentidadeDoSolicitante {
     appSlug: string
     tenantExternalId: string
+    tenantNome?: string
     requesterExternalId: string
     nome: string
     email: string
     papelNoTenant: string
     plano?: string
+    contaExternalId?: string
+    contaNome?: string
 }
 
 export interface AppParaValidacao {
@@ -136,11 +153,20 @@ export async function validarTokenDoApp(
     return {
         appSlug: claims.data.app,
         tenantExternalId: claims.data.tenant_id,
+        ...(claims.data.tenant_nome === undefined
+            ? {}
+            : { tenantNome: claims.data.tenant_nome }),
         requesterExternalId: claims.data.user_id,
         nome: claims.data.nome,
         email: claims.data.email,
         papelNoTenant: claims.data.papel,
         ...(claims.data.plano === undefined ? {} : { plano: claims.data.plano }),
+        ...(claims.data.account_id === undefined
+            ? {}
+            : { contaExternalId: claims.data.account_id }),
+        ...(claims.data.account_nome === undefined
+            ? {}
+            : { contaNome: claims.data.account_nome }),
     }
 }
 

@@ -1,0 +1,174 @@
+/* Venn360 Design System — semantic tokens
+   Derived from the approved Venn360 brand direction and the uploaded reference-site capture.
+   The reference's original font files and brand content are intentionally not redistributed. */
+
+:root,
+:root[data-theme="light"],
+[data-theme="light"] {
+  color-scheme: light;
+  --vds-bg: #FFFFFF;
+  --vds-surface: #FFFFFF;
+  --vds-surface-2: #F6F6F8;
+  --vds-surface-3: #EEEEF2;
+  --vds-text: #111117;
+  --vds-text-muted: #555663;
+  --vds-text-subtle: #70717C;
+  --vds-border: #E1E1E8;
+  --vds-border-strong: #C6C7D0;
+  --vds-inverse: #111117;
+  --vds-inverse-text: #FFFFFF;
+  --vds-glass: rgba(255, 255, 255, .74);
+  --vds-glass-border: rgba(17, 17, 23, .12);
+  --vds-shadow-sm: 0 4px 14px rgba(17, 17, 23, .06);
+  --vds-shadow-md: 0 16px 42px rgba(17, 17, 23, .10);
+  --vds-shadow-lg: 0 28px 80px rgba(17, 17, 23, .16);
+  --vds-focus-ring: rgba(31, 86, 181, .38);
+
+  --vds-ti: #1F56B5;
+  --vds-ti-strong: #16438F;
+  --vds-ti-accent: #12C7EE;
+  --vds-ti-soft: #EAF5FF;
+  --vds-ti-text: #FFFFFF;
+
+  --vds-mkt: #B94712;
+  --vds-mkt-strong: #96380D;
+  --vds-mkt-accent: #F87932;
+  --vds-mkt-soft: #FFF0E5;
+  --vds-mkt-text: #FFFFFF;
+
+  --vds-sis: #7132B8;
+  --vds-sis-strong: #572392;
+  --vds-sis-accent: #B64CF0;
+  --vds-sis-soft: #F3E8FF;
+  --vds-sis-text: #FFFFFF;
+
+  --vds-int: linear-gradient(115deg, #F87932 0%, #E84F70 32%, #1F56B5 64%, #8E35D4 100%);
+  --vds-int-soft: linear-gradient(115deg, rgba(248,121,50,.12), rgba(31,86,181,.10), rgba(142,53,212,.12));
+
+  --vds-success: #16794B;
+  --vds-success-bg: #E5F6EC;
+  --vds-warning: #8D5500;
+  --vds-warning-bg: #FFF4D6;
+  --vds-danger: #B42318;
+  --vds-danger-bg: #FEECEB;
+  --vds-info: #175CD3;
+  --vds-info-bg: #EAF2FF;
+}
+
+:root[data-theme="dark"],
+[data-theme="dark"] {
+  color-scheme: dark;
+  --vds-bg: #050510;
+  --vds-surface: #0D0D1B;
+  --vds-surface-2: #151525;
+  --vds-surface-3: #202034;
+  --vds-text: #F7F7FA;
+  --vds-text-muted: #B9BAC7;
+  --vds-text-subtle: #9293A4;
+  --vds-border: #2D2D3D;
+  --vds-border-strong: #414157;
+  --vds-inverse: #FFFFFF;
+  --vds-inverse-text: #111117;
+  --vds-glass: rgba(17, 17, 34, .74);
+  --vds-glass-border: rgba(255, 255, 255, .15);
+  --vds-shadow-sm: 0 4px 14px rgba(0, 0, 0, .18);
+  --vds-shadow-md: 0 16px 42px rgba(0, 0, 0, .28);
+  --vds-shadow-lg: 0 28px 80px rgba(0, 0, 0, .4);
+  --vds-focus-ring: rgba(110, 167, 255, .48);
+
+  --vds-ti: #6EA7FF;
+  --vds-ti-strong: #95BEFF;
+  --vds-ti-accent: #12C7EE;
+  --vds-ti-soft: #12253C;
+  --vds-ti-text: #050510;
+
+  --vds-mkt: #FF9A5F;
+  --vds-mkt-strong: #FFB78E;
+  --vds-mkt-accent: #F87932;
+  --vds-mkt-soft: #3B2118;
+  --vds-mkt-text: #050510;
+
+  --vds-sis: #C68AFF;
+  --vds-sis-strong: #D8AEFF;
+  --vds-sis-accent: #B64CF0;
+  --vds-sis-soft: #2B1C3A;
+  --vds-sis-text: #050510;
+
+  --vds-int: linear-gradient(115deg, #F87932 0%, #E84F70 32%, #3087E8 64%, #B64CF0 100%);
+  --vds-int-soft: linear-gradient(115deg, rgba(248,121,50,.16), rgba(48,135,232,.15), rgba(182,76,240,.16));
+
+  --vds-success: #76D9A2;
+  --vds-success-bg: #153526;
+  --vds-warning: #FFD27A;
+  --vds-warning-bg: #392B13;
+  --vds-danger: #FF938A;
+  --vds-danger-bg: #411F21;
+  --vds-info: #8AB4FF;
+  --vds-info-bg: #182C4B;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"],
+  [data-theme="system"] {
+    color-scheme: dark;
+    --vds-bg: #050510;
+    --vds-surface: #0D0D1B;
+    --vds-surface-2: #151525;
+    --vds-surface-3: #202034;
+    --vds-text: #F7F7FA;
+    --vds-text-muted: #B9BAC7;
+    --vds-text-subtle: #9293A4;
+    --vds-border: #2D2D3D;
+    --vds-border-strong: #414157;
+    --vds-inverse: #FFFFFF;
+    --vds-inverse-text: #111117;
+    --vds-glass: rgba(17, 17, 34, .74);
+    --vds-glass-border: rgba(255, 255, 255, .15);
+    --vds-shadow-sm: 0 4px 14px rgba(0, 0, 0, .18);
+    --vds-shadow-md: 0 16px 42px rgba(0, 0, 0, .28);
+    --vds-shadow-lg: 0 28px 80px rgba(0, 0, 0, .4);
+    --vds-focus-ring: rgba(110, 167, 255, .48);
+    --vds-ti: #6EA7FF; --vds-ti-strong: #95BEFF; --vds-ti-accent: #12C7EE; --vds-ti-soft: #12253C; --vds-ti-text: #050510;
+    --vds-mkt: #FF9A5F; --vds-mkt-strong: #FFB78E; --vds-mkt-accent: #F87932; --vds-mkt-soft: #3B2118; --vds-mkt-text: #050510;
+    --vds-sis: #C68AFF; --vds-sis-strong: #D8AEFF; --vds-sis-accent: #B64CF0; --vds-sis-soft: #2B1C3A; --vds-sis-text: #050510;
+    --vds-int: linear-gradient(115deg, #F87932 0%, #E84F70 32%, #3087E8 64%, #B64CF0 100%);
+    --vds-int-soft: linear-gradient(115deg, rgba(248,121,50,.16), rgba(48,135,232,.15), rgba(182,76,240,.16));
+    --vds-success: #76D9A2; --vds-success-bg: #153526; --vds-warning: #FFD27A; --vds-warning-bg: #392B13;
+    --vds-danger: #FF938A; --vds-danger-bg: #411F21; --vds-info: #8AB4FF; --vds-info-bg: #182C4B;
+  }
+}
+
+/* Feature accents: use on context-specific regions, not as whole-page backgrounds. */
+.area-ti { --vds-area: var(--vds-ti); --vds-area-strong: var(--vds-ti-strong); --vds-area-soft: var(--vds-ti-soft); --vds-area-gradient: linear-gradient(115deg, var(--vds-ti), var(--vds-ti-accent)); }
+.area-mkt { --vds-area: var(--vds-mkt); --vds-area-strong: var(--vds-mkt-strong); --vds-area-soft: var(--vds-mkt-soft); --vds-area-gradient: linear-gradient(115deg, var(--vds-mkt), #FFB45F); }
+.area-sis { --vds-area: var(--vds-sis); --vds-area-strong: var(--vds-sis-strong); --vds-area-soft: var(--vds-sis-soft); --vds-area-gradient: linear-gradient(115deg, var(--vds-sis), var(--vds-sis-accent)); }
+.area-int { --vds-area: var(--vds-text); --vds-area-strong: var(--vds-text); --vds-area-soft: var(--vds-surface-2); --vds-area-gradient: var(--vds-int); }
+
+:root {
+  --vds-radius-xs: 8px;
+  --vds-radius-sm: 12px;
+  --vds-radius-md: 16px;
+  --vds-radius-lg: 20px;
+  --vds-radius-xl: 24px;
+  --vds-radius-pill: 999px;
+  --vds-container: 1200px;
+  --vds-copy: 720px;
+  --vds-space-1: 4px;
+  --vds-space-2: 8px;
+  --vds-space-3: 12px;
+  --vds-space-4: 16px;
+  --vds-space-5: 20px;
+  --vds-space-6: 24px;
+  --vds-space-8: 32px;
+  --vds-space-10: 40px;
+  --vds-space-12: 48px;
+  --vds-space-16: 64px;
+  --vds-space-18: 72px;
+  --vds-space-24: 96px;
+  --vds-space-28: 112px;
+  --vds-space-30: 120px;
+  --vds-motion-fast: 150ms;
+  --vds-motion-base: 240ms;
+  --vds-motion-slow: 500ms;
+  --vds-ease-out: cubic-bezier(.16, 1, .3, 1);
+}

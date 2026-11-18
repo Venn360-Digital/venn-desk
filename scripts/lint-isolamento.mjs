@@ -50,6 +50,7 @@ const DELEGADOS = [
     'healthEpisode',
     'slaPolicy',
     'slaTimer',
+    'account',
 ]
 
 const METODOS = ['findFirst', 'findMany', 'findUnique', 'create', 'createMany', 'update', 'updateMany', 'upsert', 'delete', 'deleteMany', 'count', 'aggregate']

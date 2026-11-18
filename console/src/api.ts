@@ -15,6 +15,15 @@ export class SessaoExpirada extends Error {
     }
 }
 
+/**
+ * Os códigos que significam "não há sessão" — e só eles.
+ *
+ * O 401 do Venn Desk tem dois sentidos bem diferentes: a sessão acabou, ou as
+ * credenciais estão erradas. Tratar os dois como o primeiro é o defeito que
+ * esta lista conserta (ver abaixo).
+ */
+const SEM_SESSAO = ['sessao_ausente', 'sessao_invalida']
+
 export async function api<T>(
     caminho: string,
     opcoes: { metodo?: string; corpo?: unknown } = {}
@@ -26,13 +35,25 @@ export async function api<T>(
         ...(opcoes.corpo === undefined ? {} : { body: JSON.stringify(opcoes.corpo) }),
     })
 
-    if (resposta.status === 401) throw new SessaoExpirada()
-
     const texto = await resposta.text()
     const dados = texto === '' ? {} : (JSON.parse(texto) as Record<string, unknown>)
+    const erro = dados['erro'] as { mensagem?: string; codigo?: string } | undefined
+
+    /**
+     * O corpo é lido ANTES de decidir, e o código é que decide.
+     *
+     * A versão anterior lançava `SessaoExpirada` em qualquer 401, sem abrir o
+     * corpo. Na tela de login — onde o único 401 possível é credencial errada —
+     * o servidor respondia "E-mail ou senha incorretos." e o Console mostrava
+     * "Sessão encerrada. Entre de novo.", mandando a pessoa entrar de novo
+     * exatamente com o que acabou de não funcionar. Medido em 18/11/2026, com
+     * o André travado na porta.
+     */
+    if (resposta.status === 401 && SEM_SESSAO.includes(erro?.codigo ?? '')) {
+        throw new SessaoExpirada()
+    }
 
     if (!resposta.ok) {
-        const erro = dados['erro'] as { mensagem?: string; codigo?: string } | undefined
         throw new Error(erro?.mensagem ?? `Falha na requisição (${resposta.status}).`)
     }
 

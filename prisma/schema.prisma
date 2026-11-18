@@ -102,6 +102,7 @@ model App {
     views       View[]
     tags        Tag[]
     customFields CustomField[]
+    accounts    Account[]
     healthState HealthState?
     healthEpisodes HealthEpisode[]
 
@@ -109,12 +110,53 @@ model App {
 }
 
 /**
+ * A CONTA do cliente dentro de um app — quem contrata e paga.
+ *
+ * Nos apps a hierarquia é `Account → Workspace[]`: a conta tem as faturas e o
+ * plano, e cada workspace é uma unidade que opera (com CNPJ próprio, no caso
+ * das franquias). O Venn Desk espelha isso porque muda o atendimento: três
+ * chamados de três unidades da mesma rede não são três clientes com azar, são
+ * uma rede com uma semana ruim — e metade dos escalonamentos obrigatórios da
+ * seção 4 (cobrança, cancelamento) é assunto de conta, não de unidade.
+ *
+ * **Opcional de propósito.** As claims `account_id` e `account_nome` do token
+ * são opcionais: o app que ainda não as manda continua funcionando, e o chamado
+ * fica sem conta até ele mandar. Exigi-las agora bloquearia o Venn Desk na
+ * instalação do widget nos três apps.
+ */
+model Account {
+    id    String @id @default(cuid())
+    appId String @map("app_id")
+    app   App    @relation(fields: [appId], references: [id])
+
+    /// O id da conta no app. É o vínculo, e ele nunca é o nosso `id`.
+    externalId String  @map("external_id")
+    nome       String
+    plano      String?
+
+    criadoEm DateTime @default(now()) @map("criado_em")
+
+    tenants Tenant[]
+
+    @@unique([appId, externalId])
+    @@index([appId, nome])
+    @@map("accounts")
+}
+
+/**
  * Empresa cliente dentro de um app: a clínica, a agência, o estúdio.
+ *
+ * Corresponde ao `Workspace` dos apps — a unidade que opera. A conta que a
+ * contrata, quando o app a informa, fica em `Account`.
  */
 model Tenant {
     id    String @id @default(cuid())
     appId String @map("app_id")
     app   App    @relation(fields: [appId], references: [id])
+
+    /// A conta que contrata esta unidade. Nulo enquanto o app não informar.
+    accountId String?  @map("account_id")
+    account   Account? @relation(fields: [accountId], references: [id])
 
     /// O id do tenant NO APP, como vem na claim do token.
     externalId String  @map("external_id")
