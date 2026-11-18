@@ -104,6 +104,32 @@ export interface ChamadoNaFila {
     sla: ResumoDeSla | null
 }
 
+export interface ChaveDoMcp {
+    id: string
+    nome: string
+    escopo: 'SUPORTE' | 'ENGENHARIA'
+    /** Os 12 primeiros caracteres. O resto é hash e não existe em lugar nenhum. */
+    prefixo: string
+    criadoEm: string
+    usadoEm: string | null
+    revogadoEm: string | null
+}
+
+export interface SegredoEmitido {
+    chave: Omit<ChaveDoMcp, 'criadoEm' | 'usadoEm' | 'revogadoEm'>
+    /** A ÚNICA vez que este valor existe fora do cofre de quem recebeu. */
+    segredo: string
+    aviso: string
+}
+
+export interface Atendimento {
+    fim: 'concluiu' | 'teto'
+    chamadas: string[]
+    consumo: { passos: number; tokensDeEntrada: number; tokensDeSaida: number }
+    /** O que a IA concluiu. NÃO é o que foi dito ao cliente. */
+    conclusao: string
+}
+
 export interface OpcoesDeFiltro {
     apps: { slug: string; nome: string; prefixo: string }[]
     empresas: { id: string; nome: string; app: string }[]

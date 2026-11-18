@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Gauge, Inbox, Layers, Monitor, Moon, PanelLeft, Sun } from 'lucide-react'
+import { Gauge, Inbox, KeyRound, Layers, Monitor, Moon, PanelLeft, Sun } from 'lucide-react'
 
 import { aplicarTema, lerTema, type Tema } from '../tema.ts'
 
@@ -31,6 +31,7 @@ interface Secao {
 const SECOES: Secao[] = [
     { para: '/', rotulo: 'Fila', Icone: Inbox, fim: true },
     { para: '/metas', rotulo: 'Metas', Icone: Gauge },
+    { para: '/credenciais', rotulo: 'Credenciais', Icone: KeyRound },
     { para: '/apps', rotulo: 'Apps', Icone: Layers },
 ]
 

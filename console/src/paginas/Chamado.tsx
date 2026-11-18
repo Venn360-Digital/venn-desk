@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 
-import { api, type ChamadoCompleto } from '../api.ts'
+import { api, type Atendimento, type ChamadoCompleto } from '../api.ts'
 import { Aviso, Botao, Quando, Selo, Vazio } from '../componentes/ui.tsx'
 import { SeloDeSla } from '../componentes/sla.tsx'
+import { Sparkles } from 'lucide-react'
 
 /**
  * A tela do chamado. A linha do tempo mostra mensagem pública E nota interna —
@@ -16,11 +17,12 @@ import { SeloDeSla } from '../componentes/sla.tsx'
  * interna". Sem padrão silencioso — a seção 8 exige o mesmo no Slack, onde
  * responder ao cliente precisa de botão ou prefixo explícito.
  */
-export function Chamado() {
+export function Chamado({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
     const { app, numero } = useParams<{ app: string; numero: string }>()
     const fila = useQueryClient()
     const [texto, setTexto] = useState('')
     const [erro, setErro] = useState<string | null>(null)
+    const [atendimento, setAtendimento] = useState<Atendimento | null>(null)
 
     const chave = ['chamado', app, numero]
     const { data, isPending } = useQuery({
@@ -46,6 +48,24 @@ export function Chamado() {
         onSuccess: () => {
             void fila.invalidateQueries({ queryKey: chave })
             void fila.invalidateQueries({ queryKey: ['fila', app] })
+        },
+        onError: (e: Error) => setErro(e.message),
+    })
+
+    /**
+     * O atendimento pela IA é uma mutação demorada — o modelo lê, busca,
+     * classifica e responde, e isso leva segundos. Por isso o botão mostra que
+     * está trabalhando e o resultado aparece embaixo, em vez de a tela só
+     * recarregar sozinha: quem apertou precisa saber O QUE a IA fez.
+     */
+    const atender = useMutation({
+        mutationFn: () =>
+            api<Atendimento>(`/app/${app}/chamados/${numero}/atender`, { metodo: 'POST' }),
+        onSuccess: (r) => {
+            setAtendimento(r)
+            setErro(null)
+            void fila.invalidateQueries({ queryKey: chave })
+            void fila.invalidateQueries({ queryKey: ['fila'] })
         },
         onError: (e: Error) => setErro(e.message),
     })
@@ -176,6 +196,25 @@ export function Chamado() {
                     </div>
                 </div>
 
+                {papel !== 'AGENTE' ? (
+                    <div>
+                        <h2 className="mb-2 text-xs font-medium text-tinta-fraca">
+                            Atendimento pela IA
+                        </h2>
+                        <Botao
+                            variante="leve"
+                            desabilitado={atender.isPending || trabalhando}
+                            onClick={() => atender.mutate()}
+                        >
+                            <span className="flex items-center gap-1.5">
+                                <Sparkles size={13} aria-hidden />
+                                {atender.isPending ? 'Atendendo…' : 'Atender com a IA'}
+                            </span>
+                        </Botao>
+                        {atendimento !== null ? <Resultado atendimento={atendimento} /> : null}
+                    </div>
+                ) : null}
+
                 {chamado.contexto !== null && (
                     <div>
                         <h2 className="mb-2 text-xs font-medium text-tinta-fraca">
@@ -218,6 +257,55 @@ export function Chamado() {
                     </ol>
                 </div>
             </aside>
+        </div>
+    )
+}
+
+/**
+ * O que a IA fez, depois de fazer.
+ *
+ * **A conclusão NÃO é a resposta ao cliente.** O que chegou a ele está na linha
+ * do tempo, gravado por `responder_usuario` — e em modo sombra está lá como
+ * rascunho. Este texto é o raciocínio do modelo, e a tela diz isso, porque a
+ * confusão entre os dois é a mais cara que este desenho permite.
+ */
+function Resultado({ atendimento }: { atendimento: Atendimento }) {
+    const tokens = atendimento.consumo.tokensDeEntrada + atendimento.consumo.tokensDeSaida
+
+    return (
+        <div className="mt-3 space-y-2 rounded-sm border border-borda bg-superficie p-3 text-xs">
+            {atendimento.fim === 'teto' ? (
+                <p className="font-medium text-atencao">
+                    Parou no teto de gasto. O chamado precisa de uma pessoa.
+                </p>
+            ) : (
+                <p className="font-medium text-calmo">Atendimento concluído.</p>
+            )}
+
+            <p className="text-tinta-fraca">
+                {atendimento.consumo.passos} passo
+                {atendimento.consumo.passos === 1 ? '' : 's'} · {tokens.toLocaleString('pt-BR')}{' '}
+                tokens
+            </p>
+
+            {atendimento.chamadas.length > 0 ? (
+                <p className="text-tinta-fraca">
+                    Ferramentas: <span className="font-mono">{atendimento.chamadas.join(' → ')}</span>
+                </p>
+            ) : (
+                <p className="text-tinta-sutil">Não chamou nenhuma ferramenta.</p>
+            )}
+
+            {atendimento.conclusao.trim() !== '' ? (
+                <div>
+                    <p className="mb-1 text-tinta-sutil">
+                        Conclusão da IA — isto NÃO foi enviado ao cliente:
+                    </p>
+                    <p className="whitespace-pre-wrap text-tinta-fraca">
+                        {atendimento.conclusao}
+                    </p>
+                </div>
+            ) : null}
         </div>
     )
 }

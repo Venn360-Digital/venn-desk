@@ -8,6 +8,7 @@ import { Chamado } from './paginas/Chamado.tsx'
 import { Apps } from './paginas/Apps.tsx'
 import { Portal } from './paginas/Portal.tsx'
 import { Sla } from './paginas/Sla.tsx'
+import { Credenciais } from './paginas/Credenciais.tsx'
 import { Shell } from './componentes/Shell.tsx'
 import { Vazio } from './componentes/ui.tsx'
 
@@ -42,6 +43,7 @@ export function App() {
 /** O título da barra superior. Sai da rota, para não repetir em cada página. */
 function tituloDaRota(caminho: string): string {
     if (caminho.startsWith('/metas')) return 'Metas de atendimento'
+    if (caminho.startsWith('/credenciais')) return 'Credenciais do MCP'
     if (caminho.startsWith('/apps')) return 'Apps'
     if (caminho.includes('/chamados/')) return 'Chamado'
     return 'Fila de atendimento'
@@ -76,9 +78,14 @@ function Console() {
         <Shell agente={sessao} titulo={tituloDaRota(local.pathname)} aoSair={() => void sair()}>
             <Routes>
                 <Route path="/" element={<Fila />} />
-                <Route path="/app/:app/chamados/:numero" element={<Chamado />} />
+                <Route
+                    path="/app/:app/chamados/:numero"
+                    element={<Chamado papel={sessao.papel} />}
+                />
                 <Route path="/metas" element={<Sla papel={sessao.papel} />} />
                 <Route path="/metas/:app" element={<Sla papel={sessao.papel} />} />
+                <Route path="/credenciais" element={<Credenciais papel={sessao.papel} />} />
+                <Route path="/credenciais/:app" element={<Credenciais papel={sessao.papel} />} />
                 <Route path="/apps" element={<Apps papel={sessao.papel} />} />
                 {/* O caminho antigo, de quando a fila era por app. */}
                 <Route path="/app/:app" element={<Navigate to="/" replace />} />
