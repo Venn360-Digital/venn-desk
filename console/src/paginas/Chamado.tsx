@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom'
 
 import { api, type ChamadoCompleto } from '../api.ts'
 import { Aviso, Botao, Quando, Selo, Vazio } from '../componentes/ui.tsx'
+import { SeloDeSla } from '../componentes/sla.tsx'
 
 /**
  * A tela do chamado. A linha do tempo mostra mensagem pública E nota interna —
@@ -52,29 +53,59 @@ export function Chamado() {
     if (isPending) return <Vazio>carregando…</Vazio>
     if (!data) return <Vazio>Chamado não encontrado.</Vazio>
 
-    const { chamado, mensagens, eventos, anexos } = data
+    const { chamado, mensagens, eventos, anexos, app: produto, empresa, sla } = data
     const trabalhando = responder.isPending || evento.isPending
 
     return (
         <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
             <section>
                 <header className="mb-4">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         <span className="font-mono text-xs text-tinta-fraca">{chamado.numero}</span>
                         <Selo>{chamado.status}</Selo>
                         <Selo>{chamado.prioridade}</Selo>
+                        <SeloDeSla sla={sla} />
                     </div>
                     <h1 className="mt-1 text-lg font-semibold">{chamado.assunto}</h1>
+                    {/*
+                      De quem é e em qual produto — a mesma informação que a
+                      fila mostra. Sem isto, clicar numa linha PERDIA contexto.
+                    */}
+                    <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-tinta-fraca">
+                        <span>{produto?.nome}</span>
+                        {empresa ? (
+                            <>
+                                <span aria-hidden>·</span>
+                                <span className="text-tinta">{empresa.nome}</span>
+                                {empresa.plano ? <span>({empresa.plano})</span> : null}
+                            </>
+                        ) : null}
+                        {empresa?.conta ? (
+                            <>
+                                <span aria-hidden>·</span>
+                                <span>conta {empresa.conta.nome}</span>
+                            </>
+                        ) : null}
+                    </p>
                 </header>
 
                 <ol className="space-y-3">
                     {mensagens.map((m) => (
                         <li
                             key={m.id}
-                            className={`rounded-md border p-3 text-sm ${
+                            /**
+                             * `bg-superficie`, não `bg-white`.
+                             *
+                             * Com a marca, o Console tem tema escuro — e
+                             * `bg-white` fixo virava caixa branca em página
+                             * preta. A nota interna usa o par pronto da marca
+                             * (`atencao-fundo`) pela mesma razão: 5% de uma cor
+                             * clara sobre fundo escuro dá cinza lavado.
+                             */
+                            className={`rounded-sm border p-3 text-sm ${
                                 m.visibilidade === 'INTERNA'
-                                    ? 'border-atencao/40 bg-atencao/5'
-                                    : 'border-borda bg-white'
+                                    ? 'border-atencao/40 bg-atencao-fundo'
+                                    : 'border-borda bg-superficie'
                             }`}
                         >
                             <div className="mb-1 flex items-center gap-2 text-xs text-tinta-fraca">
@@ -97,7 +128,7 @@ export function Chamado() {
                         onChange={(e) => setTexto(e.target.value)}
                         rows={4}
                         placeholder="Escreva a resposta ou a nota…"
-                        className="w-full rounded-md border border-borda bg-white px-3 py-2 text-sm outline-none focus:border-destaque"
+                        className="w-full rounded-sm border border-borda bg-superficie px-3 py-2 text-sm text-tinta outline-none focus:border-destaque"
                     />
                     {erro !== null && <Aviso>{erro}</Aviso>}
                     <div className="flex flex-wrap gap-2">

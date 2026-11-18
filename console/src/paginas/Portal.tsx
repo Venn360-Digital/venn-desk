@@ -111,8 +111,8 @@ export function Portal() {
     }, [app])
 
     return (
-        <div className="min-h-screen bg-fundo">
-            <header className="border-b border-borda bg-white">
+        <div className="min-h-screen bg-superficie-2">
+            <header className="border-b border-borda bg-superficie">
                 <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
                     <span className="font-semibold">{dados?.app.nome ?? 'Suporte'}</span>
                     <span className="text-xs text-tinta-fraca">central de atendimento</span>
@@ -177,7 +177,7 @@ function PedirAcesso({ app }: { app: string }) {
     }
 
     return (
-        <div className="mx-auto max-w-md rounded-lg border border-borda bg-white p-5">
+        <div className="mx-auto max-w-md rounded-md border border-borda bg-superficie p-5">
             <h1 className="text-base font-semibold">Acessar meus chamados</h1>
             <p className="mb-4 mt-1 text-sm text-tinta-fraca">
                 Informe o e-mail que você usa no aplicativo. Enviamos um link de acesso para ele.
@@ -214,7 +214,7 @@ function Lista({ dados, aoAbrir }: { dados: Resposta; aoAbrir: (n: number) => vo
                     <li key={chamado.numero}>
                         <button
                             onClick={() => aoAbrir(chamado.sequencial)}
-                            className="flex w-full flex-wrap items-center gap-3 rounded-lg border border-borda bg-white px-4 py-3 text-left hover:border-destaque"
+                            className="flex w-full flex-wrap items-center gap-3 rounded-sm border border-borda bg-superficie px-4 py-3 text-left transition hover:border-destaque"
                         >
                             <span className="font-mono text-xs text-tinta-fraca">{chamado.numero}</span>
                             <span className="flex-1 text-sm font-medium">{chamado.assunto}</span>
@@ -262,7 +262,7 @@ function Conversa({
             <button onClick={aoVoltar} className="mb-4 text-sm text-tinta-fraca hover:underline">
                 ← todos os chamados
             </button>
-            <div className="rounded-lg border border-borda bg-white p-5">
+            <div className="rounded-md border border-borda bg-superficie p-5">
                 <div className="mb-4 flex flex-wrap items-center gap-3">
                     <span className="font-mono text-xs text-tinta-fraca">{dados.chamado.numero}</span>
                     <h1 className="flex-1 text-base font-semibold">{dados.chamado.assunto}</h1>

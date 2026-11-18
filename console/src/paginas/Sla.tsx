@@ -194,14 +194,14 @@ function Edicao({
                 min={1}
                 value={valores[chave]}
                 onChange={(e) => setValores({ ...valores, [chave]: Number(e.target.value) })}
-                className="w-24 rounded border border-borda px-2 py-1 text-sm"
+                className="w-24 rounded-xs border border-borda bg-superficie px-2 py-1 text-sm text-tinta"
             />
             <span className="ml-1 text-[11px] text-tinta-fraca">min</span>
         </td>
     )
 
     return (
-        <tr className="border-b border-borda/60 bg-white">
+        <tr className="border-b border-borda/60 bg-superficie">
             <td className="py-2">
                 <Selo>{meta.prioridade}</Selo>
             </td>

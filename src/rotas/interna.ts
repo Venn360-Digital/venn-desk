@@ -408,15 +408,46 @@ async function chamadoDaFila(c: Context<Ambiente>) {
 rotasInternas.get('/api/console/app/:app/chamados/:numero', async (c) => {
     const chamado = await chamadoDaFila(c)
     const escopo = c.get('escopo')
+    const app = c.get('app')
+
+    /**
+     * A tela do chamado devolve o MESMO contexto que a fila mostra: empresa,
+     * conta, app e prazo.
+     *
+     * Sem isso, clicar numa linha da fila PERDE informação — o atendente via de
+     * quem era e quanto faltava, abria, e ficava só com o texto. Numa fila que
+     * agora mistura três produtos, saber em qual deles se está é parte da
+     * leitura, não um detalhe.
+     */
+    const [mensagens, eventos, anexos, relogios, empresa] = await Promise.all([
+        escopo.mensagens.todas(chamado.id),
+        escopo.eventos.doChamado(chamado.id),
+        escopo.anexos.doChamado(chamado.id),
+        escopo.sla.doChamado(chamado.id),
+        escopo.empresas.porId(chamado.tenantId),
+    ])
 
     return c.json({
         chamado: {
             ...chamado,
-            numero: formatarNumero(c.get('app').prefixo, chamado.numero),
+            numero: formatarNumero(app.prefixo, chamado.numero),
         },
-        mensagens: await escopo.mensagens.todas(chamado.id),
-        eventos: await escopo.eventos.doChamado(chamado.id),
-        anexos: await escopo.anexos.doChamado(chamado.id),
+        app: { slug: app.slug, nome: app.nome, prefixo: app.prefixo },
+        empresa,
+        sla: resumoDoChamado(
+            relogios.map((linha) => ({
+                meta: linha.meta as Meta,
+                metaMin: linha.metaMin,
+                venceEm: linha.venceEm,
+                pausadoEm: linha.pausadoEm,
+                violadoEm: linha.violadoEm,
+                cumpridoEm: linha.cumpridoEm,
+            })),
+            new Date()
+        ),
+        mensagens,
+        eventos,
+        anexos,
     })
 })
 

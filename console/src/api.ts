@@ -147,6 +147,14 @@ export interface ChamadoCompleto {
         contexto: Record<string, unknown> | null
         criadoEm: string
     }
+    app: { slug: string; nome: string; prefixo: string }
+    empresa: {
+        id: string
+        nome: string
+        plano: string | null
+        conta: { id: string; nome: string } | null
+    } | null
+    sla: ResumoDeSla | null
     mensagens: Mensagem[]
     eventos: Evento[]
     anexos: { chave: string; nome: string; tipo: string; tamanho: number }[]

@@ -166,6 +166,13 @@ export interface EscopoDoApp {
     /** Para os seletores de filtro da fila. Nome e id, nada mais. */
     empresas: {
         listar(limite?: number): Promise<{ id: string; nome: string }[]>
+        /** Com a conta junto — é o cabeçalho do chamado. */
+        porId(id: string): Promise<{
+            id: string
+            nome: string
+            plano: string | null
+            conta: { id: string; nome: string } | null
+        } | null>
     }
 
     contas: {
@@ -685,6 +692,21 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
         },
 
         empresas: {
+            async porId(id) {
+                const achada = await conexao.tenant.findFirst({
+                    where: { id, appId },
+                    select: {
+                        id: true,
+                        nome: true,
+                        plano: true,
+                        account: { select: { id: true, nome: true } },
+                    },
+                })
+                if (achada === null) return null
+                const { account, ...resto } = achada
+                return { ...resto, conta: account }
+            },
+
             async listar(limite) {
                 return conexao.tenant.findMany({
                     where: { appId },

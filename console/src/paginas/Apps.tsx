@@ -31,7 +31,7 @@ export function Apps({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
     return (
         <div className="space-y-3">
             {apps.map((app) => (
-                <article key={app.slug} className="rounded-md border border-borda bg-white p-4">
+                <article key={app.slug} className="rounded-sm border border-borda bg-superficie p-4">
                     <header className="flex flex-wrap items-center gap-2">
                         <h2 className="font-medium">{app.nome}</h2>
                         <span className="font-mono text-xs text-tinta-fraca">{app.prefixo}</span>
