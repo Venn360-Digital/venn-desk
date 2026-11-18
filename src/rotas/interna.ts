@@ -529,6 +529,92 @@ const esquemaDoEvento = z.object({
     ]),
 })
 
+const esquemaDoRascunho = z.object({
+    acao: z.enum(['enviar', 'descartar']),
+    /// Presente sempre que a tela mandar o conteúdo da caixa. Se for igual ao
+    /// rascunho, não conta como edição — ver `aprovarRascunho`.
+    corpo: z.string().trim().min(1).max(10_000).optional(),
+})
+
+/**
+ * O botão que faltava: aprovar, editar ou descartar o rascunho do modo sombra.
+ *
+ * Sem isto, o ciclo da seção 4 ficava pela metade — a IA escrevia e o cliente
+ * nunca recebia. O próprio agente diagnosticou o laço num chamado real em
+ * 18/11/2026: a cliente reabriu três vezes porque, do ponto de vista dela,
+ * ninguém havia respondido.
+ *
+ * **Enviar faz tudo o que uma resposta humana faz**: muda o status, empurra
+ * pela sala, avisa por e-mail e cumpre o prazo de primeira resposta. Um
+ * caminho que gravasse a mensagem sem isso entregaria ao cliente uma resposta
+ * que o sistema não considera resposta.
+ */
+rotasInternas.post('/api/console/app/:app/chamados/:numero/rascunhos/:id', async (c) => {
+    const chamado = await chamadoDaFila(c)
+    const agente = c.get('agente')
+    const escopo = c.get('escopo')
+    const ator = `agent:${agente.id}`
+
+    const corpo = esquemaDoRascunho.safeParse(await c.req.json().catch(() => null))
+    if (!corpo.success) {
+        throw new ErroDeDominio('dados_invalidos', 'Diga se é para enviar ou descartar.', 400)
+    }
+
+    if (corpo.data.acao === 'descartar') {
+        const descartada = await escopo.mensagens.descartarRascunho(c.req.param('id'), { ator })
+        return c.json({ mensagem: descartada, status: chamado.status })
+    }
+
+    const enviada = await escopo.mensagens.aprovarRascunho(
+        c.req.param('id'),
+        { corpo: corpo.data.corpo },
+        { ator }
+    )
+
+    const atualizado = await escopo.chamados.aplicarEvento(chamado.id, 'responder_usuario', {
+        ator,
+    })
+
+    c.executionCtx.waitUntil(
+        publicarNaSala(c.env.SALAS, chamado.id, { tipo: 'mensagem', resumo: 'suporte' })
+    )
+
+    avisarPorEmail(c, 'atualizacao', {
+        id: chamado.id,
+        numero: chamado.numero,
+        assunto: chamado.assunto,
+        requesterId: chamado.requesterId,
+        contexto: chamado.contexto,
+    })
+
+    return c.json({ mensagem: enviada, status: atualizado.status })
+})
+
+/**
+ * O placar do modo sombra (seção 4).
+ *
+ * A sugestão da especificação é sair do modo sombra quando 90% dos rascunhos
+ * saírem SEM edição em 30 seguidos. O número não decide sozinho — quem desliga
+ * é uma pessoa —, mas sem ele a decisão seria palpite.
+ */
+rotasInternas.get('/api/console/app/:app/sombra', async (c) => {
+    const placar = await c.get('escopo').mensagens.placarDoModoSombra(30)
+    const app = c.get('app')
+
+    return c.json({
+        modoSombra: app.modoSombra,
+        ...placar,
+        /// Em fração do que foi ENVIADO, não do que foi decidido: descartar é
+        /// um "não" à resposta, e misturá-lo com "enviei editando" esconderia
+        /// a diferença entre a IA errar o texto e errar o conteúdo.
+        taxaSemEdicao:
+            placar.enviados === 0
+                ? null
+                : Number((placar.semEdicao / placar.enviados).toFixed(3)),
+        sugestao: 'A seção 4 sugere 90% sem edição em 30 decididos antes de desligar.',
+    })
+})
+
 rotasInternas.post('/api/console/app/:app/chamados/:numero/eventos', async (c) => {
     const chamado = await chamadoDaFila(c)
     const agente = c.get('agente')

@@ -73,7 +73,7 @@
         // `high` por padrão. `xhigh` e `max` existem e melhoram julgamento
         // difícil, mas cobram em LATÊNCIA — e num suporte a resposta que
         // demora dois minutos já é outra experiência para quem espera.
-        "ESFORCO_DO_AGENTE": "high",
+        "ESFORCO_DO_AGENTE": "medium",
         // Tarifa SÓ para estimar custo na trilha. Não decide nada: quem corta
         // o atendimento é o teto de passos e de tokens.
         // Tarifa do Opus, só para a estimativa da trilha.

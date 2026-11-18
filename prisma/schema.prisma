@@ -375,6 +375,27 @@ model TicketMessage {
     /// Rascunho do modo sombra: escrito pela IA, ainda não enviado (seção 4).
     rascunho Boolean @default(false)
 
+    /// Quem aprovou o envio do rascunho, e quando. `agent:<id>`.
+    aprovadoPor String?   @map("aprovado_por")
+    aprovadoEm  DateTime? @map("aprovado_em")
+
+    /**
+     * O humano mexeu no texto antes de enviar?
+     *
+     * É a métrica que decide quando um app pode sair do modo sombra: a seção 4
+     * sugere 90% de envio SEM edição em 30 chamados seguidos. Sem este campo a
+     * pergunta não teria resposta, e a saída do modo sombra viraria palpite.
+     *
+     * Nulo quando não se aplica — mensagem que nunca foi rascunho, ou rascunho
+     * ainda não decidido.
+     */
+    editadoAoEnviar Boolean? @map("editado_ao_enviar")
+
+    /// Rascunho descartado. Exclusão é lógica: a seção 10 não apaga nada, e
+    /// saber o que a IA escreveu e foi recusado é metade do aprendizado.
+    descartadoEm DateTime? @map("descartado_em")
+    descartadoPor String?  @map("descartado_por")
+
     criadoEm DateTime @default(now()) @map("criado_em")
 
     attachments Attachment[]

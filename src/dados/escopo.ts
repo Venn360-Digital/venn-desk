@@ -137,10 +137,35 @@ export interface EscopoDoApp {
 
     mensagens: {
         adicionar(dados: DadosDaMensagem, autor: Autor): Promise<TicketMessage>
-        /** O que o widget mostra: públicas, sem rascunho. */
+        /** O que o widget mostra: públicas, sem rascunho e sem descartada. */
         publicas(ticketId: string): Promise<TicketMessage[]>
-        /** O que o Console e o Slack mostram: tudo. */
+        /** O que o Console e o Slack mostram: tudo, inclusive o descartado. */
         todas(ticketId: string): Promise<TicketMessage[]>
+        /**
+         * Aprova o rascunho do modo sombra e o torna mensagem de verdade.
+         *
+         * `corpo` presente significa que o humano EDITOU — e é essa diferença,
+         * e não o fato de ter enviado, que decide quando o app sai do modo
+         * sombra (seção 4).
+         */
+        aprovarRascunho(
+            id: string,
+            dados: { corpo?: string | undefined },
+            autor: Autor
+        ): Promise<TicketMessage>
+        descartarRascunho(id: string, autor: Autor): Promise<TicketMessage>
+        /** Os rascunhos pendentes de um chamado. */
+        rascunhos(ticketId: string): Promise<TicketMessage[]>
+        /**
+         * A medida que a seção 4 pede: dos últimos rascunhos decididos, quantos
+         * saíram sem ninguém mexer.
+         */
+        placarDoModoSombra(ultimos?: number): Promise<{
+            decididos: number
+            enviados: number
+            semEdicao: number
+            descartados: number
+        }>
     }
 
     anexos: {
@@ -622,9 +647,141 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
 
             async publicas(ticketId) {
                 return conexao.ticketMessage.findMany({
-                    where: { appId, ticketId, visibilidade: 'PUBLICA', rascunho: false },
+                    where: {
+                        appId,
+                        ticketId,
+                        visibilidade: 'PUBLICA',
+                        rascunho: false,
+                        /// Um rascunho descartado nunca foi mensagem. Ele fica
+                        /// no banco para a equipe, não para o cliente.
+                        descartadoEm: null,
+                    },
                     orderBy: { criadoEm: 'asc' },
                 })
+            },
+
+            async rascunhos(ticketId) {
+                return conexao.ticketMessage.findMany({
+                    where: { appId, ticketId, rascunho: true, descartadoEm: null },
+                    orderBy: { criadoEm: 'asc' },
+                })
+            },
+
+            async aprovarRascunho(id, dados, autor) {
+                const rascunho = await conexao.ticketMessage.findFirst({
+                    where: { appId, id, rascunho: true, descartadoEm: null },
+                })
+                if (rascunho === null) {
+                    throw new ErroDeDominio(
+                        'rascunho_nao_encontrado',
+                        'Rascunho não encontrado, já enviado ou descartado.',
+                        404
+                    )
+                }
+
+                /**
+                 * "Editou" é o texto ter MUDADO, não o campo ter vindo.
+                 *
+                 * A tela manda o conteúdo da caixa de texto sempre, e ela vem
+                 * preenchida com o rascunho — então comparar presença contaria
+                 * como edição todo envio, e a métrica que decide a saída do
+                 * modo sombra nunca passaria de zero.
+                 */
+                const corpoNovo = dados.corpo?.trim()
+                const editou = corpoNovo !== undefined && corpoNovo !== rascunho.corpo.trim()
+                const agora = new Date()
+
+                await conexao.ticketMessage.updateMany({
+                    where: { id, appId },
+                    data: {
+                        rascunho: false,
+                        ...(editou ? { corpo: corpoNovo } : {}),
+                        aprovadoPor: autor.ator,
+                        aprovadoEm: agora,
+                        editadoAoEnviar: editou,
+                    },
+                })
+
+                await conexao.ticketEvent.create({
+                    data: {
+                        appId,
+                        ticketId: rascunho.ticketId,
+                        ator: autor.ator,
+                        evento: editou ? 'rascunho:editado' : 'rascunho:enviado',
+                        depois: { mensagemId: id },
+                    },
+                })
+
+                /// A primeira resposta é cumprida AGORA, e não quando a IA
+                /// escreveu: foi agora que o cliente passou a ter resposta.
+                await escopoDoApp(conexao, appId).sla.cumprir(
+                    rascunho.ticketId,
+                    'primeira_resposta',
+                    agora
+                )
+
+                const enviada = await conexao.ticketMessage.findFirst({ where: { id, appId } })
+                return enviada as TicketMessage
+            },
+
+            async descartarRascunho(id, autor) {
+                const rascunho = await conexao.ticketMessage.findFirst({
+                    where: { appId, id, rascunho: true, descartadoEm: null },
+                })
+                if (rascunho === null) {
+                    throw new ErroDeDominio(
+                        'rascunho_nao_encontrado',
+                        'Rascunho não encontrado, já enviado ou descartado.',
+                        404
+                    )
+                }
+
+                await conexao.ticketMessage.updateMany({
+                    where: { id, appId },
+                    data: { descartadoEm: new Date(), descartadoPor: autor.ator },
+                })
+
+                await conexao.ticketEvent.create({
+                    data: {
+                        appId,
+                        ticketId: rascunho.ticketId,
+                        ator: autor.ator,
+                        evento: 'rascunho:descartado',
+                        depois: { mensagemId: id },
+                    },
+                })
+
+                const descartada = await conexao.ticketMessage.findFirst({ where: { id, appId } })
+                return descartada as TicketMessage
+            },
+
+            async placarDoModoSombra(ultimos) {
+                /**
+                 * Conta os DECIDIDOS, não os escritos: um rascunho que ainda
+                 * espera não diz nada sobre a qualidade da IA, e incluí-lo
+                 * empurraria a taxa para baixo só porque ninguém olhou ainda.
+                 */
+                const decididos = await conexao.ticketMessage.findMany({
+                    where: {
+                        appId,
+                        OR: [{ editadoAoEnviar: { not: null } }, { descartadoEm: { not: null } }],
+                    },
+                    select: { editadoAoEnviar: true, descartadoEm: true },
+                    orderBy: { criadoEm: 'desc' },
+                    take: ultimos ?? 30,
+                })
+
+                const descartados = decididos.filter((m) => m.descartadoEm !== null).length
+                const enviados = decididos.length - descartados
+
+                return {
+                    decididos: decididos.length,
+                    enviados,
+                    semEdicao: decididos.filter(
+                        (m) => m.descartadoEm === null && m.editadoAoEnviar === false
+                    ).length,
+                    descartados,
+                }
             },
 
             async todas(ticketId) {

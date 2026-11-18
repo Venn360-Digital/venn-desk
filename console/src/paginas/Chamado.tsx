@@ -6,6 +6,7 @@ import { api, type Atendimento, type ChamadoCompleto } from '../api.ts'
 import { Aviso, Botao, Quando, Selo, Vazio } from '../componentes/ui.tsx'
 import { SeloDeSla } from '../componentes/sla.tsx'
 import { Sparkles } from 'lucide-react'
+import type { Mensagem } from '../api.ts'
 
 /**
  * A tela do chamado. A linha do tempo mostra mensagem pública E nota interna —
@@ -58,6 +59,20 @@ export function Chamado({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
      * está trabalhando e o resultado aparece embaixo, em vez de a tela só
      * recarregar sozinha: quem apertou precisa saber O QUE a IA fez.
      */
+    const decidir = useMutation({
+        mutationFn: (v: { id: string; acao: 'enviar' | 'descartar'; corpo?: string }) =>
+            api(`/app/${app}/chamados/${numero}/rascunhos/${v.id}`, {
+                metodo: 'POST',
+                corpo: { acao: v.acao, ...(v.corpo === undefined ? {} : { corpo: v.corpo }) },
+            }),
+        onSuccess: () => {
+            setErro(null)
+            void fila.invalidateQueries({ queryKey: chave })
+            void fila.invalidateQueries({ queryKey: ['fila'] })
+        },
+        onError: (e: Error) => setErro(e.message),
+    })
+
     const atender = useMutation({
         mutationFn: () =>
             api<Atendimento>(`/app/${app}/chamados/${numero}/atender`, { metodo: 'POST' }),
@@ -110,7 +125,15 @@ export function Chamado({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
                 </header>
 
                 <ol className="space-y-3">
-                    {mensagens.map((m) => (
+                    {mensagens.map((m) =>
+                        m.rascunho && m.descartadoEm === null ? (
+                            <RascunhoPendente
+                                key={m.id}
+                                mensagem={m}
+                                trabalhando={trabalhando || decidir.isPending}
+                                aoDecidir={(v) => decidir.mutate({ id: m.id, ...v })}
+                            />
+                        ) : (
                         <li
                             key={m.id}
                             /**
@@ -133,13 +156,24 @@ export function Chamado({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
                                 {m.visibilidade === 'INTERNA' && (
                                     <span className="font-medium text-atencao">nota interna</span>
                                 )}
-                                {m.rascunho && <span className="font-medium text-destaque">rascunho</span>}
+                                {m.descartadoEm !== null && (
+                                    <span className="font-medium text-tinta-sutil">
+                                        rascunho descartado
+                                    </span>
+                                )}
                                 <span>· {m.origem.toLowerCase()}</span>
                                 <Quando iso={m.criadoEm} />
                             </div>
-                            <p className="whitespace-pre-wrap">{m.corpo}</p>
+                            <p
+                                className={`whitespace-pre-wrap ${
+                                    m.descartadoEm === null ? '' : 'text-tinta-sutil line-through'
+                                }`}
+                            >
+                                {m.corpo}
+                            </p>
                         </li>
-                    ))}
+                        )
+                    )}
                 </ol>
 
                 <div className="mt-5 space-y-2">
@@ -307,5 +341,71 @@ function Resultado({ atendimento }: { atendimento: Atendimento }) {
                 </div>
             ) : null}
         </div>
+    )
+}
+
+/**
+ * O rascunho do modo sombra, como DECISÃO pendente.
+ *
+ * Ele não é desenhado como mensagem de propósito: uma mensagem na linha do
+ * tempo parece coisa que já aconteceu, e este texto não chegou a ninguém. Com
+ * moldura própria, caixa editável e três botões, fica claro que alguém precisa
+ * agir — e foi a falta disso que deixou uma cliente reabrindo o mesmo chamado
+ * três vezes, achando que ninguém respondia.
+ *
+ * O texto já vem na caixa, editável. "Editar" não é um modo separado: é
+ * escrever por cima e enviar. O sistema compara com o original para saber se
+ * houve edição — a medida que decide quando o app sai do modo sombra.
+ */
+function RascunhoPendente({
+    mensagem,
+    trabalhando,
+    aoDecidir,
+}: {
+    mensagem: Mensagem
+    trabalhando: boolean
+    aoDecidir: (v: { acao: 'enviar' | 'descartar'; corpo?: string }) => void
+}) {
+    const [texto, setTexto] = useState(mensagem.corpo)
+    const mexeu = texto.trim() !== mensagem.corpo.trim()
+
+    return (
+        <li className="rounded-sm border border-destaque/50 bg-destaque-suave/40 p-3">
+            <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
+                <Sparkles size={13} className="text-destaque" aria-hidden />
+                <strong className="font-medium text-destaque">
+                    Rascunho da IA — ainda não enviado
+                </strong>
+                <Quando iso={mensagem.criadoEm} />
+            </div>
+
+            <textarea
+                value={texto}
+                onChange={(e) => setTexto(e.target.value)}
+                rows={Math.min(14, texto.split('\n').length + 2)}
+                className="w-full rounded-sm border border-borda bg-superficie px-3 py-2 text-sm text-tinta outline-none focus:border-destaque"
+            />
+
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Botao
+                    desabilitado={trabalhando || texto.trim() === ''}
+                    onClick={() => aoDecidir({ acao: 'enviar', corpo: texto })}
+                >
+                    {mexeu ? 'Enviar com as minhas alterações' : 'Enviar ao cliente'}
+                </Botao>
+                <Botao
+                    variante="perigo"
+                    desabilitado={trabalhando}
+                    onClick={() => aoDecidir({ acao: 'descartar' })}
+                >
+                    Descartar
+                </Botao>
+                {mexeu ? (
+                    <span className="text-xs text-tinta-fraca">
+                        editado — isto conta contra a saída do modo sombra
+                    </span>
+                ) : null}
+            </div>
+        </li>
     )
 }

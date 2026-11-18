@@ -152,6 +152,8 @@ export interface Mensagem {
     origem: string
     corpo: string
     rascunho: boolean
+    /** Rascunho recusado. Fica na trilha, mas nunca foi mensagem. */
+    descartadoEm: string | null
     criadoEm: string
 }
 
