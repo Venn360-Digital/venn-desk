@@ -23,9 +23,14 @@ VALOR="$( set -a; . "$ARQ" >/dev/null 2>&1; set +a; printf '%s' "${!VAR:-}" )"
 [ -n "$VALOR" ] || { echo "ABORTA: $VAR não está em ${ARQ##*/} ou está vazia." >&2; exit 1; }
 
 # `--env` do wrangler: o ambiente de produção é um Worker separado.
+#
+# A expansão é `${ALVO[@]+"${ALVO[@]}"}` e não `"${ALVO[@]}"`: o bash 3.2 que o
+# macOS traz trata array VAZIO como variável não definida sob `set -u`, e o
+# script morria em "ALVO[@]: unbound variable" justamente no caminho de
+# staging, que é o mais usado. Medido em 18/11/2026.
 if [ "$AMB" = production ]; then ALVO=(--env producao); else ALVO=(); fi
 
-printf '%s' "$VALOR" | npx wrangler secret put "$VAR" "${ALVO[@]}" >/dev/null 2>&1
+printf '%s' "$VALOR" | npx wrangler secret put "$VAR" ${ALVO[@]+"${ALVO[@]}"} >/dev/null 2>&1
 ESTADO=$?
 
 FP=$(printf '%s' "$VALOR" | shasum -a 256 | cut -c1-8)

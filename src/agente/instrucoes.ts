@@ -53,7 +53,15 @@ export function montarInstrucoes(alvo: Alvo): string {
             ? 'Leia o chamado com `obter_chamado` antes de qualquer outra coisa.'
             : null,
         tem('buscar_chamados')
-            ? 'Procure casos parecidos com `buscar_chamados` antes de responder: um chamado já resolvido costuma ter a resposta pronta e consistente.'
+            ? /**
+               * O teto de buscas é instrução, e não código, de propósito: o
+               * modelo precisa poder buscar duas vezes com termos diferentes
+               * quando a primeira foi infeliz. O que ele NÃO deve fazer é
+               * insistir — medido em 18/11/2026, num chamado real: quatro
+               * buscas seguidas sem resultado, 43 mil tokens, US$ 0,16 contra
+               * os US$ 0,07 de um chamado resolvido em quatro passos.
+               */
+              'Procure casos parecidos com `buscar_chamados` antes de responder: um chamado já resolvido costuma ter a resposta pronta e consistente. **Uma busca costuma bastar, e duas são o limite** — se nenhuma achar nada, siga sem elas. Repetir termos parecidos não traz resposta nova e custa caro.'
             : null,
         tem('classificar_chamado')
             ? 'Classifique tipo e prioridade com `classificar_chamado`. Isso é interno e não avisa o cliente.'
