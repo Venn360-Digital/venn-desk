@@ -11,6 +11,7 @@ import type { Ambiente } from '../lib/ambiente.ts'
 import { avisarPorEmail } from '../correio/avisar.ts'
 import { publicarNaSala } from '../tempo-real/publicar.ts'
 import { comApp, comCliente, comTokenDoApp } from '../auth/middleware.ts'
+import { lerTema } from '../dominio/tema.ts'
 import { enfileirarAtendimento } from '../agente/fila.ts'
 import { veOsChamadosDaEmpresa } from '../auth/token-app.ts'
 
@@ -34,6 +35,57 @@ import { veOsChamadosDaEmpresa } from '../auth/token-app.ts'
  * e nenhum parâmetro pode capturar o outro. Achado pelo aceite da Fase 1.
  */
 export const rotasDoSolicitante = new Hono<Ambiente>()
+
+/**
+ * CORS para os apps, e só para eles.
+ *
+ * O widget roda no navegador do cliente, dentro do app, e fala com o Venn Desk
+ * — duas origens diferentes. Havia duas saídas:
+ *
+ *  - **Proxy no app**: cada requisição do widget iria navegador → Worker do app
+ *    → Worker do Desk. Mesma origem, sem CORS, e o dobro de latência em tudo —
+ *    incluindo o SSE do tempo real, que passaria a atravessar um route handler
+ *    do Next. Fluxo longo por dentro de outro Worker é onde isso quebra.
+ *  - **CORS**: o navegador fala direto com o Desk. O SSE funciona nativo, a
+ *    latência é a real, e o custo é uma lista de origens.
+ *
+ * Escolhido o segundo. E vale dizer o que o CORS NÃO é: ele não autentica nada
+ * — quem autentica é o token assinado pelo app (ADR 0003), e um cliente que
+ * não seja navegador ignora CORS por completo. A lista existe para impedir que
+ * uma página de terceiro use a sessão do visitante dela, não para proteger a
+ * API.
+ */
+function origensDosApps(env: Ambiente['Bindings']): string[] {
+    return (env.ORIGENS_DOS_APPS ?? '')
+        .split(',')
+        .map((o) => o.trim())
+        .filter((o) => o !== '')
+}
+
+rotasDoSolicitante.use('/api/app/*', async (c, next) => {
+    const origem = c.req.header('Origin')
+    const permitida = origem !== undefined && origensDosApps(c.env).includes(origem)
+
+    if (c.req.method === 'OPTIONS') {
+        if (!permitida) return c.body(null, 403)
+        return c.body(null, 204, {
+            'Access-Control-Allow-Origin': origem,
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+            'Access-Control-Max-Age': '86400',
+            Vary: 'Origin',
+        })
+    }
+
+    await next()
+
+    if (permitida) {
+        c.res.headers.set('Access-Control-Allow-Origin', origem)
+        /// Sem `Vary: Origin` a borda serviria a um app a resposta cacheada de
+        /// outro — e a resposta carrega o cabeçalho que autoriza.
+        c.res.headers.append('Vary', 'Origin')
+    }
+})
 
 rotasDoSolicitante.use('/api/app/:app/*', comCliente, comApp, comTokenDoApp)
 
@@ -364,6 +416,14 @@ rotasDoSolicitante.get('/api/app/:app/eu', async (c) => {
             veDaEmpresa: veOsChamadosDaEmpresa(identidade),
         },
         app: { slug: app.slug, nome: app.nome, prefixo: app.prefixo },
+        /**
+         * O tema vem JUNTO com a identidade, e não numa rota própria.
+         *
+         * O widget já faz esta chamada antes de desenhar qualquer coisa; uma
+         * segunda requisição só para saber a cor faria o botão aparecer e
+         * depois mudar de cor na frente da pessoa.
+         */
+        tema: lerTema(app.tema),
         contadores,
     })
 })

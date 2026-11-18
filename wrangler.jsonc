@@ -86,6 +86,10 @@
         // CORS tem de deixá-lo ler para a página ser conferida antes de
         // publicada. Fora da lista de produção, de propósito.
         "ORIGENS_DO_STATUS": "https://venn360-digital.github.io,https://status.venn360.com,http://localhost:4321",
+        // As origens dos apps que embutem o widget. Staging do Desk aceita só
+        // o homolog dos apps; produção, só produção. Cruzar os dois faria um
+        // widget de homolog abrir chamado no banco do cliente.
+        "ORIGENS_DOS_APPS": "https://homolog-odontobox.venn360.com,https://homolog-conecta.venn360.com,https://homolog-stagent.venn360.com,http://localhost:3000",
         // O modelo do agente, trocável sem publicar código.
         //
         // Sonnet 5 (18/11/2026). O Opus foi medido em chamado real e custou
@@ -132,6 +136,7 @@
                 // aponta para a URL do Pages, que existe.
                 "URL_STATUS": "https://venn360-digital.github.io/venn-desk/",
                 "ORIGENS_DO_STATUS": "https://venn360-digital.github.io,https://status.venn360.com",
+                "ORIGENS_DOS_APPS": "https://odontobox.venn360.com,https://conecta.venn360.com,https://stagent.venn360.com",
                 "MODELO_DO_AGENTE": "claude-sonnet-5",
                 "ESFORCO_DO_AGENTE": "medium",
                 "TARIFA_ENTRADA_POR_MILHAO": "3",

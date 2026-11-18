@@ -32,6 +32,8 @@ export interface Ambiente {
         URL_STATUS?: string
         /** Origens da página de status, separadas por vírgula. Só elas no CORS. */
         ORIGENS_DO_STATUS?: string
+        /** Origens dos apps que embutem o widget. Só elas no CORS de `/api/app/*`. */
+        ORIGENS_DOS_APPS?: string
         /**
          * Segredo de assinatura do app do Slack. Entra por `wrangler secret
          * put`, nunca em `wrangler.jsonc`. Ausente, a ponte recusa tudo.

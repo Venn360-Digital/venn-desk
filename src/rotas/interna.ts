@@ -22,6 +22,7 @@ import type { Ambiente } from '../lib/ambiente.ts'
 import type { Prisma } from '#prisma'
 import { comApp, comCliente, comSessaoDeAgente } from '../auth/middleware.ts'
 import { verificarSaude } from '../saude/verificar.ts'
+import { avisosDoTema, esquemaDoTema, lerTema } from '../dominio/tema.ts'
 import { vigiarPrazos } from '../sla/vigiar.ts'
 import type { CaixaDeSaida } from '../correio/enviar.ts'
 import {
@@ -974,6 +975,44 @@ rotasInternas.delete('/api/console/app/:app/mcp/:id', async (c) => {
     const revogada = await revogarChave(c.get('cliente'), c.req.param('id'))
 
     return c.json({ revogada })
+})
+
+/**
+ * O tema do widget daquele app — cor, posição, atendente e textos.
+ *
+ * Fica em rota própria, e não no `PATCH /apps/:slug`, por causa da permissão:
+ * alterar cadastro de app é coisa de gestor para cima, e aparência do widget é
+ * trabalho de quem cuida da marca. Separar deixa abrir uma sem abrir a outra.
+ */
+rotasInternas.get('/api/console/app/:app/tema', async (c) => {
+    const tema = lerTema(c.get('app').tema)
+
+    return c.json({ tema, avisos: avisosDoTema(tema) })
+})
+
+rotasInternas.put('/api/console/app/:app/tema', async (c) => {
+    const agente = c.get('agente')
+    if (agente.papel === 'AGENTE') {
+        throw new ErroDeDominio('sem_permissao', 'Agente não altera a aparência do widget.', 403)
+    }
+
+    const corpo = esquemaDoTema.safeParse(await c.req.json().catch(() => null))
+    if (!corpo.success) {
+        throw new ErroDeDominio(
+            'tema_invalido',
+            corpo.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '),
+            400
+        )
+    }
+
+    const app = await alterarApp(c.get('cliente'), c.req.param('app'), {
+        tema: corpo.data as unknown as Prisma.InputJsonValue,
+    })
+    if (app === null) throw new ErroDeDominio('app_nao_encontrado', 'App não encontrado.', 404)
+
+    /// Os avisos voltam com o salvo: eles não impedem, mas a tela precisa
+    /// deles para dizer o que ficou ruim DEPOIS de salvar.
+    return c.json({ tema: corpo.data, avisos: avisosDoTema(corpo.data) })
 })
 
 /** Quem está logado. É como a SPA do Console sabe se há sessão. */

@@ -9,6 +9,7 @@ import { Apps } from './paginas/Apps.tsx'
 import { Portal } from './paginas/Portal.tsx'
 import { Sla } from './paginas/Sla.tsx'
 import { Credenciais } from './paginas/Credenciais.tsx'
+import { Aparencia } from './paginas/Aparencia.tsx'
 import { Shell } from './componentes/Shell.tsx'
 import { Vazio } from './componentes/ui.tsx'
 
@@ -44,6 +45,7 @@ export function App() {
 function tituloDaRota(caminho: string): string {
     if (caminho.startsWith('/metas')) return 'Metas de atendimento'
     if (caminho.startsWith('/credenciais')) return 'Credenciais do MCP'
+    if (caminho.startsWith('/aparencia')) return 'Aparência do widget'
     if (caminho.startsWith('/apps')) return 'Apps'
     if (caminho.includes('/chamados/')) return 'Chamado'
     return 'Fila de atendimento'
@@ -86,6 +88,8 @@ function Console() {
                 <Route path="/metas/:app" element={<Sla papel={sessao.papel} />} />
                 <Route path="/credenciais" element={<Credenciais papel={sessao.papel} />} />
                 <Route path="/credenciais/:app" element={<Credenciais papel={sessao.papel} />} />
+                <Route path="/aparencia" element={<Aparencia papel={sessao.papel} />} />
+                <Route path="/aparencia/:app" element={<Aparencia papel={sessao.papel} />} />
                 <Route path="/apps" element={<Apps papel={sessao.papel} />} />
                 {/* O caminho antigo, de quando a fila era por app. */}
                 <Route path="/app/:app" element={<Navigate to="/" replace />} />

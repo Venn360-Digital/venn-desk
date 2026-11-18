@@ -45,12 +45,14 @@ export function Campo({
     onChange,
     tipo = 'text',
     requerido,
+    desabilitado,
 }: {
     rotulo: string
     valor: string
     onChange: (v: string) => void
     tipo?: string
     requerido?: boolean
+    desabilitado?: boolean
 }) {
     return (
         <label className="block">
@@ -59,8 +61,9 @@ export function Campo({
                 type={tipo}
                 value={valor}
                 required={requerido}
+                disabled={desabilitado}
                 onChange={(e) => onChange(e.target.value)}
-                className="w-full rounded-sm border border-borda bg-superficie px-3 py-2 text-sm text-tinta outline-none focus:border-destaque"
+                className="w-full rounded-sm border border-borda bg-superficie px-3 py-2 text-sm text-tinta outline-none focus:border-destaque disabled:opacity-50"
             />
         </label>
     )

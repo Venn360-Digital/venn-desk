@@ -78,6 +78,24 @@ export interface AppCadastrado {
     chaveCadastrada: boolean
 }
 
+/**
+ * A aparência do widget daquele app. Espelha `src/dominio/tema.ts` no servidor.
+ *
+ * Os campos opcionais são opcionais de propósito: ausente significa "herde do
+ * app", e é diferente de uma cor escolhida que por acaso é a do app.
+ */
+export interface TemaDoWidget {
+    corDeDestaque?: string
+    corSobreDestaque?: string
+    posicao: 'direita' | 'esquerda'
+    margem: number
+    atendente: { nome?: string; avatar?: string }
+    saudacao?: string
+    organizacao?: string
+    modulos: string[]
+    mostrarBotao: boolean
+}
+
 export interface ResumoDeSla {
     estado: 'cumprido' | 'violado' | 'pausado' | 'vencido' | 'em_risco' | 'em_dia'
     meta: 'primeira_resposta' | 'proxima_resposta' | 'resolucao'
