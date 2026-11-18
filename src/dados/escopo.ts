@@ -131,6 +131,8 @@ export interface EscopoDoApp {
             },
             autor: Autor
         ): Promise<Ticket>
+        /** Liga o chamado ao defeito que o explica (Fase 5). */
+        vincularProblema(id: string, problemId: string, autor: Autor): Promise<Ticket>
     }
 
     mensagens: {
@@ -484,6 +486,25 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 if (destino === 'RESOLVIDO') {
                     await esteEscopo.sla.cumprir(id, 'resolucao', agora)
                 }
+
+                return reler(id, count)
+            },
+
+            async vincularProblema(id, problemId, autor) {
+                const { count } = await conexao.ticket.updateMany({
+                    where: { id, appId },
+                    data: { problemId },
+                })
+
+                await conexao.ticketEvent.create({
+                    data: {
+                        appId,
+                        ticketId: id,
+                        ator: autor.ator,
+                        evento: 'vinculo:problema',
+                        depois: { problemId },
+                    },
+                })
 
                 return reler(id, count)
             },

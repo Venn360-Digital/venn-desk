@@ -103,6 +103,7 @@ model App {
     tags        Tag[]
     customFields CustomField[]
     accounts    Account[]
+    mcpKeys     McpKey[]
     healthState HealthState?
     healthEpisodes HealthEpisode[]
 
@@ -836,4 +837,56 @@ model HealthEpisode {
 
     @@index([appId, iniciadoEm])
     @@map("health_episodes")
+}
+
+// ============================================
+// 9. MCP (Fase 4)
+// ============================================
+
+/**
+ * A credencial do servidor MCP — uma por app e por escopo.
+ *
+ * A seção 10 é explícita: "o canal do Odontobox não consegue ler nem alterar
+ * chamados do Conecta". A consequência de desenho é que **o app não é um
+ * parâmetro das ferramentas**: ele vem da chave. Uma ferramenta que recebesse
+ * `app` como argumento dependeria de quem chama pedir o app certo — e quem
+ * chama é um modelo lendo texto escrito por terceiros.
+ *
+ * O escopo separa o canal de suporte do canal de engenharia (seção 8): o
+ * primeiro atende sem acesso a código, o segundo abre issue e acompanha PR. A
+ * separação é a principal defesa contra instrução maliciosa dentro de um
+ * chamado, e por isso ela também mora na chave.
+ *
+ * **Só o hash é guardado.** A chave aparece uma vez, no instante em que é
+ * criada, e nunca mais — nem para quem a criou. Guardá-la em claro faria do
+ * banco do Venn Desk a porta para os chamados de todos os apps.
+ */
+model McpKey {
+    id    String @id @default(cuid())
+    appId String @map("app_id")
+    app   App    @relation(fields: [appId], references: [id])
+
+    /// Para quem é esta chave, em texto. Aparece na auditoria e na tela.
+    nome   String
+    escopo McpScope
+
+    /// PBKDF2 da chave, no mesmo formato da senha do Console.
+    hash String
+
+    /// O prefixo visível (`vdk_sup_ab12…`), para reconhecer sem revelar.
+    prefixo String
+
+    criadoEm   DateTime  @default(now()) @map("criado_em")
+    usadoEm    DateTime? @map("usado_em")
+    revogadoEm DateTime? @map("revogado_em")
+
+    @@index([appId, escopo])
+    @@map("mcp_keys")
+}
+
+enum McpScope {
+    SUPORTE
+    ENGENHARIA
+
+    @@map("mcp_scope")
 }

@@ -1,0 +1,468 @@
+import type { App, PrismaClient } from '#prisma'
+
+import type { EscopoDoApp } from '../dados/escopo.ts'
+import { ErroDeDominio } from '../lib/erros.ts'
+import { formatarNumero } from '../dominio/numero.ts'
+import { grupoNoWidget, type Status } from '../dominio/estados.ts'
+import { ferramentaPorNome, type Escopo } from './ferramentas.ts'
+
+/**
+ * A execução das ferramentas do MCP.
+ *
+ * Tudo aqui passa por `EscopoDoApp`, que já veio amarrado ao app da credencial.
+ * Nenhuma função desta camada recebe `appId`, e é de propósito: não existe
+ * caminho em que um argumento vindo do modelo escolha o app.
+ *
+ * **Quem age é `ia:<ferramenta>`.** O ator fica na trilha com o nome da
+ * ferramenta, não como "sistema" nem como um agente humano. Quando alguém
+ * perguntar "quem respondeu isso ao cliente", a resposta precisa distinguir a
+ * IA de uma pessoa — e dizer qual chamada foi.
+ */
+
+export interface Contexto {
+    cliente: PrismaClient
+    escopoDoApp: EscopoDoApp
+    app: App
+    escopo: Escopo
+}
+
+export interface Resultado {
+    /** Texto para o modelo ler. */
+    texto: string
+    /** `true` quando a ferramenta recusou — o modelo precisa saber. */
+    erro?: boolean
+}
+
+/**
+ * `ODB-1042`, `odb-1042` e `1042` dão o mesmo número.
+ *
+ * O prefixo é só legibilidade humana; o número é por app, e o app já está
+ * fixado pela credencial. Aceitar as três formas evita a ida e volta em que o
+ * modelo tenta um formato, erra, e tenta outro.
+ */
+function numeroDe(bruto: string): number | null {
+    const digitos = bruto.replace(/\D+/g, '')
+    if (digitos === '') return null
+    const numero = Number(digitos)
+    return Number.isSafeInteger(numero) && numero > 0 ? numero : null
+}
+
+/**
+ * O texto do solicitante vai para o modelo DENTRO de uma marca explícita.
+ *
+ * A seção 10 e o CLAUDE.md dizem a mesma coisa: texto escrito pelo usuário é
+ * dado, nunca instrução. Isto não torna a injeção impossível — nada torna —,
+ * mas remove a ambiguidade: o modelo recebe o conteúdo já rotulado, com a
+ * fronteira marcada, em vez de colado no meio do relatório como se fosse nosso.
+ */
+function comoDado(rotulo: string, texto: string): string {
+    return [
+        `<${rotulo} origem="solicitante" natureza="dado-nao-confiavel">`,
+        texto,
+        `</${rotulo}>`,
+    ].join('\n')
+}
+
+async function chamadoPeloNumero(ctx: Contexto, bruto: string) {
+    const numero = numeroDe(bruto)
+    if (numero === null) {
+        throw new ErroDeDominio('numero_invalido', `"${bruto}" não é um número de chamado.`, 400)
+    }
+
+    const chamado = await ctx.escopoDoApp.chamados.porNumero(numero)
+    if (chamado === null) {
+        /// A mesma resposta para "não existe" e "é de outro app": o segundo
+        /// caso nem chega aqui, porque o escopo não o enxerga.
+        throw new ErroDeDominio(
+            'chamado_nao_encontrado',
+            `Não há chamado ${bruto} em ${ctx.app.nome}.`,
+            404
+        )
+    }
+
+    return chamado
+}
+
+export async function executarFerramenta(
+    ctx: Contexto,
+    nome: string,
+    argumentos: Record<string, unknown>
+): Promise<Resultado> {
+    const ferramenta = ferramentaPorNome(ctx.escopo, nome)
+    if (ferramenta === null) {
+        /**
+         * A mensagem diz que a ferramenta não existe NESTE canal, e não que ela
+         * não existe. É verdade e é útil: o modelo no canal de suporte que
+         * tenta `criar_problema` aprende a escalar, em vez de tentar de novo.
+         */
+        return {
+            erro: true,
+            texto: `A ferramenta "${nome}" não existe neste canal (escopo ${ctx.escopo.toLowerCase()}).`,
+        }
+    }
+
+    const validados = ferramenta.argumentos.safeParse(argumentos)
+    if (!validados.success) {
+        return {
+            erro: true,
+            texto: `Argumentos inválidos para ${nome}: ${validados.error.issues
+                .map((i) => `${i.path.join('.') || '(raiz)'} — ${i.message}`)
+                .join('; ')}`,
+        }
+    }
+
+    const dados = validados.data as Record<string, unknown>
+    const ator = `ia:${nome}`
+
+    switch (nome) {
+        case 'obter_chamado':
+            return obterChamado(ctx, dados['numero'] as string)
+        case 'buscar_chamados':
+            return buscarChamados(ctx, dados)
+        case 'classificar_chamado':
+            return classificar(ctx, dados, ator)
+        case 'nota_interna':
+            return notaInterna(ctx, dados, ator)
+        case 'responder_usuario':
+            return responderUsuario(ctx, dados, ator)
+        case 'mudar_status':
+            return mudarStatus(ctx, dados, ator)
+        case 'escalar':
+            return escalar(ctx, dados, ator)
+        case 'criar_problema':
+            return criarProblema(ctx, dados)
+        case 'vincular_incidente':
+            return vincularIncidente(ctx, dados, ator)
+        default:
+            return { erro: true, texto: `A ferramenta "${nome}" não tem execução.` }
+    }
+}
+
+async function obterChamado(ctx: Contexto, bruto: string): Promise<Resultado> {
+    const chamado = await chamadoPeloNumero(ctx, bruto)
+    const [mensagens, solicitante, empresa, relogios] = await Promise.all([
+        ctx.escopoDoApp.mensagens.todas(chamado.id),
+        ctx.escopoDoApp.solicitantes.porId(chamado.requesterId),
+        ctx.escopoDoApp.empresas.porId(chamado.tenantId),
+        ctx.escopoDoApp.sla.doChamado(chamado.id),
+    ])
+
+    const cabecalho = [
+        `Chamado ${formatarNumero(ctx.app.prefixo, chamado.numero)} — ${ctx.app.nome}`,
+        `Status: ${chamado.status} (grupo ${grupoNoWidget(chamado.status as Status)}) · Tipo: ${chamado.tipo} · Prioridade: ${chamado.prioridade} · Nível: ${chamado.nivel}`,
+        /**
+         * O NOME do solicitante vai; o e-mail NÃO.
+         *
+         * A seção 10 pede minimização, e o e-mail não ajuda a diagnosticar
+         * nada — ele serve para o aviso sair, e quem o envia é o Venn Desk,
+         * não a IA. Guardá-lo fora do contexto do modelo é uma superfície a
+         * menos num texto que será copiado para threads.
+         */
+        `Solicitante: ${solicitante?.nome ?? 'desconhecido'}`,
+        `Empresa: ${empresa?.nome ?? '—'}${empresa?.plano ? ` (plano ${empresa.plano})` : ''}${
+            empresa?.conta ? ` · Conta: ${empresa.conta.nome}` : ''
+        }`,
+        `Aberto em ${chamado.criadoEm.toISOString()}`,
+    ]
+
+    const prazos = relogios.map(
+        (r) =>
+            `- ${r.meta}: vence ${r.venceEm.toISOString()}${r.pausadoEm !== null ? ' (pausado)' : ''}${
+                r.cumpridoEm !== null ? ' (cumprido)' : ''
+            }${r.violadoEm !== null ? ' (VIOLADO)' : ''}`
+    )
+
+    const linhaDoTempo = mensagens.map((m) => {
+        const quem =
+            m.autor === 'USUARIO'
+                ? 'SOLICITANTE'
+                : m.autor === 'IA'
+                  ? 'IA'
+                  : m.autor === 'HUMANO'
+                    ? 'ATENDENTE'
+                    : 'SISTEMA'
+        const marcas = [
+            m.visibilidade === 'INTERNA' ? 'nota interna' : 'público',
+            m.rascunho ? 'RASCUNHO, ainda não enviado' : null,
+        ].filter((x) => x !== null)
+
+        const corpo =
+            m.autor === 'USUARIO' ? comoDado('mensagem', m.corpo) : m.corpo
+
+        return `[${m.criadoEm.toISOString()}] ${quem} (${marcas.join(', ')}):\n${corpo}`
+    })
+
+    const contexto =
+        chamado.contexto === null
+            ? 'Nenhum contexto capturado.'
+            : /// O contexto vem do widget, não do usuário: rota, versão, erros
+              /// do console. É dado nosso e vai sem a marca.
+              JSON.stringify(chamado.contexto, null, 2)
+
+    return {
+        texto: [
+            cabecalho.join('\n'),
+            '',
+            `Assunto (escrito pelo solicitante):\n${comoDado('assunto', chamado.assunto)}`,
+            '',
+            prazos.length === 0 ? 'Sem relógios de SLA.' : `Prazos:\n${prazos.join('\n')}`,
+            '',
+            `Contexto capturado pelo widget:\n${contexto}`,
+            '',
+            `Linha do tempo (${mensagens.length}):`,
+            linhaDoTempo.join('\n\n'),
+        ].join('\n'),
+    }
+}
+
+async function buscarChamados(
+    ctx: Contexto,
+    dados: Record<string, unknown>
+): Promise<Resultado> {
+    const texto = (dados['texto'] as string).toLowerCase()
+    const incluirFechados = dados['incluirFechados'] === true
+    const limite = (dados['limite'] as number | undefined) ?? 10
+
+    const status: Status[] = incluirFechados
+        ? ['NOVO', 'ABERTO', 'AGUARDANDO_USUARIO', 'EM_ESPERA', 'RESOLVIDO', 'FECHADO']
+        : ['NOVO', 'ABERTO', 'AGUARDANDO_USUARIO', 'EM_ESPERA']
+
+    /**
+     * A busca é por assunto e feita AQUI, sobre o que o escopo devolveu.
+     *
+     * Uma busca textual no banco entraria com o termo do modelo numa cláusula
+     * — e o termo vem de um texto que pode ter sido escrito para isso. Filtrar
+     * depois é mais lento e não tem como vazar para fora do app.
+     */
+    const candidatos = await ctx.escopoDoApp.chamados.listar({ status, limite: 200 })
+    const achados = candidatos
+        .filter((c) => c.assunto.toLowerCase().includes(texto))
+        .slice(0, limite)
+
+    if (achados.length === 0) return { texto: `Nenhum chamado com "${texto}" no assunto.` }
+
+    return {
+        texto: achados
+            .map(
+                (c) =>
+                    `${formatarNumero(ctx.app.prefixo, c.numero)} · ${c.status} · ${c.prioridade} · ${comoDado('assunto', c.assunto)}`
+            )
+            .join('\n'),
+    }
+}
+
+async function classificar(
+    ctx: Contexto,
+    dados: Record<string, unknown>,
+    ator: string
+): Promise<Resultado> {
+    const chamado = await chamadoPeloNumero(ctx, dados['numero'] as string)
+
+    const atualizado = await ctx.escopoDoApp.chamados.alterar(
+        chamado.id,
+        {
+            tipo: dados['tipo'] as 'DUVIDA' | undefined,
+            prioridade: dados['prioridade'] as 'BAIXA' | undefined,
+        },
+        { ator }
+    )
+
+    return {
+        texto: `Classificado: tipo ${atualizado.tipo}, prioridade ${atualizado.prioridade}. O cliente não foi notificado.`,
+    }
+}
+
+async function notaInterna(
+    ctx: Contexto,
+    dados: Record<string, unknown>,
+    ator: string
+): Promise<Resultado> {
+    const chamado = await chamadoPeloNumero(ctx, dados['numero'] as string)
+
+    await ctx.escopoDoApp.mensagens.adicionar(
+        {
+            ticketId: chamado.id,
+            autor: 'IA',
+            corpo: dados['corpo'] as string,
+            visibilidade: 'INTERNA',
+            origem: 'MCP',
+        },
+        { ator }
+    )
+
+    return { texto: 'Nota interna gravada. O cliente não vê esta mensagem.' }
+}
+
+async function responderUsuario(
+    ctx: Contexto,
+    dados: Record<string, unknown>,
+    ator: string
+): Promise<Resultado> {
+    const chamado = await chamadoPeloNumero(ctx, dados['numero'] as string)
+
+    /**
+     * O modo sombra decide SE a resposta sai, e a decisão é do app, não da
+     * chamada.
+     *
+     * Em sombra, a mensagem é gravada como rascunho e o status NÃO muda: mudar
+     * para "aguardando usuário" diria ao cliente — e ao relógio de SLA — que
+     * houve resposta, quando ainda não houve. A primeira resposta também não é
+     * cumprida, porque `mensagens.adicionar` ignora rascunho de propósito.
+     */
+    const emSombra = ctx.app.modoSombra
+
+    await ctx.escopoDoApp.mensagens.adicionar(
+        {
+            ticketId: chamado.id,
+            autor: 'IA',
+            corpo: dados['corpo'] as string,
+            visibilidade: 'PUBLICA',
+            origem: 'MCP',
+            rascunho: emSombra,
+        },
+        { ator }
+    )
+
+    if (emSombra) {
+        return {
+            texto:
+                'O app está em MODO SOMBRA: a resposta foi gravada como rascunho e ainda ' +
+                'NÃO foi enviada ao cliente. Alguém da equipe precisa aprovar. O status do ' +
+                'chamado não mudou.',
+        }
+    }
+
+    const atualizado = await ctx.escopoDoApp.chamados.aplicarEvento(
+        chamado.id,
+        'responder_usuario',
+        { ator }
+    )
+
+    return { texto: `Resposta enviada ao cliente. O chamado está em ${atualizado.status}.` }
+}
+
+async function mudarStatus(
+    ctx: Contexto,
+    dados: Record<string, unknown>,
+    ator: string
+): Promise<Resultado> {
+    const chamado = await chamadoPeloNumero(ctx, dados['numero'] as string)
+
+    try {
+        const atualizado = await ctx.escopoDoApp.chamados.aplicarEvento(
+            chamado.id,
+            dados['evento'] as 'assumir',
+            { ator }
+        )
+        return { texto: `Status agora: ${atualizado.status}.` }
+    } catch (erro) {
+        /**
+         * A transição impossível volta como RESULTADO, não como falha do
+         * protocolo: o modelo precisa ler o porquê para escolher outro
+         * caminho. Um erro de JSON-RPC aqui encerraria a chamada sem lhe
+         * dizer nada de útil.
+         */
+        if (erro instanceof ErroDeDominio) return { erro: true, texto: erro.message }
+        throw erro
+    }
+}
+
+async function escalar(
+    ctx: Contexto,
+    dados: Record<string, unknown>,
+    ator: string
+): Promise<Resultado> {
+    const chamado = await chamadoPeloNumero(ctx, dados['numero'] as string)
+    const para = dados['para'] as 'engenharia' | 'humano'
+    const motivo = dados['motivo'] as string
+
+    /// O motivo entra na trilha ANTES da transição: se a transição for
+    /// recusada, a tentativa e a razão dela continuam registradas.
+    await ctx.escopoDoApp.eventos.registrar({
+        ticketId: chamado.id,
+        ator,
+        evento: `escalar:${para}`,
+        depois: { motivo },
+    })
+
+    await ctx.escopoDoApp.mensagens.adicionar(
+        {
+            ticketId: chamado.id,
+            autor: 'IA',
+            corpo: `Escalado para ${para}.\n\n${motivo}`,
+            visibilidade: 'INTERNA',
+            origem: 'MCP',
+        },
+        { ator }
+    )
+
+    if (para === 'humano') {
+        /**
+         * Escalar para humano NÃO mexe no status.
+         *
+         * A seção 4 manda chamar uma pessoa nos casos obrigatórios — cobrança,
+         * LGPD, suspeita de vazamento, ameaça de cancelamento. Mover o chamado
+         * para "em espera" nesses casos o tiraria da fila de quem precisa
+         * pegá-lo agora. Ele continua onde está, com a nota e o evento.
+         */
+        return {
+            texto:
+                'Registrado o pedido de atendimento humano, com o motivo na linha do tempo. ' +
+                'O status não mudou: o chamado continua na fila da equipe. Não responda mais ' +
+                'ao cliente sobre este assunto.',
+        }
+    }
+
+    try {
+        const atualizado = await ctx.escopoDoApp.chamados.aplicarEvento(
+            chamado.id,
+            'escalar_engenharia',
+            { ator }
+        )
+        return { texto: `Escalado para engenharia. Status: ${atualizado.status}.` }
+    } catch (erro) {
+        if (erro instanceof ErroDeDominio) {
+            return {
+                erro: true,
+                texto: `O motivo ficou registrado, mas a transição falhou: ${erro.message}`,
+            }
+        }
+        throw erro
+    }
+}
+
+async function criarProblema(
+    ctx: Contexto,
+    dados: Record<string, unknown>
+): Promise<Resultado> {
+    const problema = await ctx.escopoDoApp.problemas.abrir({
+        titulo: dados['titulo'] as string,
+        ...(dados['causa'] === undefined ? {} : { causa: dados['causa'] as string }),
+    })
+
+    return {
+        texto: `Defeito criado: ${problema.id} — "${problema.titulo}". Etapa ${problema.etapa}. Nenhuma issue foi aberta no GitHub e nada foi aprovado.`,
+    }
+}
+
+async function vincularIncidente(
+    ctx: Contexto,
+    dados: Record<string, unknown>,
+    ator: string
+): Promise<Resultado> {
+    const chamado = await chamadoPeloNumero(ctx, dados['numero'] as string)
+    const problemaId = dados['problemaId'] as string
+
+    /// O problema é buscado PELO ESCOPO: um id de outro app devolve `null`, e
+    /// a resposta é a mesma de um id inexistente.
+    const problema = await ctx.escopoDoApp.problemas.porId(problemaId)
+    if (problema === null) {
+        return { erro: true, texto: `Não há defeito ${problemaId} em ${ctx.app.nome}.` }
+    }
+
+    await ctx.escopoDoApp.chamados.vincularProblema(chamado.id, problema.id, { ator })
+
+    return {
+        texto: `Chamado ${formatarNumero(ctx.app.prefixo, chamado.numero)} ligado ao defeito "${problema.titulo}".`,
+    }
+}

@@ -41,7 +41,8 @@
         "status:montar": "node status/montar.mjs",
         "status:publicar": "node scripts/publicar-status.mjs",
         "aceite:portal": "node scripts/aceite-portal.mjs",
-        "aceite:sla": "node scripts/aceite-sla.mjs"
+        "aceite:sla": "node scripts/aceite-sla.mjs",
+        "aceite:mcp": "node scripts/aceite-mcp.mjs"
     },
     "dependencies": {
         "@neondatabase/serverless": "1.2.0",

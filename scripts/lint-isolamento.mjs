@@ -51,6 +51,7 @@ const DELEGADOS = [
     'slaPolicy',
     'slaTimer',
     'account',
+    'mcpKey',
 ]
 
 const METODOS = ['findFirst', 'findMany', 'findUnique', 'create', 'createMany', 'update', 'updateMany', 'upsert', 'delete', 'deleteMany', 'count', 'aggregate']

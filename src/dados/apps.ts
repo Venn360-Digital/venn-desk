@@ -12,6 +12,11 @@ export async function appPorSlug(cliente: PrismaClient, slug: string): Promise<A
     return cliente.app.findFirst({ where: { slug, excluidoEm: null } })
 }
 
+/** Pelo id — é o que a credencial do MCP carrega, em vez do slug. */
+export async function appPorId(cliente: PrismaClient, id: string): Promise<App | null> {
+    return cliente.app.findFirst({ where: { id, excluidoEm: null } })
+}
+
 export async function appsAtivos(cliente: PrismaClient): Promise<App[]> {
     return cliente.app.findMany({ where: { excluidoEm: null }, orderBy: { nome: 'asc' } })
 }

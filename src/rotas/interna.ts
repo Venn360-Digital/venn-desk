@@ -24,7 +24,14 @@ import { comApp, comCliente, comSessaoDeAgente } from '../auth/middleware.ts'
 import { verificarSaude } from '../saude/verificar.ts'
 import { vigiarPrazos } from '../sla/vigiar.ts'
 import type { CaixaDeSaida } from '../correio/enviar.ts'
-import { conferirSenha, criarSessao, podeAprovar, VALIDADE_DA_SESSAO_S } from '../auth/sessao-console.ts'
+import {
+    conferirSenha,
+    criarSessao,
+    hashDeSenha,
+    podeAprovar,
+    VALIDADE_DA_SESSAO_S,
+} from '../auth/sessao-console.ts'
+import { chavesDoApp, criarChave, revogarChave, TAMANHO_DO_PREFIXO } from '../dados/mcp.ts'
 
 /**
  * A API interna — o que o Console consome, e o que a ponte do Slack vai chamar
@@ -699,6 +706,103 @@ rotasInternas.post('/api/console/sla/vigiar', comCliente, comSessaoDeAgente, asy
     }
 
     return c.json({ estouros: await vigiarPrazos(c.get('cliente')) })
+})
+
+const esquemaDaChaveMcp = z.object({
+    nome: z.string().trim().min(3).max(60),
+    escopo: z.enum(['SUPORTE', 'ENGENHARIA']),
+})
+
+/**
+ * As credenciais do MCP daquele app.
+ *
+ * Nunca a chave — só prefixo, nome, escopo e quando foi usada pela última vez.
+ * O valor existe uma vez, na resposta da criação, e some.
+ */
+rotasInternas.get('/api/console/app/:app/mcp', async (c) => {
+    const chaves = await chavesDoApp(c.get('cliente'), c.get('app').id)
+
+    return c.json({
+        chaves: chaves.map((k) => ({
+            id: k.id,
+            nome: k.nome,
+            escopo: k.escopo,
+            prefixo: k.prefixo,
+            criadoEm: k.criadoEm,
+            usadoEm: k.usadoEm,
+            revogadoEm: k.revogadoEm,
+        })),
+    })
+})
+
+rotasInternas.post('/api/console/app/:app/mcp', async (c) => {
+    const agente = c.get('agente')
+    /**
+     * Só ADMIN, e não gestor.
+     *
+     * Esta chave dá a um modelo acesso de leitura e escrita a todos os chamados
+     * de um app. É a credencial mais poderosa que o Venn Desk emite — mais que
+     * a sessão de um atendente, que pelo menos é de uma pessoa identificada.
+     */
+    if (agente.papel !== 'ADMIN') {
+        throw new ErroDeDominio('sem_permissao', 'Só admin emite credencial de MCP.', 403)
+    }
+
+    const corpo = esquemaDaChaveMcp.safeParse(await c.req.json().catch(() => null))
+    if (!corpo.success) {
+        throw new ErroDeDominio('dados_invalidos', 'Informe nome e escopo.', 400)
+    }
+
+    const app = c.get('app')
+
+    /**
+     * 32 bytes de aleatoriedade criptográfica, em base64url.
+     *
+     * O prefixo legível (`vdk_sup_`) serve a três coisas: a busca estreita por
+     * prefixo no banco (o resto é hash e não se consulta), o reconhecimento
+     * numa lista sem revelar nada, e os detectores de segredo — um `vdk_` em
+     * commit é achável por varredura, e o gitleaks do portão passa a ter o que
+     * procurar.
+     */
+    const bytes = crypto.getRandomValues(new Uint8Array(32))
+    const segredo = btoa(String.fromCharCode(...bytes))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '')
+    const chave = `vdk_${corpo.data.escopo === 'SUPORTE' ? 'sup' : 'eng'}_${segredo}`
+
+    const criada = await criarChave(c.get('cliente'), {
+        appId: app.id,
+        nome: corpo.data.nome,
+        escopo: corpo.data.escopo,
+        hash: await hashDeSenha(chave),
+        prefixo: chave.slice(0, TAMANHO_DO_PREFIXO),
+    })
+
+    return c.json({
+        chave: {
+            id: criada.id,
+            nome: criada.nome,
+            escopo: criada.escopo,
+            prefixo: criada.prefixo,
+        },
+        /// A ÚNICA vez que isto existe fora do cofre de quem recebeu.
+        segredo: chave,
+        aviso: 'Guarde agora. Esta chave não será mostrada de novo.',
+    })
+})
+
+rotasInternas.delete('/api/console/app/:app/mcp/:id', async (c) => {
+    const agente = c.get('agente')
+    if (agente.papel === 'AGENTE') {
+        throw new ErroDeDominio('sem_permissao', 'Agente não revoga credencial.', 403)
+    }
+
+    /// Revogar é marcar `revogadoEm`, não apagar: a trilha de qual chave agiu
+    /// em qual chamado precisa continuar resolvendo o id.
+    const revogada = await revogarChave(c.get('cliente'), c.req.param('id'))
+
+    return c.json({ revogada })
 })
 
 /** Quem está logado. É como a SPA do Console sabe se há sessão. */
