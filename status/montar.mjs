@@ -134,8 +134,18 @@ function pintar(slug,linha){
   if(linha===null||linha===undefined){
     pilula.dataset.estado='';pilula.textContent=t.desconhecido;quando.textContent='';return
   }
-  if(linha.estado===null){
-    pilula.dataset.estado='';pilula.textContent=t.naoMedido;quando.textContent='';return
+  // Estado desconhecido entra junto de nulo, e NAO pode cair no ramo de baixo:
+  // ali o texto e "operacional ou fora do ar", entao desconhecido viraria
+  // alarme de queda. E o erro oposto ao que a validade veio corrigir, e
+  // igualmente grave -- quem recebe alarme falso para de acreditar no proximo.
+  // (Sem crase nestes comentarios: este bloco vive dentro de um template
+  // literal, e cada crase fecharia a string.)
+  if(linha.estado===null||linha.estado==='desconhecido'){
+    pilula.dataset.estado='';pilula.textContent=t.naoMedido;quando.textContent=''
+    // O carimbo continua aparecendo quando existe: "nao medido agora, ultima
+    // verificacao as 19:47 de ontem" diz muito mais que "nao medido".
+    if(linha.verificadoEm)quando.textContent=t.verificadoEm+' '+dataHora(linha.verificadoEm)
+    return
   }
   pilula.dataset.estado=linha.estado
   pilula.textContent=linha.estado==='operacional'?t.operacional:t.fora

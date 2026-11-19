@@ -9,6 +9,7 @@ import { ErroDeDominio } from '../lib/erros.ts'
 import type { Ambiente } from '../lib/ambiente.ts'
 import { avisarPorEmail } from '../correio/avisar.ts'
 import { comApp, comCliente } from '../auth/middleware.ts'
+import { estadoPublico } from '../dominio/transicao-publica.ts'
 
 /**
  * A API pública da página de status (seção 7, itens 1 e 2).
@@ -103,7 +104,7 @@ rotasDeStatus.get('/api/status', async (c) => {
                  * mediu é o jeito mais rápido de uma página de status perder a
                  * razão de existir.
                  */
-                estado: estado === null ? null : estado.saudavel ? 'operacional' : 'fora_do_ar',
+                estado: estadoPublico(estado, new Date()),
                 desdeEm: estado?.desdeEm ?? null,
                 verificadoEm: estado?.verificadoEm ?? null,
                 incidente:
@@ -131,7 +132,7 @@ rotasDeStatus.get('/api/status/:app', async (c) => {
             app: app.slug,
             nome: app.nome,
             url: app.urlApp,
-            estado: estado === null ? null : estado.saudavel ? 'operacional' : 'fora_do_ar',
+            estado: estadoPublico(estado, new Date()),
             desdeEm: estado?.desdeEm ?? null,
             verificadoEm: estado?.verificadoEm ?? null,
             episodios: episodios.map((e) => ({
