@@ -52,6 +52,18 @@ export function montarInstrucoes(alvo: Alvo): string {
         tem('obter_chamado')
             ? 'Leia o chamado com `obter_chamado` antes de qualquer outra coisa.'
             : null,
+        tem('buscar_base')
+            ? /**
+               * A base vem ANTES dos chamados, e a ordem é a mensagem.
+               *
+               * Um artigo é a resposta que a empresa decidiu; um chamado
+               * resolvido é o que um atendente respondeu numa terça-feira, com
+               * o acerto e o erro daquele dia. Invertida a ordem, o modelo acha
+               * primeiro o caso parecido e responde por ele — e a base, que
+               * custou trabalho a alguém escrever, vira enfeite.
+               */
+              'Procure na base com `buscar_base` ANTES de qualquer outra busca: o artigo é a resposta oficial da empresa, e um chamado antigo é só o que alguém respondeu um dia. Achando artigo que sirva, leia inteiro com `obter_artigo` antes de responder por ele.'
+            : null,
         tem('buscar_chamados')
             ? /**
                * Sem teto de buscas.
@@ -61,7 +73,7 @@ export function montarInstrucoes(alvo: Alvo): string {
                * regra que sempre valeu — parar quando a busca deixa de trazer
                * coisa nova, que é diferente de parar no segundo tento.
                */
-              'Procure casos parecidos com `buscar_chamados`: um chamado já resolvido costuma ter a resposta pronta e consistente. Busque quantas vezes for útil, com termos diferentes — e pare quando duas buscas seguidas não trouxerem nada que você ainda não sabia.'
+              'Se a base não cobrir, procure casos parecidos com `buscar_chamados`: um chamado já resolvido costuma ter a resposta pronta e consistente. Busque quantas vezes for útil, com termos diferentes — e pare quando duas buscas seguidas não trouxerem nada que você ainda não sabia.'
             : null,
         tem('classificar_chamado')
             ? 'Classifique tipo e prioridade com `classificar_chamado`. Isso é interno e não avisa o cliente.'

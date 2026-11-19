@@ -1,8 +1,17 @@
 import type { Prisma, PrismaClient } from '#prisma'
-import type { Attachment, HealthEpisode, HealthState, Problem, SlaTimer, Ticket, TicketEvent, TicketMessage } from '#prisma'
+import type { Attachment, HealthEpisode, HealthState, KbArticle, Problem, SlaTimer, Ticket, TicketEvent, TicketMessage } from '#prisma'
 
 import { ErroDeDominio } from '../lib/erros.ts'
 import { transicionar, type Evento, type Status } from '../dominio/estados.ts'
+import {
+    podeIrPara,
+    textoDeBusca,
+    VISIVEL,
+    type DadosDoArtigo,
+    type EdicaoDoArtigo,
+    type StatusDoArtigo,
+} from '../dominio/artigo.ts'
+import { parecidos } from '../dominio/busca.ts'
 import {
     aoMudarStatus,
     metaEmMinutos,
@@ -213,6 +222,21 @@ export interface EscopoDoApp {
     }
 
     /**
+     * A base de conhecimento (seção 6). Única família onde a linha pode NÃO
+     * ter app: artigo global vale para os três, por `app_id (ou global)` da
+     * especificação. Ver `ondeDoArtigo` abaixo, que é onde isso mora.
+     */
+    artigos: {
+        listar(filtro?: { status?: StatusDoArtigo }): Promise<KbArticle[]>
+        porId(id: string): Promise<KbArticle | null>
+        criar(dados: DadosDoArtigo): Promise<KbArticle>
+        alterar(id: string, dados: EdicaoDoArtigo): Promise<KbArticle | null>
+        mudarStatus(id: string, para: StatusDoArtigo): Promise<KbArticle>
+        /** Só artigos publicados, ordenados por relevância. Usada pelo agente. */
+        buscar(texto: string, limite: number): Promise<{ artigo: KbArticle; nota: number }[]>
+    }
+
+    /**
      * A verificação de saúde (seção 7). Mora no escopo como o resto: o estado é
      * por app, e a página de status de um app nunca enxerga outro.
      */
@@ -335,6 +359,23 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
      * a mesma nos dois casos, de propósito: dizer qual seria confirmar a
      * existência de dado de outro cliente.
      */
+    /**
+     * A cláusula do artigo: **deste app OU global**.
+     *
+     * É a única exceção à igualdade `appId: appId` em todo o sistema, e por
+     * isso existe aqui, numa função, em vez de repetida em cada consulta da
+     * família. Repetida, ela seria seis chances de alguém escrever
+     * `{ appId: null }` sozinho — que devolveria os globais e mais nada — ou de
+     * esquecer o `null` e sumir com eles.
+     *
+     * O que a regra de isolamento protege continua intacto: `appId` nulo não é
+     * "qualquer app", é "nenhum app em particular". Não existe cláusula aqui
+     * que alcance a linha de OUTRO app, e o teste de isolamento prova isso.
+     */
+    function ondeDoArtigo(): { OR: [{ appId: string }, { appId: null }] } {
+        return { OR: [{ appId }, { appId: null }] }
+    }
+
     async function reler(id: string, alterados: number): Promise<Ticket> {
         if (alterados !== 1) {
             throw new ErroDeDominio('chamado_nao_encontrado', 'Chamado não encontrado.', 404)
@@ -997,6 +1038,108 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                     data: { resolvidoEm: new Date() },
                 })
                 return count === 1 ? conexao.problem.findFirst({ where: { id, appId } }) : null
+            },
+        },
+
+        artigos: {
+            async listar(filtro) {
+                return conexao.kbArticle.findMany({
+                    where: {
+                        ...ondeDoArtigo(),
+                        ...(filtro?.status === undefined ? {} : { status: filtro.status }),
+                    },
+                    orderBy: { atualizadoEm: 'desc' },
+                })
+            },
+
+            async porId(id) {
+                return conexao.kbArticle.findFirst({ where: { id, ...ondeDoArtigo() } })
+            },
+
+            async criar(dados) {
+                return conexao.kbArticle.create({
+                    data: {
+                        /**
+                         * Global grava `appId` NULO, e é a única escrita do
+                         * sistema que faz isso de propósito. Note que ela não
+                         * permite gravar no app do vizinho: ou é este app, ou é
+                         * de todos — não existe "o app ali".
+                         */
+                        appId: dados.global ? null : appId,
+                        titulo: dados.titulo,
+                        corpo: dados.corpo,
+                        tags: dados.tags,
+                    },
+                })
+            },
+
+            async alterar(id, dados) {
+                const { count } = await conexao.kbArticle.updateMany({
+                    where: { id, ...ondeDoArtigo() },
+                    data: {
+                        ...(dados.titulo === undefined ? {} : { titulo: dados.titulo }),
+                        ...(dados.corpo === undefined ? {} : { corpo: dados.corpo }),
+                        ...(dados.tags === undefined ? {} : { tags: dados.tags }),
+                        ...(dados.global === undefined ? {} : { appId: dados.global ? null : appId }),
+                    },
+                })
+
+                return count === 1
+                    ? conexao.kbArticle.findFirst({ where: { id, ...ondeDoArtigo() } })
+                    : null
+            },
+
+            async mudarStatus(id, para) {
+                const artigo = await conexao.kbArticle.findFirst({
+                    where: { id, ...ondeDoArtigo() },
+                })
+                if (artigo === null) {
+                    throw new ErroDeDominio('artigo_nao_encontrado', 'Artigo não encontrado.', 404)
+                }
+
+                const de = artigo.status as StatusDoArtigo
+                if (de === para) return artigo
+
+                if (!podeIrPara(de, para)) {
+                    throw new ErroDeDominio(
+                        'transicao_invalida',
+                        `Um artigo ${de.toLowerCase()} não vai direto para ${para.toLowerCase()}.`,
+                        422
+                    )
+                }
+
+                await conexao.kbArticle.updateMany({
+                    where: { id, ...ondeDoArtigo() },
+                    data: { status: para },
+                })
+
+                return { ...artigo, status: para }
+            },
+
+            async buscar(texto, limite) {
+                /**
+                 * Lê os publicados e pontua em memória, sem `vector`.
+                 *
+                 * A coluna `embedding` existe desde a Fase 1 e continua vazia: a
+                 * busca semântica exige um provedor de embedding, que o Desk não
+                 * tem — a chave aqui é da Anthropic, que não serve embedding.
+                 * Essa decisão é do André e está pendente.
+                 *
+                 * Enquanto isso, casamento por palavra sobre uma base de
+                 * dezenas de artigos por app é barato e honesto. Quando o
+                 * vetor entrar, troca-se o corpo desta função e nada acima dela
+                 * muda — é por isso que ela devolve `{artigo, nota}` em vez do
+                 * que o Postgres devolveria.
+                 */
+                const publicados = await conexao.kbArticle.findMany({
+                    where: { ...ondeDoArtigo(), status: VISIVEL },
+                })
+
+                return parecidos(
+                    publicados.map((artigo) => ({ artigo, assunto: textoDeBusca(artigo) })),
+                    texto,
+                    limite
+                ).map(({ item, nota }) => ({ artigo: item.artigo, nota }))
             },
         },
 

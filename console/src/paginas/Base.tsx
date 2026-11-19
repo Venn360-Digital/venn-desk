@@ -1,0 +1,379 @@
+import { useEffect, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link, useParams } from 'react-router-dom'
+import { Globe, Plus } from 'lucide-react'
+
+import { api, type AppCadastrado, type Artigo, type StatusDoArtigo } from '../api.ts'
+import { Aviso, Botao, Campo, Quando, Vazio } from '../componentes/ui.tsx'
+
+/**
+ * A base de conhecimento, por app.
+ *
+ * **Para que esta tela existe.** Sem artigo, o agente responde pelo que alguém
+ * já perguntou: ele acha um chamado antigo e repete o que um atendente escreveu
+ * numa terça-feira, com o acerto e o erro daquele dia. Com artigo, ele responde
+ * pelo que a empresa decidiu que é a resposta certa — e a instrução manda
+ * consultar a base ANTES dos chamados.
+ *
+ * **Publicar é um segundo ato.** O artigo nasce rascunho e só vira resposta
+ * oficial por um clique deliberado: o que está aqui chega a cliente pela boca
+ * da IA, e ninguém põe isso no ar de passagem.
+ */
+
+const RASCUNHO_VAZIO = { titulo: '', corpo: '', tags: '', global: false }
+
+const CORES: Record<StatusDoArtigo, string> = {
+    RASCUNHO: 'bg-superficie-3 text-tinta-fraca',
+    PUBLICADO: 'bg-calmo-fundo text-calmo',
+    ARQUIVADO: 'bg-superficie-3 text-tinta-sutil',
+}
+
+const ROTULOS: Record<StatusDoArtigo, string> = {
+    RASCUNHO: 'rascunho',
+    PUBLICADO: 'no ar',
+    ARQUIVADO: 'arquivado',
+}
+
+export function Base({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
+    const { app: daRota } = useParams<{ app: string }>()
+    const fila = useQueryClient()
+    const [erro, setErro] = useState<string | null>(null)
+    const [editando, setEditando] = useState<string | null>(null)
+    const [rascunho, setRascunho] = useState(RASCUNHO_VAZIO)
+    /**
+     * O editor nasce FECHADO.
+     *
+     * O trabalho principal desta tela é consultar o que já existe; escrever é o
+     * eventual. Aberto por padrão, o formulário empurrava a tabela inteira para
+     * fora da primeira tela — medido em 493px de altura, mais que o dobro da
+     * lista com três artigos.
+     */
+    const [abertoParaEscrever, setAberto] = useState(false)
+
+    const { data: cadastro } = useQuery({
+        queryKey: ['apps'],
+        queryFn: () => api<{ apps: AppCadastrado[] }>('/apps'),
+        staleTime: 5 * 60_000,
+    })
+    const apps = cadastro?.apps ?? []
+    const app = daRota ?? apps[0]?.slug
+
+    const { data, isPending } = useQuery({
+        queryKey: ['base', app],
+        queryFn: () => api<{ artigos: Artigo[] }>(`/app/${app}/base`),
+        enabled: app !== undefined,
+    })
+
+    /// Trocar de app fecha o editor: continuar editando um artigo do app
+    /// anterior salvaria no lugar errado sem avisar.
+    useEffect(() => {
+        setEditando(null)
+        setRascunho(RASCUNHO_VAZIO)
+        setAberto(false)
+        setErro(null)
+    }, [app])
+
+    const recarregar = () => void fila.invalidateQueries({ queryKey: ['base', app] })
+
+    const salvar = useMutation({
+        mutationFn: async () => {
+            const corpo = {
+                titulo: rascunho.titulo,
+                corpo: rascunho.corpo,
+                tags: rascunho.tags
+                    .split(',')
+                    .map((t) => t.trim())
+                    .filter((t) => t !== ''),
+                global: rascunho.global,
+            }
+
+            return editando === null
+                ? api(`/app/${app}/base`, { metodo: 'POST', corpo })
+                : api(`/app/${app}/base/${editando}`, { metodo: 'PUT', corpo })
+        },
+        onSuccess: () => {
+            setErro(null)
+            setEditando(null)
+            setRascunho(RASCUNHO_VAZIO)
+            setAberto(false)
+            recarregar()
+        },
+        onError: (e: Error) => setErro(e.message),
+    })
+
+    const mudarStatus = useMutation({
+        mutationFn: ({ id, status }: { id: string; status: StatusDoArtigo }) =>
+            api(`/app/${app}/base/${id}/status`, { metodo: 'POST', corpo: { status } }),
+        onSuccess: () => {
+            setErro(null)
+            recarregar()
+        },
+        onError: (e: Error) => setErro(e.message),
+    })
+
+    if (isPending) return <Vazio>carregando…</Vazio>
+
+    const artigos = data?.artigos ?? []
+    const podeEditar = papel !== 'AGENTE'
+    const abrir = (artigo: Artigo) => {
+        setEditando(artigo.id)
+        setAberto(true)
+        setRascunho({
+            titulo: artigo.titulo,
+            corpo: artigo.corpo,
+            tags: artigo.tags.join(', '),
+            global: artigo.global,
+        })
+    }
+
+    return (
+        <div className="space-y-4">
+            <nav className="flex flex-wrap gap-1">
+                {apps.map((a) => (
+                    <Link
+                        key={a.slug}
+                        to={`/base/${a.slug}`}
+                        className={
+                            a.slug === app
+                                ? 'rounded-sm bg-tinta px-3 py-1.5 text-xs font-medium text-fundo'
+                                : 'rounded-sm border border-borda bg-superficie px-3 py-1.5 text-xs text-tinta-fraca transition hover:text-tinta'
+                        }
+                    >
+                        {a.nome}
+                    </Link>
+                ))}
+            </nav>
+
+            <p className="text-xs text-tinta-fraca">
+                O agente consulta a base <strong className="text-tinta">antes</strong> dos
+                chamados antigos. Só o que está no ar chega a cliente.
+            </p>
+
+            {erro !== null ? <Aviso>{erro}</Aviso> : null}
+
+            {podeEditar && abertoParaEscrever ? (
+                <Editor
+                    rascunho={rascunho}
+                    setRascunho={setRascunho}
+                    editando={editando}
+                    salvando={salvar.isPending}
+                    onSalvar={() => salvar.mutate()}
+                    onCancelar={() => {
+                        setEditando(null)
+                        setRascunho(RASCUNHO_VAZIO)
+                        setAberto(false)
+                    }}
+                />
+            ) : podeEditar ? (
+                <Botao
+                    variante="leve"
+                    onClick={() => {
+                        setEditando(null)
+                        setRascunho(RASCUNHO_VAZIO)
+                        setAberto(true)
+                    }}
+                >
+                    Artigo novo
+                </Botao>
+            ) : (
+                <p className="text-xs text-tinta-fraca">
+                    Agente lê a base; gestor e admin escrevem.
+                </p>
+            )}
+
+            {artigos.length === 0 ? (
+                <Vazio>
+                    Nenhum artigo ainda. Sem base, o agente responde pelo que alguém já
+                    perguntou.
+                </Vazio>
+            ) : (
+                <div className="overflow-x-auto rounded-sm border border-borda bg-superficie">
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="border-b border-borda text-left text-xs text-tinta-fraca">
+                                <th className="px-3 py-2 font-medium">Artigo</th>
+                                <th className="px-3 py-2 font-medium">Tags</th>
+                                <th className="px-3 py-2 font-medium">Estado</th>
+                                <th className="px-3 py-2 font-medium">Atualizado</th>
+                                <th className="px-3 py-2" />
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {artigos.map((artigo) => (
+                                <tr key={artigo.id} className="border-b border-borda last:border-0">
+                                    <td className="px-3 py-2">
+                                        <div className="flex items-center gap-1.5">
+                                            {artigo.global ? (
+                                                <Globe
+                                                    size={13}
+                                                    className="shrink-0 text-tinta-sutil"
+                                                    aria-label="vale para os três apps"
+                                                />
+                                            ) : null}
+                                            <span className="text-tinta">{artigo.titulo}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-3 py-2 text-xs text-tinta-fraca">
+                                        {artigo.tags.join(', ') || '—'}
+                                    </td>
+                                    <td className="px-3 py-2">
+                                        <span
+                                            className={`inline-block rounded-xs px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap ${CORES[artigo.status]}`}
+                                        >
+                                            {ROTULOS[artigo.status]}
+                                        </span>
+                                    </td>
+                                    <td className="px-3 py-2">
+                                        <Quando iso={artigo.atualizadoEm} />
+                                    </td>
+                                    <td className="px-3 py-2">
+                                        {podeEditar ? (
+                                            <div className="flex justify-end gap-1.5">
+                                                <Acao onClick={() => abrir(artigo)}>editar</Acao>
+                                                {artigo.status !== 'PUBLICADO' ? (
+                                                    <Acao
+                                                        onClick={() =>
+                                                            mudarStatus.mutate({
+                                                                id: artigo.id,
+                                                                status: 'PUBLICADO',
+                                                            })
+                                                        }
+                                                        /// Arquivado não vai direto ao ar:
+                                                        /// quem arquivou tirou por um motivo.
+                                                        desabilitado={artigo.status === 'ARQUIVADO'}
+                                                    >
+                                                        publicar
+                                                    </Acao>
+                                                ) : (
+                                                    <Acao
+                                                        onClick={() =>
+                                                            mudarStatus.mutate({
+                                                                id: artigo.id,
+                                                                status: 'RASCUNHO',
+                                                            })
+                                                        }
+                                                    >
+                                                        tirar do ar
+                                                    </Acao>
+                                                )}
+                                            </div>
+                                        ) : null}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </div>
+    )
+}
+
+function Acao({
+    children,
+    onClick,
+    desabilitado,
+}: {
+    children: string
+    onClick: () => void
+    desabilitado?: boolean
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            disabled={desabilitado}
+            title={desabilitado ? 'Tire do arquivo primeiro: republicar sem reler desfaz a decisão de quem arquivou.' : undefined}
+            className="rounded-xs border border-borda px-2 py-0.5 text-[11px] text-tinta-fraca transition hover:text-tinta disabled:opacity-40"
+        >
+            {children}
+        </button>
+    )
+}
+
+type Rascunho = typeof RASCUNHO_VAZIO
+
+function Editor({
+    rascunho,
+    setRascunho,
+    editando,
+    salvando,
+    onSalvar,
+    onCancelar,
+}: {
+    rascunho: Rascunho
+    setRascunho: (r: Rascunho) => void
+    editando: string | null
+    salvando: boolean
+    onSalvar: () => void
+    onCancelar: () => void
+}) {
+    return (
+        <section className="space-y-3 rounded-sm border border-borda bg-superficie p-4">
+            <h2 className="flex items-center gap-1.5 text-xs font-medium text-tinta-fraca">
+                {editando === null ? (
+                    <>
+                        <Plus size={13} aria-hidden /> Artigo novo
+                    </>
+                ) : (
+                    'Editando'
+                )}
+            </h2>
+
+            <Campo
+                rotulo="Título — é por ele que a busca acha o artigo"
+                valor={rascunho.titulo}
+                onChange={(v) => setRascunho({ ...rascunho, titulo: v })}
+            />
+
+            <label className="block">
+                <span className="mb-1 block text-xs font-medium text-tinta-fraca">
+                    Corpo — a resposta, como você a daria ao cliente
+                </span>
+                <textarea
+                    rows={8}
+                    value={rascunho.corpo}
+                    onChange={(e) => setRascunho({ ...rascunho, corpo: e.target.value })}
+                    className="w-full rounded-sm border border-borda bg-superficie px-3 py-2 text-sm text-tinta outline-none focus:border-destaque"
+                />
+            </label>
+
+            <Campo
+                rotulo="Tags, separadas por vírgula — as palavras que o cliente usaria"
+                valor={rascunho.tags}
+                onChange={(v) => setRascunho({ ...rascunho, tags: v })}
+            />
+
+            <label className="flex items-start gap-2 text-xs">
+                <input
+                    type="checkbox"
+                    checked={rascunho.global}
+                    onChange={(e) => setRascunho({ ...rascunho, global: e.target.checked })}
+                    className="mt-0.5"
+                />
+                <span>
+                    Vale para os três produtos
+                    <span className="block text-[11px] text-tinta-sutil">
+                        Marque quando a resposta não muda entre Odontobox, Conecta e Stagent —
+                        trocar a senha, por exemplo. Editar um artigo global muda os três.
+                    </span>
+                </span>
+            </label>
+
+            <div className="flex items-center gap-3">
+                <Botao desabilitado={salvando} onClick={onSalvar}>
+                    {salvando ? 'Salvando…' : editando === null ? 'Criar rascunho' : 'Salvar'}
+                </Botao>
+                {editando === null ? (
+                    <span className="text-[11px] text-tinta-sutil">
+                        Nasce fora do ar. Publicar é um segundo clique.
+                    </span>
+                ) : (
+                    <Botao variante="leve" onClick={onCancelar}>
+                        Cancelar
+                    </Botao>
+                )}
+            </div>
+        </section>
+    )
+}

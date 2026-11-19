@@ -5,6 +5,7 @@ import {
     Inbox,
     KeyRound,
     Layers,
+    BookOpen,
     MessageCircle,
     Monitor,
     Moon,
@@ -42,6 +43,7 @@ const SECOES: Secao[] = [
     { para: '/', rotulo: 'Fila', Icone: Inbox, fim: true },
     { para: '/metas', rotulo: 'Metas', Icone: Gauge },
     { para: '/credenciais', rotulo: 'Credenciais', Icone: KeyRound },
+    { para: '/base', rotulo: 'Base', Icone: BookOpen },
     { para: '/aparencia', rotulo: 'Aparência', Icone: MessageCircle },
     { para: '/apps', rotulo: 'Apps', Icone: Layers },
 ]

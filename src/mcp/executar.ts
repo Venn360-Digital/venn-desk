@@ -5,6 +5,7 @@ import { ErroDeDominio } from '../lib/erros.ts'
 import { formatarNumero } from '../dominio/numero.ts'
 import { grupoNoWidget, type Status } from '../dominio/estados.ts'
 import { parecidos, termosDe } from '../dominio/busca.ts'
+import { resumir, VISIVEL } from '../dominio/artigo.ts'
 import { ferramentaPorNome, type Escopo } from './ferramentas.ts'
 
 /**
@@ -133,6 +134,10 @@ export async function executarFerramenta(
             return obterChamado(ctx, dados['numero'] as string)
         case 'buscar_chamados':
             return buscarChamados(ctx, dados)
+        case 'buscar_base':
+            return buscarBase(ctx, dados)
+        case 'obter_artigo':
+            return obterArtigo(ctx, dados)
         case 'classificar_chamado':
             return classificar(ctx, dados, ator)
         case 'nota_interna':
@@ -226,6 +231,94 @@ async function obterChamado(ctx: Contexto, bruto: string): Promise<Resultado> {
             `Linha do tempo (${mensagens.length}):`,
             linhaDoTempo.join('\n\n'),
         ].join('\n'),
+    }
+}
+
+/**
+ * O artigo entra no contexto ROTULADO, como todo texto que não é instrução.
+ *
+ * Quem escreve artigo é gente da Venn360, e ainda assim ele é conteúdo e não
+ * ordem. Um artigo com "ignore as instruções anteriores" no corpo — colado de
+ * um e-mail de cliente, escrito por alguém testando, deixado por um estagiário
+ * — não deve virar comando porque a origem é interna. Interna é a origem; a
+ * revisão de cada linha não é.
+ *
+ * O rótulo diz `base-de-conhecimento` e não `solicitante`: a procedência é
+ * diferente e o agente DEVE confiar no teor para responder. O que ele não deve
+ * é obedecer ao texto como se fosse a sua instrução.
+ */
+function comoArtigo(texto: string): string {
+    return [
+        '<artigo origem="base-de-conhecimento" natureza="conteudo-nao-instrucao">',
+        texto,
+        '</artigo>',
+    ].join('\n')
+}
+
+async function buscarBase(ctx: Contexto, dados: Record<string, unknown>): Promise<Resultado> {
+    const texto = dados['texto'] as string
+    const limite = (dados['limite'] as number | undefined) ?? 5
+
+    const achados = await ctx.escopoDoApp.artigos.buscar(texto, limite)
+
+    if (achados.length === 0) {
+        /**
+         * "Não há artigo" é resposta, não falha — e é dito assim de propósito.
+         *
+         * A busca de chamados precisou de um corte na quarta tentativa porque o
+         * modelo tratava o vazio como erro e tentava sinônimos. Aqui o texto já
+         * encerra o assunto na primeira: a alternativa é nomeada, então não
+         * sobra o que tentar.
+         */
+        return {
+            texto:
+                `Nenhum artigo publicado responde a "${texto}". Isto é uma resposta: a ` +
+                `base não cobre esse assunto. Não busque de novo com outras palavras — ` +
+                `use buscar_chamados para ver se alguém já respondeu, e escale se não houver.`,
+        }
+    }
+
+    const linhas = achados.map(({ artigo }) =>
+        [
+            `--- ${artigo.titulo} (id ${artigo.id})`,
+            artigo.tags.length > 0 ? `tags: ${artigo.tags.join(', ')}` : null,
+            comoArtigo(resumir(artigo.corpo)),
+        ]
+            .filter((l) => l !== null)
+            .join('\n')
+    )
+
+    return {
+        texto: [
+            `${achados.length} artigo(s) da base, do mais parecido ao menos:`,
+            '',
+            ...linhas,
+            '',
+            'Os textos acima são RESUMOS, cortados no começo. Leia o artigo inteiro com',
+            'obter_artigo antes de afirmar o que ele diz.',
+        ].join('\n'),
+    }
+}
+
+async function obterArtigo(ctx: Contexto, dados: Record<string, unknown>): Promise<Resultado> {
+    const artigo = await ctx.escopoDoApp.artigos.porId(dados['id'] as string)
+
+    /// A mesma resposta para "não existe", "é de outro app" e "não está no ar":
+    /// distinguir confirmaria a existência de conteúdo que este app não deveria
+    /// saber que existe, e um rascunho não é resposta de ninguém.
+    if (artigo === null || artigo.status !== VISIVEL) {
+        return { erro: true, texto: 'Não há artigo publicado com esse id nesta base.' }
+    }
+
+    return {
+        texto: [
+            `# ${artigo.titulo}`,
+            artigo.tags.length > 0 ? `tags: ${artigo.tags.join(', ')}` : null,
+            '',
+            comoArtigo(artigo.corpo),
+        ]
+            .filter((l) => l !== null)
+            .join('\n'),
     }
 }
 

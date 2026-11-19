@@ -84,6 +84,19 @@ export interface AppCadastrado {
  * Os campos opcionais são opcionais de propósito: ausente significa "herde do
  * app", e é diferente de uma cor escolhida que por acaso é a do app.
  */
+export type StatusDoArtigo = 'RASCUNHO' | 'PUBLICADO' | 'ARQUIVADO'
+
+/** Um artigo da base. `global` é `appId` nulo: vale para os três produtos. */
+export interface Artigo {
+    id: string
+    titulo: string
+    corpo: string
+    tags: string[]
+    status: StatusDoArtigo
+    global: boolean
+    atualizadoEm: string
+}
+
 export interface TemaDoWidget {
     corDeDestaque?: string
     corSobreDestaque?: string

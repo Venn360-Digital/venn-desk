@@ -13,10 +13,15 @@ const BASE = {
 describe('as instruções do agente', () => {
     it('nomeia SÓ ferramentas que existem no escopo', () => {
         /**
-         * A seção 8 cita `buscar_base`, que é da base de conhecimento (Fase 7)
-         * e ainda não existe. Mandar o modelo usá-la gastaria uma rodada para
-         * ele descobrir que não está na lista — e instrução que mente sobre as
-         * próprias ferramentas corrói a confiança no resto do texto.
+         * Instrução que mente sobre as próprias ferramentas gasta uma rodada
+         * do modelo descobrindo que a ferramenta não está na lista — e corrói a
+         * confiança no resto do texto.
+         *
+         * Nasceu com uma asserção fixa contra `buscar_base`, que a seção 8
+         * citava e o sistema não tinha. A base de conhecimento entrou em
+         * 19/11/2026 e a asserção saiu; o que prova a regra é o laço abaixo,
+         * que confere TODO nome citado contra o escopo — e vale para a próxima
+         * ferramenta que alguém citar antes de existir.
          */
         const texto = montarInstrucoes(BASE)
         const citadas = [...texto.matchAll(/`([a-z_]+)`/g)].map((m) => m[1]!)
@@ -27,7 +32,6 @@ describe('as instruções do agente', () => {
             if (!citada.includes('_')) continue
             expect(existentes, `instruções citam ${citada}`).toContain(citada)
         }
-        expect(texto).not.toContain('buscar_base')
     })
 
     it('as regras comuns NÃO dependem do cadastro do app', () => {

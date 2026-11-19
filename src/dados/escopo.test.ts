@@ -59,6 +59,7 @@ function conexaoFalsa(respostas: Record<string, unknown> = {}) {
         requester: delegado('requester'),
         slaTimer: delegado('slaTimer'),
         slaPolicy: delegado('slaPolicy'),
+        kbArticle: delegado('kbArticle'),
     } as unknown as Conexao
 
     return { conexao, chamadas }
@@ -295,5 +296,92 @@ describe('os relógios de SLA, pelo escopo', () => {
 
             expect(chamadas.some((c) => c.delegado === 'slaTimer')).toBe(false)
         }
+    })
+})
+
+/**
+ * A base de conhecimento é a ÚNICA família onde a linha pode não ter app, e
+ * esses testes são o que sustenta essa exceção.
+ *
+ * O risco de um `OR` com `appId: null` não é teórico: escrito errado uma vez,
+ * ele vira `{}` e devolve a base inteira dos três produtos. Então a prova não é
+ * "o global aparece" — é que o artigo do vizinho NÃO aparece, em cada consulta
+ * da família.
+ */
+describe('artigos: deste app ou global, nunca do vizinho', () => {
+    const SO_DESTE_APP_OU_GLOBAL = { OR: [{ appId: 'app-a' }, { appId: null }] }
+
+    it('toda leitura carrega a cláusula, e ela nunca alcança outro app', async () => {
+        const { conexao, chamadas } = conexaoFalsa()
+        const escopo = escopoDoApp(conexao, 'app-a')
+
+        await escopo.artigos.listar()
+        await escopo.artigos.porId('artigo-1')
+        await escopo.artigos.buscar('senha', 5)
+
+        expect(chamadas).toHaveLength(3)
+        for (const chamada of chamadas) {
+            expect(chamada.args['where']).toMatchObject(SO_DESTE_APP_OU_GLOBAL)
+
+            /// A cláusula tem de ser EXATAMENTE as duas alternativas. Uma
+            /// terceira — ou um `OR` vazio — devolveria a base dos três.
+            const onde = chamada.args['where'] as { OR: unknown[] }
+            expect(onde.OR).toHaveLength(2)
+        }
+    })
+
+    it('a busca lê só publicado — rascunho não vira resposta da IA', async () => {
+        const { conexao, chamadas } = conexaoFalsa()
+        const escopo = escopoDoApp(conexao, 'app-a')
+
+        await escopo.artigos.buscar('senha', 5)
+
+        expect(chamadas[0]?.args['where']).toMatchObject({ status: 'PUBLICADO' })
+    })
+
+    it('criar sem global grava NESTE app; com global grava nulo', async () => {
+        const { conexao, chamadas } = conexaoFalsa()
+        const escopo = escopoDoApp(conexao, 'app-a')
+
+        await escopo.artigos.criar({ titulo: 'Trocar senha', corpo: 'x', tags: [], global: false })
+        await escopo.artigos.criar({ titulo: 'Trocar senha', corpo: 'x', tags: [], global: true })
+
+        expect(chamadas[0]?.args['data']).toMatchObject({ appId: 'app-a' })
+        expect(chamadas[1]?.args['data']).toMatchObject({ appId: null })
+    })
+
+    it('alterar não alcança o artigo do vizinho', async () => {
+        const { conexao, chamadas } = conexaoFalsa({ 'kbArticle.updateMany': { count: 0 } })
+        const escopo = escopoDoApp(conexao, 'app-a')
+
+        const resultado = await escopo.artigos.alterar('artigo-de-outro-app', { titulo: 'Novo' })
+
+        /// Zero linhas alteradas significa "não existe" OU "é de outro app", e a
+        /// resposta é a mesma nos dois casos — dizer qual confirmaria a
+        /// existência de conteúdo que este app não deveria saber que existe.
+        expect(resultado).toBeNull()
+        expect(chamadas[0]?.args['where']).toMatchObject(SO_DESTE_APP_OU_GLOBAL)
+    })
+
+    it('recusa republicar um arquivado direto', async () => {
+        const { conexao } = conexaoFalsa({
+            'kbArticle.findFirst': { id: 'a', status: 'ARQUIVADO' },
+        })
+        const escopo = escopoDoApp(conexao, 'app-a')
+
+        await expect(escopo.artigos.mudarStatus('a', 'PUBLICADO')).rejects.toBeInstanceOf(
+            ErroDeDominio
+        )
+    })
+
+    it('mudar para o mesmo status não escreve nada', async () => {
+        const { conexao, chamadas } = conexaoFalsa({
+            'kbArticle.findFirst': { id: 'a', status: 'PUBLICADO' },
+        })
+        const escopo = escopoDoApp(conexao, 'app-a')
+
+        await escopo.artigos.mudarStatus('a', 'PUBLICADO')
+
+        expect(chamadas.filter((c) => c.metodo === 'updateMany')).toHaveLength(0)
     })
 })

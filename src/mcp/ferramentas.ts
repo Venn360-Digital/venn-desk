@@ -77,6 +77,34 @@ export const FERRAMENTAS: Ferramenta[] = [
         escopos: ['SUPORTE', 'ENGENHARIA'],
     },
     {
+        nome: 'buscar_base',
+        titulo: 'Procurar na base de conhecimento',
+        descricao:
+            'Procura artigos PUBLICADOS da base deste app e os globais da Venn360. É a ' +
+            'PRIMEIRA coisa a tentar numa dúvida de uso: o artigo é a resposta que a ' +
+            'empresa decidiu, enquanto um chamado antigo é o que um atendente respondeu ' +
+            'num dia específico. Casa por PALAVRA — descreva a dúvida com as palavras do ' +
+            'usuário. Devolve um resumo e o id; use obter_artigo para ler inteiro antes ' +
+            'de responder com base nele.',
+        argumentos: z.object({
+            texto: z.string().trim().min(2).max(120).describe('A dúvida, em palavras do usuário.'),
+            limite: z.number().int().min(1).max(10).optional(),
+        }),
+        escopos: ['SUPORTE', 'ENGENHARIA'],
+    },
+    {
+        nome: 'obter_artigo',
+        titulo: 'Ler um artigo inteiro',
+        descricao:
+            'Lê o texto completo de um artigo publicado, pelo id que buscar_base devolveu. ' +
+            'Leia antes de afirmar o que o artigo diz: o resumo da busca corta no começo, e ' +
+            'responder pelo resumo é responder pela primeira frase.',
+        argumentos: z.object({
+            id: z.string().trim().min(1).max(60).describe('O id devolvido por buscar_base.'),
+        }),
+        escopos: ['SUPORTE', 'ENGENHARIA'],
+    },
+    {
         nome: 'classificar_chamado',
         titulo: 'Classificar tipo e prioridade',
         descricao:

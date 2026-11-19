@@ -23,6 +23,7 @@ import type { Prisma } from '#prisma'
 import { comApp, comCliente, comSessaoDeAgente } from '../auth/middleware.ts'
 import { verificarSaude } from '../saude/verificar.ts'
 import { avisosDoTema, esquemaDoTema, lerTema } from '../dominio/tema.ts'
+import { esquemaDoArtigo, STATUS, type StatusDoArtigo } from '../dominio/artigo.ts'
 import { vigiarPrazos } from '../sla/vigiar.ts'
 import type { CaixaDeSaida } from '../correio/enviar.ts'
 import {
@@ -1013,6 +1014,99 @@ rotasInternas.put('/api/console/app/:app/tema', async (c) => {
     /// Os avisos voltam com o salvo: eles não impedem, mas a tela precisa
     /// deles para dizer o que ficou ruim DEPOIS de salvar.
     return c.json({ tema: corpo.data, avisos: avisosDoTema(corpo.data) })
+})
+
+/**
+ * A base de conhecimento daquele app — o que a empresa sabe, escrito uma vez.
+ *
+ * Mora sob `/app/:app/` como o resto: a listagem devolve os artigos DESTE app
+ * mais os globais, e a cláusula que expressa isso é única, em
+ * `ondeDoArtigo` no escopo. Nenhuma rota aqui alcança a base do vizinho.
+ *
+ * **Agente lê, gestor escreve.** Quem atende precisa consultar o artigo no meio
+ * do chamado; publicar é decidir qual é a resposta oficial da empresa, e isso
+ * não é decisão de quem está no meio de um atendimento.
+ */
+rotasInternas.get('/api/console/app/:app/base', async (c) => {
+    const escopo = escopoDoApp(c.get('cliente'), c.get('app').id)
+    const status = c.req.query('status')
+
+    const artigos = await escopo.artigos.listar(
+        status !== undefined && STATUS.includes(status as StatusDoArtigo)
+            ? { status: status as StatusDoArtigo }
+            : undefined
+    )
+
+    return c.json({
+        artigos: artigos.map((a) => ({
+            id: a.id,
+            titulo: a.titulo,
+            corpo: a.corpo,
+            tags: a.tags,
+            status: a.status,
+            /// `appId` nulo é o artigo global. A tela precisa distinguir para
+            /// avisar que editar ali muda os três produtos.
+            global: a.appId === null,
+            atualizadoEm: a.atualizadoEm.toISOString(),
+        })),
+    })
+})
+
+rotasInternas.post('/api/console/app/:app/base', async (c) => {
+    if (c.get('agente').papel === 'AGENTE') {
+        throw new ErroDeDominio('sem_permissao', 'Agente não escreve na base.', 403)
+    }
+
+    const corpo = esquemaDoArtigo.safeParse(await c.req.json().catch(() => null))
+    if (!corpo.success) {
+        throw new ErroDeDominio(
+            'artigo_invalido',
+            corpo.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '),
+            400
+        )
+    }
+
+    const escopo = escopoDoApp(c.get('cliente'), c.get('app').id)
+    const artigo = await escopo.artigos.criar(corpo.data)
+
+    /// Nasce RASCUNHO, pelo padrão do banco. Publicar é um segundo ato
+    /// deliberado — ninguém põe resposta oficial no ar sem reler.
+    return c.json({ artigo: { id: artigo.id, status: artigo.status } }, 201)
+})
+
+rotasInternas.put('/api/console/app/:app/base/:id', async (c) => {
+    if (c.get('agente').papel === 'AGENTE') {
+        throw new ErroDeDominio('sem_permissao', 'Agente não escreve na base.', 403)
+    }
+
+    const corpo = esquemaDoArtigo.partial().safeParse(await c.req.json().catch(() => null))
+    if (!corpo.success) {
+        throw new ErroDeDominio('artigo_invalido', 'Artigo inválido.', 400)
+    }
+
+    const escopo = escopoDoApp(c.get('cliente'), c.get('app').id)
+    const artigo = await escopo.artigos.alterar(c.req.param('id'), corpo.data)
+    if (artigo === null) {
+        throw new ErroDeDominio('artigo_nao_encontrado', 'Artigo não encontrado.', 404)
+    }
+
+    return c.json({ artigo: { id: artigo.id } })
+})
+
+rotasInternas.post('/api/console/app/:app/base/:id/status', async (c) => {
+    if (c.get('agente').papel === 'AGENTE') {
+        throw new ErroDeDominio('sem_permissao', 'Agente não publica na base.', 403)
+    }
+
+    const corpo = z
+        .object({ status: z.enum(STATUS) })
+        .safeParse(await c.req.json().catch(() => null))
+    if (!corpo.success) throw new ErroDeDominio('status_invalido', 'Status inválido.', 400)
+
+    const escopo = escopoDoApp(c.get('cliente'), c.get('app').id)
+    const artigo = await escopo.artigos.mudarStatus(c.req.param('id'), corpo.data.status)
+
+    return c.json({ artigo: { id: artigo.id, status: artigo.status } })
 })
 
 /** Quem está logado. É como a SPA do Console sabe se há sessão. */
