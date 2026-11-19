@@ -101,6 +101,14 @@ export interface EscopoDoApp {
         /** Para quem o aviso por e-mail vai. Nunca vem do corpo da requisição. */
         porId(id: string): Promise<{ nome: string; email: string } | null>
         /**
+         * Os nomes de vários solicitantes, numa consulta, para a trilha.
+         *
+         * Passa pelo escopo como tudo: um id de solicitante vazado de outro app
+         * não vira nome aqui — devolve nada, e a trilha mostra o id cru, que é
+         * o comportamento certo para "não é deste app".
+         */
+        nomes(ids: string[]): Promise<{ id: string; nome: string }[]>
+        /**
          * Quem é este e-mail dentro deste app — e `null` se não for ninguém.
          *
          * Serve ao "também fui afetado" da página de status (seção 7), que é o
@@ -393,6 +401,15 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
         appId,
 
         solicitantes: {
+            async nomes(ids) {
+                if (ids.length === 0) return []
+
+                return conexao.requester.findMany({
+                    where: { id: { in: ids }, appId },
+                    select: { id: true, nome: true },
+                })
+            },
+
             async garantir(identidade) {
                 /**
                  * A conta vem ANTES da empresa, porque a empresa aponta para

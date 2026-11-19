@@ -284,7 +284,20 @@ export function Chamado({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
                         {eventos.map((e) => (
                             <li key={e.id} className="flex flex-wrap items-baseline gap-1">
                                 <span className="font-medium text-tinta">{e.evento}</span>
-                                <span className="font-mono">{e.ator}</span>
+                                {/* Sem `font-mono`: era identificador e virou
+                                    nome. A fonte monoespaçada dizia "isto é um
+                                    código", e dizer isso de um nome de pessoa
+                                    convida a lê-lo como código. */}
+                                <span>{e.ator}</span>
+                                {/* A IA assinando tem de ser reconhecível de
+                                    relance: numa trilha misturada, saber que
+                                    aquele passo foi do modelo muda como se lê
+                                    o passo seguinte. */}
+                                {e.atorTipo === 'ia' ? (
+                                    <span className="rounded-xs bg-superficie-3 px-1 text-[10px] text-tinta-sutil">
+                                        IA
+                                    </span>
+                                ) : null}
                                 <Quando iso={e.criadoEm} />
                             </li>
                         ))}

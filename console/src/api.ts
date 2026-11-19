@@ -191,7 +191,10 @@ export interface Mensagem {
 
 export interface Evento {
     id: string
+    /** Já resolvido para NOME pela rota. Cai no id quando quem agiu sumiu. */
     ator: string
+    /** O que ele é: agente, solicitante, IA ou sistema. Decide o tom na tela. */
+    atorTipo: 'agente' | 'solicitante' | 'ia' | 'sistema'
     evento: string
     criadoEm: string
 }

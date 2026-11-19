@@ -34,3 +34,25 @@ export async function responsaveisPorAlerta(cliente: PrismaClient): Promise<Agen
         orderBy: { nome: 'asc' },
     })
 }
+
+/**
+ * Os nomes de vários agentes, numa consulta.
+ *
+ * Serve à trilha de auditoria, que precisa trocar `agent:<id>` por gente. Em
+ * lote porque um chamado com trinta eventos do mesmo agente faria trinta
+ * consultas idênticas — e a tela do chamado é a mais aberta do Console.
+ *
+ * Traz INATIVO também: agente desativado continua tendo feito o que fez, e
+ * escondê-lo da leitura apaga o rastro de quem agiu.
+ */
+export async function nomesDeAgentes(
+    cliente: PrismaClient,
+    ids: string[]
+): Promise<{ id: string; nome: string }[]> {
+    if (ids.length === 0) return []
+
+    return cliente.agent.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, nome: true },
+    })
+}

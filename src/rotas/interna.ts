@@ -24,6 +24,8 @@ import { comApp, comCliente, comSessaoDeAgente } from '../auth/middleware.ts'
 import { verificarSaude } from '../saude/verificar.ts'
 import { avisosDoTema, esquemaDoTema, lerTema } from '../dominio/tema.ts'
 import { esquemaDoArtigo, STATUS, type StatusDoArtigo } from '../dominio/artigo.ts'
+import { resolverAtores } from '../dominio/ator.ts'
+import { nomesDeAgentes } from '../dados/agentes.ts'
 import { vigiarPrazos } from '../sla/vigiar.ts'
 import type { CaixaDeSaida } from '../correio/enviar.ts'
 import {
@@ -438,6 +440,25 @@ rotasInternas.get('/api/console/app/:app/chamados/:numero', async (c) => {
         escopo.empresas.porId(chamado.tenantId),
     ])
 
+    /**
+     * A trilha sai daqui com NOME, não com `agent:cmwj7x2a90001…`.
+     *
+     * Ela existe para alguém reconstruir o que houve num chamado, e quem
+     * recorre a ela está com pressa. Uma coluna de identificadores obriga a
+     * decorar id para ler a própria história.
+     *
+     * Resolvido na rota, e não na tela: o Console não pode consultar agente nem
+     * solicitante por conta própria — e o solicitante precisa passar pelo
+     * escopo do app, senão um id de outro produto viraria nome aqui.
+     */
+    const atores = await resolverAtores(
+        eventos.map((e) => e.ator),
+        {
+            agentes: (ids) => nomesDeAgentes(c.get('cliente'), ids),
+            solicitantes: (ids) => escopo.solicitantes.nomes(ids),
+        }
+    )
+
     return c.json({
         chamado: {
             ...chamado,
@@ -457,7 +478,11 @@ rotasInternas.get('/api/console/app/:app/chamados/:numero', async (c) => {
             new Date()
         ),
         mensagens,
-        eventos,
+        eventos: eventos.map((e) => ({
+            ...e,
+            ator: atores.get(e.ator)?.nome ?? e.ator,
+            atorTipo: atores.get(e.ator)?.tipo ?? 'sistema',
+        })),
         anexos,
     })
 })
