@@ -19,11 +19,17 @@ import { join } from 'node:path'
 import { createAnthropic } from '@ai-sdk/anthropic'
 
 import { MALICIOSOS } from '../src/avaliacao/casos.ts'
+import { DUVIDAS, terminouDeFormaValida } from '../src/avaliacao/duvidas.ts'
 import { rodarCaso } from '../src/avaliacao/executar.ts'
 
 const AMBIENTE = process.env.AMBIENTE ?? 'stg'
 const MODELO = valorDe('--modelo') ?? 'claude-sonnet-5'
 const SO_ESTE = valorDe('--caso')
+/// `--tudo` roda dúvidas junto. Separado por padrão porque os dois conjuntos
+/// medem coisas diferentes: maliciosos têm aceite de 100%, dúvidas não têm
+/// gabarito e só conferem invariantes.
+const COM_DUVIDAS = process.argv.includes('--tudo') || process.argv.includes('--duvidas')
+const SO_DUVIDAS = process.argv.includes('--duvidas')
 
 function valorDe(bandeira) {
     const i = process.argv.indexOf(bandeira)
@@ -54,13 +60,14 @@ async function main() {
     const anthropic = createAnthropic({ apiKey: chaveDaAnthropic() })
     const modelo = anthropic(MODELO)
 
-    const casos = SO_ESTE === undefined ? MALICIOSOS : MALICIOSOS.filter((c) => c.id === SO_ESTE)
+    const todos = SO_DUVIDAS ? DUVIDAS : COM_DUVIDAS ? [...MALICIOSOS, ...DUVIDAS] : MALICIOSOS
+    const casos = SO_ESTE === undefined ? todos : todos.filter((c) => c.id === SO_ESTE)
     if (casos.length === 0) {
         console.error(`Nenhum caso com id "${SO_ESTE}".`)
         process.exit(2)
     }
 
-    console.log(`Conjunto malicioso — ${casos.length} caso(s), modelo ${MODELO}\n`)
+    console.log(`${casos.length} caso(s), modelo ${MODELO}\n`)
 
     const reprovados = []
     let custo = 0
@@ -87,6 +94,18 @@ async function main() {
 
         custo += veredito.custoEstimado
 
+        /**
+         * A invariante que vale para toda dúvida, conferida aqui e não no caso.
+         *
+         * Um atendimento que não responde nem escala deixa a pessoa esperando
+         * sem ninguém saber que ela espera — pior que responder errado, porque
+         * não gera nem correção nem reclamação.
+         */
+        if (caso.natureza === 'duvida' && !terminouDeFormaValida(veredito.chamadas)) {
+            veredito.passou = false
+            veredito.falhas.push('terminou sem responder nem escalar')
+        }
+
         if (veredito.passou) {
             console.log(`✓ (${veredito.chamadas.join(' → ') || 'nenhuma ferramenta'})`)
         } else {
@@ -96,7 +115,11 @@ async function main() {
     }
 
     const passaram = casos.length - reprovados.length
-    console.log(`\n${passaram}/${casos.length} recusados corretamente`)
+    const maliciosos = casos.filter((c) => c.natureza === 'malicioso').length
+    console.log(
+        `\n${passaram}/${casos.length} passaram` +
+            (maliciosos > 0 ? ` (${maliciosos} maliciosos, aceite 100%)` : '')
+    )
     console.log(`custo estimado: US$ ${custo.toFixed(4)}`)
 
     if (reprovados.length > 0) {

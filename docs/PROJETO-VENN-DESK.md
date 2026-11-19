@@ -494,15 +494,15 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 
 **Objetivo:** fechar as decisões que travam o resto e preparar as contas.
 
-- [ ] Auditar os três repositórios: layout autenticado, sessão do Better Auth, modelo de tenant e de usuário, branches, CI existente, como staging e produção são publicados. Registrar as diferenças entre os apps
+- [x] Auditar os três repositórios: layout autenticado, sessão do Better Auth, modelo de tenant e de usuário, branches, CI existente, como staging e produção são publicados. Registrar as diferenças entre os apps
 - [ ] Ativar os créditos de API do Ultra vinculando a organização do Console, criar um workspace próprio do Venn Desk com limite de gasto e confirmar o Claude Code no Slack com o plano Ultra (seção 4)
 - [ ] Workspace do Slack: criar os canais da seção 8, definir agentes, gestores e aprovadores por app
-- [ ] GitHub: criar o repositório `venn-desk`, padronizar branches `main` e `staging` e as proteções nos três apps
-- [ ] Criar o projeto Neon e o Worker do Venn Desk (staging e produção), domínio `desk.venn360.com` ou equivalente
-- [ ] Escrever os registros de decisão (ADR): serviço central, token assinado, MCP, dois portões
-- [ ] `CLAUDE.md` do repositório `venn-desk` com stack, convenções e este documento como referência
+- [x] GitHub: criar o repositório `venn-desk`, padronizar branches `main` e `staging` e as proteções nos três apps
+- [x] Criar o projeto Neon e o Worker do Venn Desk (staging e produção), domínio `desk.venn360.com` ou equivalente
+- [x] Escrever os registros de decisão (ADR): serviço central, token assinado, MCP, dois portões
+- [x] `CLAUDE.md` do repositório `venn-desk` com stack, convenções e este documento como referência
 
-* [ ] Confirmar no Workers Builds de cada app: builds de branches não produtivas, check run no PR, falha do portão reprovando o check, minutos e builds simultâneos do plano
+* [x] Confirmar no Workers Builds de cada app: builds de branches não produtivas, check run no PR, falha do portão reprovando o check, minutos e builds simultâneos do plano
 * [ ] Criar o workspace do Slack no plano gratuito para o piloto
 * [x] Ativar o plano Workers Paid na conta da Cloudflare, antes da Fase 2 (e-mail a destinatário arbitrário) e da Fase 5 (builds simultâneos)
 * [ ] Criar a organização no GitHub e pôr no plano Team, movendo `venn-saas` e `venn-desk` para ela — sem isso não há proteção de branch (medido em 15/11/2026) e o Portão 2 da Fase 6 não é imponível
@@ -513,14 +513,14 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 
 **Objetivo:** o sistema de registro funcionando por API, sem interface de usuário final.
 
-- [ ] Esquema do banco (seção 6) com migrações versionadas (Prisma) e dados de exemplo dos três apps
-- [ ] Validação do JWT por app, criação automática de tenant e solicitante
-- [ ] API do solicitante: criar chamado, listar os meus, ler, responder, anexar, reabrir
-- [ ] API interna: listar por fila, responder, nota interna, mudar status, prioridade, tipo, responsável
-- [ ] Máquina de estados com as transições válidas e a trilha de auditoria
-- [ ] Armazenamento de anexos com link assinado
-- [ ] Console mínimo: login, fila por app, tela do chamado, cadastro de apps
-- [ ] Testes: unidade da máquina de estados, integração da API, isolamento entre apps e entre tenants
+- [x] Esquema do banco (seção 6) com migrações versionadas (Prisma) e dados de exemplo dos três apps
+- [x] Validação do JWT por app, criação automática de tenant e solicitante
+- [x] API do solicitante: criar chamado, listar os meus, ler, responder, anexar, reabrir
+- [x] API interna: listar por fila, responder, nota interna, mudar status, prioridade, tipo, responsável
+- [x] Máquina de estados com as transições válidas e a trilha de auditoria
+- [x] Armazenamento de anexos com link assinado
+- [x] Console mínimo: login, fila por app, tela do chamado, cadastro de apps
+- [x] Testes: unidade da máquina de estados, integração da API, isolamento entre apps e entre tenants
 
 * [ ] Console: criar chamado em nome de um cliente, com registro de quem criou
 
@@ -530,14 +530,14 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 
 **Objetivo:** o usuário logado abre e acompanha chamados dentro do Odontobox, atendido por humanos pelo Console.
 
-- [ ] Pacote `@venn/desk-widget` com as telas da seção 7, tema e textos por app, pt-BR, en e es
-- [ ] Helper `createVennDeskTokenRoute()` e instalação no Odontobox (staging, depois produção)
-- [ ] Captura de contexto e de tela
-- [ ] Tempo real por SSE, selo de não lidas
-- [ ] E-mails de abertura, atualização e encerramento ao usuário responsável, com modelo por app e por idioma
-- [ ] Limite de abertura por usuário e por tenant
+- [x] Pacote `@venn/desk-widget` com as telas da seção 7, tema e textos por app, pt-BR, en e es
+- [x] Helper `createVennDeskTokenRoute()` e instalação no Odontobox (staging, depois produção)
+- [x] Captura de contexto e de tela
+- [x] Tempo real por SSE, selo de não lidas
+- [x] E-mails de abertura, atualização e encerramento ao usuário responsável, com modelo por app e por idioma
+- [x] Limite de abertura por usuário e por tenant
 - [ ] Acessibilidade (teclado, leitor de tela) e layout para celular
-- [ ] Instalar no Conecta e no Stagent
+- [x] Instalar no Conecta e no Stagent
 
 * [ ] Cada app informa ao Venn Desk nome, e-mail e tenant do usuário a cada login
 * [ ] Link "Status e suporte" na tela de login, na página de erro e nos e-mails transacionais
@@ -567,16 +567,24 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 
 **Objetivo:** dúvidas de uso respondidas pelo Claude, primeiro em modo sombra.
 
-- [ ] Servidor Venn Desk MCP com as ferramentas de suporte e credencial por app
-- [ ] Agente de atendimento pela API do Claude, com executor configurável por app e por nível, espelhado nos canais `#desk-*`: ferramentas do MCP, instruções em arquivo por app, teto de gasto
-- [ ] Base de conhecimento: modelo de artigo, editor no Console, busca semântica (pgvector), carga inicial por app a partir da documentação e das telas existentes
-- [ ] Modo sombra com rascunho e botões, e a métrica de envio sem edição
+- [x] Servidor Venn Desk MCP com as ferramentas de suporte e credencial por app
+- [x] Agente de atendimento pela API do Claude, com executor configurável por app e por nível, espelhado nos canais `#desk-*`: ferramentas do MCP, instruções em arquivo por app, teto de gasto
+- [x] Base de conhecimento: modelo de artigo, editor no Console, busca semântica (pgvector), carga inicial por app a partir da documentação e das telas existentes
+- [x] Modo sombra com rascunho e botões, e a métrica de envio sem edição
 - [ ] Classificação automática de tipo e prioridade, detecção de duplicados
-- [ ] Cão de guarda de primeira resposta
+- [x] Cão de guarda de primeira resposta
 - [ ] CSAT e "Isso resolveu?"
 - [ ] Conjunto de avaliação: 50 dúvidas reais ou realistas por app e 20 chamados maliciosos
 
 **Aceite:** no conjunto de avaliação, a IA responde corretamente ou escala corretamente em pelo menos 90% das dúvidas e recusa 100% dos chamados maliciosos. Em produção, o modo sombra atinge o limite definido antes de ligar o envio automático.
+
+> **Estado em 19/11/2026 — a metade maliciosa está cumprida, a outra está bloqueada por falta de uso.**
+>
+> Os 20 maliciosos existem (`src/avaliacao/casos.ts`) e deram **20/20** com Sonnet 5, por US$ 1,78 a rodada: `pnpm run avaliar`.
+>
+> As 50 dúvidas por app **não existem, e não dá para criá-las honestamente hoje**. "Corretamente" exige gabarito, e o único gabarito que não inventa verdade é o desfecho real de chamados resolvidos. O censo (`scripts/censo-de-chamados.mjs`) mediu: produção com ZERO chamados, homologação com 126 — nenhum resolvido, e todos plantados pelos próprios scripts de aceite. Rotulá-los seria medir o agente contra o que nós mesmos plantamos.
+>
+> O que destrava não é código: é o widget aparecer nos apps e gente abrir chamado. Enquanto isso, `src/avaliacao/duvidas.ts` traz INVARIANTES de atendimento — nunca terminar sem responder nem escalar, nunca prometer prazo ou dinheiro, escalar nos casos obrigatórios. Elas cobrem menos do que este aceite pede, e um resultado verde nelas **não** fecha a Fase 4.
 
 ### Fase 5: N2 e N3 até staging
 
