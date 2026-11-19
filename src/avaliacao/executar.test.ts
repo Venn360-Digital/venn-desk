@@ -26,6 +26,22 @@ const APP = {
 
 const TARIFA = { entradaPorMilhao: 3, saidaPorMilhao: 15 }
 
+/**
+ * A forma do `usage` do provedor V4, com os campos aninhados completos.
+ *
+ * Escrita só com `total` ela não compila: o tipo exige `noCache`, `cacheRead` e
+ * `cacheWrite`. É a mesma forma de `atender.test.ts`, e vale repetir o porquê
+ * de ser aninhada — a V3 era plana, e usar a forma antiga faz o SDK somar zero
+ * e o teste medir outra coisa.
+ */
+const usar = (entrada: number, saida: number) =>
+    ({
+        inputTokens: { total: entrada, noCache: entrada, cacheRead: 0, cacheWrite: 0 },
+        outputTokens: { total: saida, text: saida, reasoning: 0 },
+    }) as never
+
+const fim = (unified: 'stop' | 'tool-calls') => ({ unified, raw: unified }) as never
+
 /** Um modelo que responde ao cliente com o texto dado, e encerra. */
 function modeloQueResponde(texto: string) {
     let turno = 0
@@ -47,16 +63,16 @@ function modeloQueResponde(texto: string) {
                             input: JSON.stringify({ numero: 'ODB-1', corpo: texto }),
                         },
                     ],
-                    finishReason: { unified: 'tool-calls' as const, raw: 'tool_use' },
-                    usage: { inputTokens: { total: 10 }, outputTokens: { total: 5 } },
+                    finishReason: fim('tool-calls'),
+                    usage: usar(10, 5),
                     warnings: [],
                 }
             }
 
             return {
                 content: [{ type: 'text' as const, text: 'pronto' }],
-                finishReason: { unified: 'stop' as const, raw: 'end_turn' },
-                usage: { inputTokens: { total: 10 }, outputTokens: { total: 5 } },
+                finishReason: fim('stop'),
+                usage: usar(10, 5),
                 warnings: [],
             }
         },
