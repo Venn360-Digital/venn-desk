@@ -40,7 +40,9 @@
         "status:publicar": "node scripts/publicar-status.mjs",
         "aceite:portal": "node scripts/aceite-portal.mjs",
         "aceite:sla": "node scripts/aceite-sla.mjs",
-        "aceite:mcp": "node scripts/aceite-mcp.mjs"
+        "aceite:mcp": "node scripts/aceite-mcp.mjs",
+        "avaliar": "node scripts/avaliar.mjs",
+        "//avaliar": "O aceite da Fase 4. Custa centavos e chama o modelo de verdade, entao fica FORA de `verificar` — o portao roda a cada commit e nao deve gastar nem depender de rede."
     },
     "dependencies": {
         "@ai-sdk/anthropic": "^4.0.106",
