@@ -5,6 +5,13 @@ import { abrirChamado } from '../dados/abertura.ts'
 import { formatarNumero } from '../dominio/numero.ts'
 import { grupoNoWidget, type GrupoNoWidget, type Status } from '../dominio/estados.ts'
 import { prioridadeSugerida, type Impacto } from '../dominio/prioridade.ts'
+import {
+    atendidoPelaIa,
+    esquemaDaNota,
+    NOTA_MAXIMA,
+    NOTA_MINIMA,
+    podeAvaliar,
+} from '../dominio/csat.ts'
 import { assinar, VALIDADE_DO_LINK_S } from '../lib/assinatura.ts'
 import { ErroDeDominio } from '../lib/erros.ts'
 import type { Ambiente } from '../lib/ambiente.ts'
@@ -275,8 +282,23 @@ rotasDoSolicitante.get('/api/app/:app/chamados/:numero', async (c) => {
     const mensagens = await escopo.mensagens.publicas(chamado.id)
     const anexos = await escopo.anexos.doChamado(chamado.id)
 
+    /**
+     * A nota já dada vem junto, para o widget saber se ainda pergunta.
+     *
+     * Sem isso ele perguntaria de novo a cada abertura do painel, e insistir
+     * com quem já respondeu é o jeito mais rápido de ninguém mais responder.
+     * `podeAvaliar` decide se a pergunta cabe; `nota` decide se já coube.
+     */
+    const avaliacao = await escopo.csat.doChamado(chamado.id)
+
     return c.json({
         chamado: paraOWidget(chamado, c.get('app').prefixo),
+        csat: {
+            podeAvaliar:
+                podeAvaliar(chamado.status) &&
+                chamado.requesterId === c.get('solicitante').requesterId,
+            nota: avaliacao?.nota ?? null,
+        },
         mensagens: mensagens.map((mensagem) => ({
             id: mensagem.id,
             autor: mensagem.autor,
@@ -290,6 +312,66 @@ rotasDoSolicitante.get('/api/app/:app/chamados/:numero', async (c) => {
             tamanho: anexo.tamanho,
         })),
     })
+})
+
+/**
+ * A nota de satisfação, dada por quem recebeu o atendimento.
+ *
+ * **Quem avalia é o solicitante do chamado, não a empresa inteira.** Um
+ * administrador que vê os chamados da empresa (`veOsChamadosDaEmpresa`) pode
+ * LER o chamado de uma colega, e não deve poder avaliar o atendimento que ela
+ * recebeu — a nota é a impressão de quem foi atendido.
+ *
+ * `atendidoPelaIa` é DEDUZIDO aqui, das mensagens do chamado. Recebê-lo do
+ * corpo tornaria editável, por quem responde o formulário, a métrica que decide
+ * se o atendimento automático é ligado num app.
+ */
+rotasDoSolicitante.post('/api/app/:app/chamados/:numero/csat', async (c) => {
+    const chamado = await chamadoDoSolicitante(c)
+    const escopo = c.get('escopo')
+    const solicitante = c.get('solicitante')
+
+    if (chamado.requesterId !== solicitante.requesterId) {
+        throw new ErroDeDominio(
+            'nao_e_seu',
+            'A nota é de quem foi atendido. Este chamado é de outra pessoa.',
+            403
+        )
+    }
+
+    if (!podeAvaliar(chamado.status)) {
+        throw new ErroDeDominio(
+            'chamado_em_andamento',
+            'Este chamado ainda está em andamento. A nota vem quando ele for encerrado.',
+            422
+        )
+    }
+
+    const corpo = esquemaDaNota.safeParse(await c.req.json().catch(() => null))
+    if (!corpo.success) {
+        throw new ErroDeDominio('nota_invalida', `A nota vai de ${NOTA_MINIMA} a ${NOTA_MAXIMA}.`, 400)
+    }
+
+    const mensagens = await escopo.mensagens.todas(chamado.id)
+
+    const resposta = await escopo.csat.registrar({
+        ticketId: chamado.id,
+        nota: corpo.data.nota,
+        ...(corpo.data.comentario === undefined ? {} : { comentario: corpo.data.comentario }),
+        atendidoPelaIa: atendidoPelaIa(mensagens),
+    })
+
+    /// A trilha registra a nota, não o comentário: o texto é do cliente e já
+    /// está na linha do CSAT; repeti-lo no evento o espalharia por um lugar a
+    /// mais, sem acrescentar o que a trilha precisa saber.
+    await escopo.eventos.registrar({
+        ticketId: chamado.id,
+        ator: `requester:${solicitante.requesterId}`,
+        evento: 'csat:avaliou',
+        depois: { nota: resposta.nota, atendidoPelaIa: resposta.atendidoPelaIa },
+    })
+
+    return c.json({ nota: resposta.nota, registradaEm: resposta.criadoEm.toISOString() })
 })
 
 rotasDoSolicitante.post('/api/app/:app/chamados/:numero/mensagens', async (c) => {

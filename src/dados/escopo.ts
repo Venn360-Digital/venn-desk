@@ -1,5 +1,5 @@
 import type { Prisma, PrismaClient } from '#prisma'
-import type { Attachment, HealthEpisode, HealthState, KbArticle, Problem, SlaTimer, Ticket, TicketEvent, TicketMessage } from '#prisma'
+import type { Attachment, CsatResponse, HealthEpisode, HealthState, KbArticle, Problem, SlaTimer, Ticket, TicketEvent, TicketMessage } from '#prisma'
 
 import { ErroDeDominio } from '../lib/erros.ts'
 import { transicionar, type Evento, type Status } from '../dominio/estados.ts'
@@ -227,6 +227,24 @@ export interface EscopoDoApp {
         porId(id: string): Promise<Problem | null>
         abrir(dados: { titulo: string; causa?: string }): Promise<Problem>
         resolver(id: string): Promise<Problem | null>
+    }
+
+    /**
+     * A nota de satisfação (seção 12). Uma por chamado — o banco tem `@unique`
+     * em `ticketId`, e reavaliar substitui em vez de acumular: um chamado
+     * reaberto e resolvido de novo vale pela última experiência, não pela
+     * primeira.
+     */
+    csat: {
+        doChamado(ticketId: string): Promise<CsatResponse | null>
+        registrar(dados: {
+            ticketId: string
+            nota: number
+            comentario?: string
+            atendidoPelaIa: boolean
+        }): Promise<CsatResponse>
+        /** Todas as notas do app, para o resumo. */
+        todas(): Promise<{ nota: number; atendidoPelaIa: boolean }[]>
     }
 
     /**
@@ -1055,6 +1073,46 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                     data: { resolvidoEm: new Date() },
                 })
                 return count === 1 ? conexao.problem.findFirst({ where: { id, appId } }) : null
+            },
+        },
+
+        csat: {
+            async doChamado(ticketId) {
+                return conexao.csatResponse.findFirst({ where: { ticketId, appId } })
+            },
+
+            async registrar(dados) {
+                /**
+                 * `upsert` pelo `ticketId`, que é único — e o `appId` entra nos
+                 * DOIS lados.
+                 *
+                 * No `where` ele não cabe (a chave única é só `ticketId`), então
+                 * a garantia de isolamento vem de quem chama: a rota só alcança
+                 * o chamado pelo escopo, e um chamado de outro app não chega
+                 * aqui. No `create` ele entra para a linha nascer carimbada.
+                 */
+                return conexao.csatResponse.upsert({
+                    where: { ticketId: dados.ticketId },
+                    create: {
+                        appId,
+                        ticketId: dados.ticketId,
+                        nota: dados.nota,
+                        ...(dados.comentario === undefined ? {} : { comentario: dados.comentario }),
+                        atendidoPelaIa: dados.atendidoPelaIa,
+                    },
+                    update: {
+                        nota: dados.nota,
+                        comentario: dados.comentario ?? null,
+                        atendidoPelaIa: dados.atendidoPelaIa,
+                    },
+                })
+            },
+
+            async todas() {
+                return conexao.csatResponse.findMany({
+                    where: { appId },
+                    select: { nota: true, atendidoPelaIa: true },
+                })
             },
         },
 

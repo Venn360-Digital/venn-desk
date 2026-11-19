@@ -60,6 +60,7 @@ function conexaoFalsa(respostas: Record<string, unknown> = {}) {
         slaTimer: delegado('slaTimer'),
         slaPolicy: delegado('slaPolicy'),
         kbArticle: delegado('kbArticle'),
+        csatResponse: delegado('csatResponse'),
     } as unknown as Conexao
 
     return { conexao, chamadas }
@@ -383,5 +384,38 @@ describe('artigos: deste app ou global, nunca do vizinho', () => {
         await escopo.artigos.mudarStatus('a', 'PUBLICADO')
 
         expect(chamadas.filter((c) => c.metodo === 'updateMany')).toHaveLength(0)
+    })
+})
+
+describe('csat: a nota é do app, e a dedução não vem do cliente', () => {
+    it('ler e resumir filtram por app', async () => {
+        const { conexao, chamadas } = conexaoFalsa()
+        const escopo = escopoDoApp(conexao, 'app-a')
+
+        await escopo.csat.doChamado('chamado-1')
+        await escopo.csat.todas()
+
+        for (const chamada of chamadas) {
+            expect(chamada.args['where']).toMatchObject({ appId: 'app-a' })
+        }
+    })
+
+    it('a linha nova nasce carimbada com o app', async () => {
+        const { conexao, chamadas } = conexaoFalsa()
+        const escopo = escopoDoApp(conexao, 'app-a')
+
+        await escopo.csat.registrar({
+            ticketId: 'chamado-1',
+            nota: 5,
+            atendidoPelaIa: true,
+        })
+
+        /**
+         * O `where` do upsert é só `ticketId` — a chave única do banco não tem
+         * `appId`, e não há como pô-lo ali. O isolamento vem de quem chama: a
+         * rota só alcança o chamado pelo escopo. O que SE pode garantir aqui é
+         * que a linha nova nasça com o app certo, e é o que isto prova.
+         */
+        expect(chamadas[0]?.args['create']).toMatchObject({ appId: 'app-a' })
     })
 })

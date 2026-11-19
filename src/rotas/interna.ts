@@ -25,6 +25,7 @@ import { verificarSaude } from '../saude/verificar.ts'
 import { avisosDoTema, esquemaDoTema, lerTema } from '../dominio/tema.ts'
 import { esquemaDoArtigo, STATUS, type StatusDoArtigo } from '../dominio/artigo.ts'
 import { resolverAtores } from '../dominio/ator.ts'
+import { resumirCsat } from '../dominio/csat.ts'
 import { nomesDeAgentes } from '../dados/agentes.ts'
 import { vigiarPrazos } from '../sla/vigiar.ts'
 import type { CaixaDeSaida } from '../correio/enviar.ts'
@@ -432,12 +433,13 @@ rotasInternas.get('/api/console/app/:app/chamados/:numero', async (c) => {
      * agora mistura três produtos, saber em qual deles se está é parte da
      * leitura, não um detalhe.
      */
-    const [mensagens, eventos, anexos, relogios, empresa] = await Promise.all([
+    const [mensagens, eventos, anexos, relogios, empresa, avaliacao] = await Promise.all([
         escopo.mensagens.todas(chamado.id),
         escopo.eventos.doChamado(chamado.id),
         escopo.anexos.doChamado(chamado.id),
         escopo.sla.doChamado(chamado.id),
         escopo.empresas.porId(chamado.tenantId),
+        escopo.csat.doChamado(chamado.id),
     ])
 
     /**
@@ -477,6 +479,22 @@ rotasInternas.get('/api/console/app/:app/chamados/:numero', async (c) => {
             })),
             new Date()
         ),
+        /**
+         * A nota aparece no chamado, e não só no relatório.
+         *
+         * A seção 13 pede revisão semanal das respostas com nota baixa, e quem
+         * revisa precisa ver a nota ao lado do que foi respondido — num
+         * relatório agregado ela vira número, e o que a revisão procura é o
+         * texto que gerou o número.
+         */
+        csat: avaliacao === null
+            ? null
+            : {
+                  nota: avaliacao.nota,
+                  comentario: avaliacao.comentario,
+                  atendidoPelaIa: avaliacao.atendidoPelaIa,
+                  criadoEm: avaliacao.criadoEm.toISOString(),
+              },
         mensagens,
         eventos: eventos.map((e) => ({
             ...e,
@@ -1132,6 +1150,19 @@ rotasInternas.post('/api/console/app/:app/base/:id/status', async (c) => {
     const artigo = await escopo.artigos.mudarStatus(c.req.param('id'), corpo.data.status)
 
     return c.json({ artigo: { id: artigo.id, status: artigo.status } })
+})
+
+/**
+ * O resumo de satisfação daquele app (seção 12).
+ *
+ * Separa IA de humano porque é dessa comparação que sai a decisão de ligar o
+ * atendimento automático: o modo sombra responde "a IA escreveria bem?", e o
+ * CSAT responde "quem recebeu achou bom?". Só a segunda vem de fora de casa.
+ */
+rotasInternas.get('/api/console/app/:app/csat', async (c) => {
+    const escopo = escopoDoApp(c.get('cliente'), c.get('app').id)
+
+    return c.json({ resumo: resumirCsat(await escopo.csat.todas()) })
 })
 
 /** Quem está logado. É como a SPA do Console sabe se há sessão. */
