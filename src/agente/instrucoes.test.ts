@@ -93,3 +93,32 @@ describe('as instruções do agente', () => {
         expect(eng).toMatch(/nunca prometa prazo/i)
     })
 })
+
+describe('o bloco da base viva', () => {
+    it('entra quando a base está no catálogo, com as três regras que o agente não adivinha', () => {
+        const texto = montarInstrucoes({
+            nomeDoApp: 'Odontobox360',
+            numeroDoChamado: 'ODB-0001',
+            modoSombra: false,
+            ferramentas: ferramentasDoEscopo('SUPORTE'),
+        })
+
+        expect(texto).toContain('## A base é viva')
+        /// Qual artigo vale mais: o derivado, que é a verdade de hoje.
+        expect(texto).toContain('prefira o derivado mais recente')
+        /// Como dizer onde fica: o caminho do menu, não o endereço.
+        expect(texto).toContain('Vendas → Procedimentos')
+        /// O mapa técnico é para entender e apontar, nunca para repetir.
+        expect(texto).toMatch(/tag `tecnico`[\s\S]*Nunca repita ao cliente/)
+    })
+
+    it('não entra quando o canal não tem a base: seria instrução sobre o que não existe', () => {
+        const texto = montarInstrucoes({
+            nomeDoApp: 'Odontobox360',
+            numeroDoChamado: 'ODB-0001',
+            modoSombra: false,
+            ferramentas: ferramentasDoEscopo('SUPORTE').filter((f) => f.nome !== 'buscar_base'),
+        })
+        expect(texto).not.toContain('## A base é viva')
+    })
+})

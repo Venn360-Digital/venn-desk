@@ -2,6 +2,10 @@ import type { App, PrismaClient } from '#prisma'
 
 import type { EscopoDoApp } from '../dados/escopo.ts'
 import type { Embutidor } from '../conhecimento/embeddings.ts'
+import { esquemaDoMenu } from '../conhecimento/extrair/menu.ts'
+import { CHAVE_MENU } from '../conhecimento/renderizar/menu.ts'
+import { rotuloDaOrigem } from '../conhecimento/rotulos.ts'
+import { nomeDaTela } from '../conhecimento/rota.ts'
 import { ErroDeDominio } from '../lib/erros.ts'
 import { formatarNumero } from '../dominio/numero.ts'
 import { grupoNoWidget, type Status } from '../dominio/estados.ts'
@@ -228,6 +232,16 @@ async function obterChamado(ctx: Contexto, bruto: string): Promise<Resultado> {
         return `[${m.criadoEm.toISOString()}] ${quem} (${marcas.join(', ')}):\n${corpo}`
     })
 
+    /**
+     * Em que TELA o cliente estava quando abriu o chamado.
+     *
+     * O widget manda o endereço (`/vendas/servicos`), que não diz nada a quem
+     * atende. O artigo do menu tem a mesma tabela que a trilha do produto usa,
+     * então o nome sai dela: "Vendas → Procedimentos". É a primeira coisa que
+     * uma pessoa experiente pergunta, e aqui ela já vem respondida.
+     */
+    const telaDoCliente = await nomeDaTelaDoChamado(ctx, chamado.contexto)
+
     const contexto =
         chamado.contexto === null
             ? 'Nenhum contexto capturado.'
@@ -243,6 +257,7 @@ async function obterChamado(ctx: Contexto, bruto: string): Promise<Resultado> {
             '',
             prazos.length === 0 ? 'Sem relógios de SLA.' : `Prazos:\n${prazos.join('\n')}`,
             '',
+            telaDoCliente === null ? null : `Tela em que o cliente estava: ${telaDoCliente}`,
             `Contexto capturado pelo widget:\n${contexto}`,
             '',
             `Linha do tempo (${mensagens.length}):`,
@@ -270,6 +285,58 @@ function comoArtigo(texto: string): string {
         texto,
         '</artigo>',
     ].join('\n')
+}
+
+/**
+ * O nome da tela a partir do contexto do widget, pelo artigo do menu.
+ *
+ * Nunca lança nem derruba a ferramenta: sem menu derivado, sem rota no
+ * contexto, ou com o artigo em outra forma, devolve `null` — e o chamado segue
+ * com o endereço cru, que é o que havia antes.
+ */
+async function nomeDaTelaDoChamado(ctx: Contexto, contexto: unknown): Promise<string | null> {
+    const rota = (contexto as { rota?: unknown } | null)?.rota
+    if (typeof rota !== 'string' || rota === '') return null
+
+    try {
+        const artigo = await ctx.escopoDoApp.artigos.porChave(CHAVE_MENU)
+        const menu = esquemaDoMenu.safeParse(artigo?.dados ?? null)
+        if (!menu.success) return null
+
+        /// O vocabulário sai do tema do app, que é o que o widget já usa; sem
+        /// ele, os placeholders ficam como estão e o nome ainda serve.
+        const vocabulario = (ctx.app.tema as { vocabulario?: unknown } | null)?.vocabulario
+        return nomeDaTela(rota, menu.data, (vocabulario ?? {}) as never)
+    } catch {
+        return null
+    }
+}
+
+/** Onde o N2 começa a olhar, a partir do mapa técnico da tela do cliente. */
+async function ponteiroDoMapa(ctx: Contexto, contexto: unknown): Promise<string | null> {
+    const rota = (contexto as { rota?: unknown } | null)?.rota
+    if (typeof rota !== 'string' || rota === '') return null
+
+    try {
+        const mapas = await ctx.escopoDoApp.artigos.listar({ origem: 'DERIVADO' })
+        for (const artigo of mapas) {
+            if (artigo.chave === null || !artigo.chave.startsWith('derivado:mapa:')) continue
+            const dados = artigo.dados as { telas?: { rota: string; arquivos?: string[]; apis?: string[]; modelos?: string[] }[] } | null
+            const tela = dados?.telas?.find((t) => t.rota === rota)
+            if (tela === undefined) continue
+
+            const partes = [
+                tela.arquivos === undefined || tela.arquivos.length === 0 ? null : tela.arquivos.slice(0, 3).join(', '),
+                tela.apis === undefined || tela.apis.length === 0 ? null : `APIs ${tela.apis.join(', ')}`,
+                tela.modelos === undefined || tela.modelos.length === 0 ? null : `tabelas ${tela.modelos.join(', ')}`,
+            ].filter((p) => p !== null)
+
+            return partes.length === 0 ? null : partes.join(' · ')
+        }
+        return null
+    } catch {
+        return null
+    }
 }
 
 async function buscarBase(
@@ -329,6 +396,15 @@ async function buscarBase(
         [
             `--- ${artigo.titulo} (id ${artigo.id})`,
             artigo.tags.length > 0 ? `tags: ${artigo.tags.join(', ')}` : null,
+            /**
+             * A PROCEDÊNCIA vai junto do resumo, e não só no corpo do artigo.
+             *
+             * Dois artigos podem responder à mesma pergunta — um escrito à mão
+             * em outubro, outro derivado do produto na semana passada. Sem a
+             * data e a origem, o agente escolhe pelo texto mais parecido; com
+             * elas, ele sabe qual é a verdade de hoje.
+             */
+            rotuloDaOrigem(artigo),
             comoArtigo(resumir(artigo.corpo)),
         ]
             .filter((l) => l !== null)
@@ -370,6 +446,7 @@ async function obterArtigo(ctx: Contexto, dados: Record<string, unknown>): Promi
         texto: [
             `# ${artigo.titulo}`,
             artigo.tags.length > 0 ? `tags: ${artigo.tags.join(', ')}` : null,
+            rotuloDaOrigem(artigo),
             '',
             comoArtigo(artigo.corpo),
         ]
@@ -576,20 +653,33 @@ async function escalar(
     const para = dados['para'] as 'engenharia' | 'humano'
     const motivo = dados['motivo'] as string
 
+    /**
+     * Escalando para ENGENHARIA, a nota leva o ponteiro do mapa técnico.
+     *
+     * O N1 não lê código (ADR 0012), mas tem o mapa — e quem recebe o chamado
+     * do outro lado começa procurando onde olhar. Dizer "a tela de
+     * Procedimentos chama a API de produtos, que toca a tabela de serviços"
+     * economiza a primeira meia hora do N2, e sai de graça: o mapa já está na
+     * base, e a tela do cliente já foi identificada.
+     */
+    const ponteiros = para === 'engenharia' ? await ponteiroDoMapa(ctx, chamado.contexto) : null
+
     /// O motivo entra na trilha ANTES da transição: se a transição for
     /// recusada, a tentativa e a razão dela continuam registradas.
     await ctx.escopoDoApp.eventos.registrar({
         ticketId: chamado.id,
         ator,
         evento: `escalar:${para}`,
-        depois: { motivo },
+        depois: { motivo, ...(ponteiros === null ? {} : { ponteiros }) },
     })
 
     await ctx.escopoDoApp.mensagens.adicionar(
         {
             ticketId: chamado.id,
             autor: 'IA',
-            corpo: `Escalado para ${para}.\n\n${motivo}`,
+            corpo: [`Escalado para ${para}.`, '', motivo, ponteiros === null ? null : `\nPor onde começar a olhar: ${ponteiros}`]
+                .filter((l) => l !== null)
+                .join('\n'),
             visibilidade: 'INTERNA',
             origem: 'MCP',
         },
