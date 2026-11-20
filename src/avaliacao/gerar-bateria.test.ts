@@ -265,6 +265,6 @@ describe('para quem cada caso técnico escala', () => {
         const t = tecnicosDoApp('odontobox')
         const localizados = t.filter((c) => c.gabarito.desfecho === 'escalou-engenharia')
         expect(localizados.length).toBe(7)
-        expect(localizados.some((c) => c.mensagem.includes('não bate com a soma'))).toBe(true)
+        expect(localizados.some((c) => c.assunto.includes('Relatório com número errado'))).toBe(true)
     })
 })

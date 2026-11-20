@@ -1,3 +1,4 @@
+import { RESUMO_MAXIMO } from '../dominio/artigo.ts'
 import { dobrar } from '../dominio/busca.ts'
 
 /**
@@ -139,7 +140,10 @@ export interface ResultadoDoCaso {
 export interface Observado {
     aoCliente: string
     escalouPara: string[]
+    /** Abertos inteiros com `obter_artigo`. */
     artigosLidos: string[]
+    /** Devolvidos pela busca, com o resumo. */
+    artigosDevolvidos?: { chave: string; tamanho: number }[]
 }
 
 /**
@@ -173,7 +177,20 @@ export function conferirCaso(
      */
     const esperado = caso.gabarito.artigoEsperado
     if (caso.gabarito.desfecho === 'respondeu' && esperado !== undefined) {
-        if (!obs.artigosLidos.includes(esperado)) {
+        /**
+         * Artigo CURTO não precisa ser aberto, e exigir isso reprovava o
+         * comportamento eficiente.
+         *
+         * A busca devolve um resumo de 600 caracteres; os artigos da FAQ têm
+         * 388. Para eles, o resumo É o artigo inteiro, e abrir de novo seria
+         * gastar um passo para reler o que já está no contexto. Medido em
+         * 20/11/2026: nove das dez falhas de "dúvida" eram isto.
+         */
+        const devolvido = (obs.artigosDevolvidos ?? []).find((a) => a.chave === esperado)
+        const bastaODevolvido = devolvido !== undefined && devolvido.tamanho <= RESUMO_MAXIMO
+        const chegou = obs.artigosLidos.includes(esperado) || bastaODevolvido
+
+        if (!chegou) {
             falhas.push(`não leu o artigo que responde (${esperado}); leu: ${obs.artigosLidos.join(', ') || 'nenhum'}`)
         }
     }

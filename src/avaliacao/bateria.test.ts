@@ -198,3 +198,38 @@ describe('a FONTE: quem responde tem de ter lido o artigo', () => {
         expect(r.passou).toBe(true)
     })
 })
+
+describe('artigo curto não precisa ser aberto', () => {
+    const curto = { chave: 'derivado:faq:o-que-e-um-credito', tamanho: 388 }
+    const longo = { chave: 'derivado:tela:marketing-remetentes', tamanho: 2027 }
+
+    it('o resumo da busca JÁ é o artigo inteiro quando ele cabe nele', () => {
+        /**
+         * A busca devolve 600 caracteres; os artigos da FAQ têm 388. Exigir
+         * que o agente abra o que já leu gastava um passo para reler — e nove
+         * das dez falhas de "dúvida" em 20/11/2026 eram isto.
+         */
+        const r = conferirCaso(
+            caso({ gabarito: { desfecho: 'respondeu', artigoEsperado: curto.chave } }),
+            obs({ artigosLidos: [], artigosDevolvidos: [curto] })
+        )
+        expect(r.passou).toBe(true)
+    })
+
+    it('artigo LONGO devolvido na busca não basta: o resumo corta no começo', () => {
+        const r = conferirCaso(
+            caso({ gabarito: { desfecho: 'respondeu', artigoEsperado: longo.chave } }),
+            obs({ artigosLidos: [], artigosDevolvidos: [longo] })
+        )
+        expect(r.passou).toBe(false)
+        expect(r.falhas[0]).toContain('não leu o artigo que responde')
+    })
+
+    it('artigo longo ABERTO passa', () => {
+        const r = conferirCaso(
+            caso({ gabarito: { desfecho: 'respondeu', artigoEsperado: longo.chave } }),
+            obs({ artigosLidos: [longo.chave], artigosDevolvidos: [longo] })
+        )
+        expect(r.passou).toBe(true)
+    })
+})

@@ -33,6 +33,8 @@ export interface Observacao {
     notas: string[]
     escalou: string[]
     artigosLidos: string[]
+    /** O que a busca devolveu, com o tamanho: artigo curto cabe no resumo. */
+    artigosDevolvidos: { chave: string; tamanho: number }[]
 }
 
 function escopoComBase(caso: CasoDaBateria, artigos: KbArticle[], obs: Observacao): EscopoDoApp {
@@ -108,12 +110,20 @@ function escopoComBase(caso: CasoDaBateria, artigos: KbArticle[], obs: Observaca
              * Reusar `parecidos` e `textoDeBusca` é o que torna o resultado
              * comparável com produção, em vez de medir outra busca.
              */
-            buscar: async (texto: string, limite: number) =>
-                parecidos(
+            buscar: async (texto: string, limite: number) => {
+                const achados = parecidos(
                     publicados.map((artigo) => ({ artigo, assunto: textoDeBusca(artigo) })),
                     texto,
                     limite
-                ).map(({ item, nota }) => ({ artigo: item.artigo, nota })),
+                ).map(({ item, nota }) => ({ artigo: item.artigo, nota }))
+
+                /// Registra o que foi DEVOLVIDO, com o tamanho: para artigo
+                /// curto, o resumo da busca já é o artigo inteiro.
+                for (const { artigo } of achados) {
+                    if (artigo.chave != null) obs.artigosDevolvidos.push({ chave: artigo.chave, tamanho: artigo.corpo.length })
+                }
+                return achados
+            },
 
             porId: async (id: string) => {
                 const artigo = publicados.find((a) => a.id === id) ?? null
@@ -146,7 +156,7 @@ export interface PedidoDeCaso {
 }
 
 export async function rodarCasoDaBateria(p: PedidoDeCaso): Promise<ResultadoDoCaso> {
-    const obs: Observacao = { aoCliente: [], notas: [], escalou: [], artigosLidos: [] }
+    const obs: Observacao = { aoCliente: [], notas: [], escalou: [], artigosLidos: [], artigosDevolvidos: [] }
 
     const contexto: Contexto = {
         cliente: null as unknown as PrismaClient,
@@ -174,6 +184,7 @@ export async function rodarCasoDaBateria(p: PedidoDeCaso): Promise<ResultadoDoCa
         aoCliente,
         escalouPara: obs.escalou,
         artigosLidos: obs.artigosLidos,
+        artigosDevolvidos: obs.artigosDevolvidos,
     })
 
     return {
