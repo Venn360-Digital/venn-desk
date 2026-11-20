@@ -183,6 +183,31 @@ describe('sincronizarApp', () => {
         ).rejects.toMatchObject({ codigoDeLeitura: 'limite_de_taxa' })
     })
 
+    it('publicado sem vetor (manual, ou de rodada em que o AI falhou) é reparado na rodada seguinte', async () => {
+        /// Em staging, 108 artigos ficaram sem vetor porque o primeiro lote
+        /// estourou o bge-m3; a rodada seguinte os viu "inalterados" e não
+        /// re-embutiu nada. O reparo lista o que está no ar sem vetor.
+        const { conexao, chamadas } = conexaoFalsa({
+            'kbArticle.findFirst': null,
+            'sql.queryRaw': [{ id: 'manual-1', titulo: 'Como troco a senha', corpo: 'Conta → Segurança.', tags: [] }],
+        })
+        const { leitor } = leitorFalso(ARQUIVOS)
+        const embutidos: string[] = []
+        const embutir = async (textos: string[]) => {
+            embutidos.push(...textos)
+            return textos.map(() => Array.from({ length: 1024 }, () => 0.1))
+        }
+
+        await sincronizarApp({ escopo: escopoDoApp(conexao, 'app-a'), app: APP, leitor, extrator: null, embutir, commitSha: SHA, anterior: null, agora: new Date(), tarifa: TARIFA })
+
+        expect(embutidos.some((t) => t.includes('Como troco a senha'))).toBe(true)
+        const gravacoes = chamadas.filter((c) => c.delegado === 'sql' && c.metodo === 'executeRaw')
+        expect(gravacoes.some((g) => (g.args['valores'] as unknown[]).includes('manual-1'))).toBe(true)
+        const listagem = chamadas.find((c) => c.delegado === 'sql' && c.metodo === 'queryRaw')
+        expect(listagem?.args['sql']).toContain('embedding IS NULL')
+        expect(listagem?.args['valores']).toContain('app-a')
+    })
+
     it('com Workers AI, os artigos novos ganham vetor em lote, com o appId no SQL', async () => {
         const { conexao, chamadas } = conexaoFalsa({ 'kbArticle.findFirst': null })
         const { leitor } = leitorFalso(ARQUIVOS)

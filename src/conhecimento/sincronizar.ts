@@ -213,6 +213,20 @@ export async function sincronizarApp(pedido: PedidoDeSincronizacao): Promise<Res
 
     /// Embeddings por último e em lotes: o que foi criado ou mudou ganha vetor.
     /// Falha aqui não falha a rodada — a busca por palavra continua valendo.
+    /// Reparo: o que está no ar sem vetor entra na fila de embedding desta
+    /// rodada — o artigo manual do Console, e o derivado de uma rodada em que o
+    /// Workers AI falhou. Sem isto, um artigo nascia sem vetor e ficava assim.
+    if (pedido.embutir !== null) {
+        const jaNaFila = new Set(pendentesDeVetor.map((p) => p.id))
+        const orfaos = await escopo.artigos.publicadosSemVetor(200).catch((e: unknown) => {
+            console.error('[conhecimento] não consegui listar os publicados sem vetor:', e)
+            return []
+        })
+        for (const a of orfaos) {
+            if (!jaNaFila.has(a.id)) pendentesDeVetor.push({ id: a.id, texto: textoDeBusca(a) })
+        }
+    }
+
     let semVetor = 0
     if (pedido.embutir !== null && pendentesDeVetor.length > 0) {
         /// `embutir` divide em chamadas pequenas por dentro (teto do bge-m3 por

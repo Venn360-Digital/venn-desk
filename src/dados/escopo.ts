@@ -360,6 +360,13 @@ export interface EscopoDoApp {
         }): Promise<KbArticle>
         /** Grava o vetor da busca semântica. SQL cru: o Prisma não tem `vector`. */
         gravarEmbedding(id: string, vetor: number[]): Promise<void>
+        /**
+         * Publicados deste app (ou globais) ainda sem vetor — o que a
+         * sincronização repara a cada rodada. Alcança o manual escrito no
+         * Console, que não passa por upsert nenhum, e o derivado de uma rodada
+         * em que o Workers AI falhou.
+         */
+        publicadosSemVetor(limite: number): Promise<{ id: string; titulo: string; corpo: string; tags: string[] }[]>
         /** Os publicados mais próximos do vetor, por cosseno. */
         buscarPorVetor(vetor: number[], limite: number): Promise<{ id: string; distancia: number }[]>
     }
@@ -1623,6 +1630,18 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                     UPDATE kb_articles
                     SET embedding = ${literal}::vector
                     WHERE id = ${id} AND (app_id = ${appId} OR app_id IS NULL)
+                `
+            },
+
+            async publicadosSemVetor(limite) {
+                return conexao.$queryRaw<{ id: string; titulo: string; corpo: string; tags: string[] }[]>`
+                    SELECT id, titulo, corpo, tags
+                    FROM kb_articles
+                    WHERE (app_id = ${appId} OR app_id IS NULL)
+                      AND status = 'PUBLICADO'
+                      AND embedding IS NULL
+                    ORDER BY atualizado_em DESC
+                    LIMIT ${limite}
                 `
             },
 
