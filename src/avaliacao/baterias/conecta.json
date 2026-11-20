@@ -1,1615 +1,1599 @@
 [
-  {
-    "id": "duvida-conecta-derivado-emails-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "empresa ficou em modo leitura",
-    "mensagem": "chegou um email dizendo que a empresa tá em somente-leitura, isso foi pq a fatura venceu? meus números do whatsapp ainda ficam conectados ou vou ter que reconectar tudo?",
-    "gabarito": {
-      "desfecho": "escalou-humano",
-      "artigoEsperado": "derivado:emails"
-    }
-  },
-  {
-    "id": "duvida-conecta-os-e-clientes-dos-outros-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "atendente ve tudo?",
-    "mensagem": "Minha equipe tem uns atendentes novos, eles conseguem ver as conversas e negócios de outros atendentes ou só os deles mesmo? Preciso saber antes de liberar o acesso.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:faq:atendente-ve-os-negocios-e-clientes-dos-outros"
-    }
-  },
-  {
-    "id": "duvida-conecta-gem-e-preenchida-sozinha-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "origem automatica dos contatos",
-    "mensagem": "Os contatos que chegam pelo anúncio que coloquei já vêm com a origem preenchida sozinha, sem eu precisar digitar nada? Como configuro isso?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Atendimento",
-          "Agentes",
-          "Canais"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:como-a-origem-e-preenchida-sozinha"
-    }
-  },
-  {
-    "id": "duvida-conecta-um-recesso-ou-fechamento-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "fechamento so de tarde",
-    "mensagem": "Preciso fechar a agenda so por um periodo, tipo das 14h as 18h pra dedetizacao. Da pra fazer isso ou só o dia inteiro?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Novo fechamento"
-        ],
-        [
-          "data de início e fim"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:como-cadastro-um-recesso-ou-fechamento"
-    }
-  },
-  {
-    "id": "duvida-conecta-a-mais-filas-para-alguem-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "adicionar fila pra atendente",
-    "mensagem": "Preciso que uma pessoa do meu time atenda duas filas diferentes sem precisar mudar ela de setor. Dá pra fazer isso onde?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Usuários"
-        ],
-        [
-          "departamentos"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:como-dou-acesso-a-mais-filas-para-alguem"
-    }
-  },
-  {
-    "id": "duvida-conecta-presa-atende-num-feriado-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "atender em feriado",
-    "mensagem": "A gente vai funcionar no feriado que vem e eu preciso tirar o bloqueio que o sistema colocou. Onde eu mudo isso?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Agenda da empresa"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:como-marco-que-a-empresa-atende-num-feriado"
-    }
-  },
-  {
-    "id": "duvida-conecta-nversa-para-outra-pessoa-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "nao acho opcao de transferir conversa",
-    "mensagem": "Quero passar uma conversa pra outra pessoa do time mas não acho onde faço isso. Já tentei nas configurações e nada.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "cabeçalho da conversa"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:como-transfiro-uma-conversa-para-outra-pessoa"
-    }
-  },
-  {
-    "id": "duvida-conecta-vulsos-quando-sao-usados-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "creditos avulsos quando usa",
-    "mensagem": "comprei uns creditos extra mes passado, queria saber quando eles entram no lugar dos do plano? e eles vencem?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "acaba"
-        ],
-        [
-          "90 dias"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:comprei-creditos-avulsos-quando-sao-usados"
-    }
-  },
-  {
-    "id": "duvida-conecta--as-conversas-por-agente-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "filtrar conversa por agente",
-    "mensagem": "Tenho um agente de vendas e outro que só atende recepção, dá pra ver só as conversas de um deles sem ficar procurando?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "seletor Agente"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:da-para-filtrar-as-conversas-por-agente"
-    }
-  },
-  {
-    "id": "duvida-conecta-numa-conversa-especifica-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "agente nao pode responder uma conversa",
-    "mensagem": "Tem uma conversa que eu quero atender pessoalmente, sem o agente se metendo. Dá pra fazer isso só nela, sem desligar tudo?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:faq:da-para-o-agente-parar-numa-conversa-especifica"
-    }
-  },
-  {
-    "id": "duvida-conecta-uracao-de-um-compromisso-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "duração compromisso errada",
-    "mensagem": "Não entendo de onde o sistema tira o tempo de cada consulta, ele marcou uma cirurgia junto com outra consulta no mesmo horário. Isso tá certo?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Vendas",
-          "Serviços"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:de-onde-sai-a-duracao-de-um-compromisso"
-    }
-  },
-  {
-    "id": "duvida-conecta-odem-usar-o-mesmo-numero-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "dois numeros mesmo agente",
-    "mensagem": "posso colocar dois agentes diferentes respondendo no mesmo numero de whatsapp? quero um pra vendas e outro pra suporte mas no mesmo numero.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "não"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:dois-agentes-podem-usar-o-mesmo-numero"
-    }
-  },
-  {
-    "id": "duvida-conecta-de-responder-o-que-houve-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "agente sumiu nao responde mais",
-    "mensagem": "De repente o agente parou de responder os clientes, mas as mensagens continuam chegando normal. O que pode ter acontecido?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "créditos de IA",
-          "pausado",
-          "Agentes",
-          "desconectou",
-          "número desconectou"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:o-agente-parou-de-responder-o-que-houve"
-    }
-  },
-  {
-    "id": "duvida-conecta-agente-responde-em-audio-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "agente nao manda audio",
-    "mensagem": "meu agente só responde em texto, queria que ele mandasse áudio pro cliente também, como ativo isso? tem algum limite de quantidade?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "teto mensal",
-          "Plano e créditos"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:o-agente-responde-em-audio"
-    }
-  },
-  {
-    "id": "duvida-conecta-eu-duas-vezes-o-que-faco-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "cliente duplicado",
-    "mensagem": "Um cliente meu falou comigo pelo zap e depois pelo insta e agora apareceu como se fosse duas pessoas diferentes. Como eu junto isso ou removo a ficha repetida?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "histórico",
-          "conversas"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:o-mesmo-cliente-apareceu-duas-vezes-o-que-faco"
-    }
-  },
-  {
-    "id": "duvida-conecta-e-quando-o-credito-acaba-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "agente parou de responder",
-    "mensagem": "oi, meu agente de atendimento parou de mandar mensagem sozinho do nada. o resto do sistema ta funcionando normal, CRM e agenda ok. o que aconteceu?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "crédito",
-          "franquia"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:o-que-acontece-quando-o-credito-acaba"
-    }
-  },
-  {
-    "id": "duvida-conecta-faq-o-que-e-a-fila-geral-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "conversa sumiu de dpto",
-    "mensagem": "Chegou uma conversa aqui mas não tá em nenhum departamento, cadê ela? quem consegue ver isso?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "fila geral"
-        ],
-        [
-          "todo mundo vê"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:o-que-e-a-fila-geral"
-    }
-  },
-  {
-    "id": "duvida-conecta-o-que-e-um-credito-de-ia-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "duvida sobre credito",
-    "mensagem": "oi, vi que gastou credito aqui mas foi minha atendente que respondeu na mão, não foi o robo. isso devia gastar credito? quero entender o que conta como credito",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "ação de IA",
-          "resposta do agente",
-          "resumo",
-          "transcrição de áudio"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:o-que-e-um-credito-de-ia"
-    }
-  },
-  {
-    "id": "duvida-conecta-e-onde-vem-meus-clientes-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "gráfico mostra tudo sem origem",
-    "mensagem": "Oi, no dashboard o gráfico de origem dos clientes tá quase todo marcado como",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "ninguém preencheu"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:onde-vejo-de-onde-vem-meus-clientes"
-    }
-  },
-  {
-    "id": "duvida-conecta-co-nao-aparece-na-agenda-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "serviço sumiu da agenda",
-    "mensagem": "Oi, cadastrei um serviço novo mas ele não aparece na hora de marcar horário pro profissional. O que pode ser?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "cadastrado como serviço"
-        ],
-        [
-          "liberado na janela de atendimento"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:por-que-meu-servico-nao-aparece-na-agenda"
-    }
-  },
-  {
-    "id": "duvida-conecta--a-fila-de-outra-unidade-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "nao acho a fila de outra unidade",
-    "mensagem": "Oi, sou de um departamento e não consigo ver a fila de outra unidade aqui no sistema. Isso é normal? Como faço pra ver?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:faq:por-que-nao-vejo-a-fila-de-outra-unidade"
-    }
-  },
-  {
-    "id": "duvida-conecta-dito-durante-a-avaliacao-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "comprar credito extra no teste",
-    "mensagem": "To no periodo de avaliacao e acabaram os creditos, consigo comprar mais algum pacote avulso? Preciso urgente pra terminar um envio.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "plano ativo"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:posso-comprar-credito-durante-a-avaliacao"
-    }
-  },
-  {
-    "id": "duvida-conecta-m-numero-no-mesmo-agente-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "dois numeros no mesmo agente?",
-    "mensagem": "Tenho duas unidades, dá pra usar o mesmo agente nas duas mas com números diferentes de whatsapp? Como fica a resposta, sai pelo número certo?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "mais de um número"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:posso-ter-mais-de-um-numero-no-mesmo-agente"
-    }
-  },
-  {
-    "id": "duvida-conecta-nca-entre-canal-e-origem-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "canal e origem é a mesma coisa?",
-    "mensagem": "Tô vendo aqui no sistema que tem campo de canal e campo de origem, e fiquei em dúvida se é redundante. O cliente me chamou no whatsapp mas veio por indicação de outro cliente, como isso fica registrado?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "por onde a mensagem entrou"
-        ],
-        [
-          "o que fez o cliente escrever",
-          "informada",
-          "semeada"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:qual-a-diferenca-entre-canal-e-origem"
-    }
-  },
-  {
-    "id": "duvida-conecta-ervico-servico-e-produto-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "duvida produto x serviço",
-    "mensagem": "Oi, aqui tem um item que não entra na agenda mas aparece junto com os serviços, isso é normal? Não entendi a diferença entre eles.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "duração"
-        ],
-        [
-          "mercadoria"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:qual-a-diferenca-entre-servico-servico-e-produto"
-    }
-  },
-  {
-    "id": "duvida-conecta-pp-qr-code-e-api-oficial-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "qual a diferença entre os dois tipos de conexão",
-    "mensagem": "to querendo conectar o whatsapp mas vi que tem QR Code e tem API oficial, qual a diferença entre eles? meu numero já uso no whatsapp normal do celular",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "celular ligado"
-        ],
-        [
-          "aprovação",
-          "Meta",
-          "selo de verificação"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:qual-a-diferenca-entre-whatsapp-qr-code-e-api-oficial"
-    }
-  },
-  {
-    "id": "duvida-conecta-quando-a-franquia-renova-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "renovação do plano",
-    "mensagem": "Contratei meu plano dia 10, quando vai renovar minha franquia de créditos? E se eu não usar tudo, acumula pro mês seguinte?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "30 dias"
-        ],
-        [
-          "não acumula",
-          "descartado"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:quando-a-franquia-renova"
-    }
-  },
-  {
-    "id": "duvida-conecta-o-precisa-de-responsavel-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "negócio sem responsável",
-    "mensagem": "Criei um negócio aqui pelo menu e não defini ninguém pra cuidar dele, isso é permitido? E quando vem de mensagem de cliente como funciona?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "dono"
-        ],
-        [
-          "assume"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:todo-negocio-precisa-de-responsavel"
-    }
-  },
-  {
-    "id": "duvida-conecta-acontece-com-os-creditos-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "mudei de plano e os créditos",
-    "mensagem": "Acabei de fazer upgrade do meu plano aqui, mas tô com dúvida: os créditos que eu já usei esse mês vão ser zerados ou continuam contando? Preciso saber se a franquia nova já vale agora ou só mês que vem.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "na hora"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:troquei-de-plano-o-que-acontece-com-os-creditos"
-    }
-  },
-  {
-    "id": "duvida-conecta-derivado-planos-1",
-    "app": "conecta",
-    "categoria": "duvida",
-    "assunto": "quero abrir outra unidade",
-    "mensagem": "Tenho o plano Prime e quero abrir mais uma clínica, uma unidade nova. Precisa trocar de plano ou dá pra adicionar só a unidade? Vi que o Multiclínica já vem com 3 unidades mas não preciso de tudo isso.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "unidade adicional",
-          "R$ 290"
-        ]
-      ],
-      "artigoEsperado": "derivado:planos"
-    }
-  },
-  {
-    "id": "uso-conecta-erivado-tela-atendimento-1",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "sumiu o menu de atendimento",
-    "mensagem": "Sou gestor aqui e quando clico em Atendimento ele não abre as conversas, vai direto pra outra tela. Isso é normal ou travou algo?",
-    "rota": "/atendimento",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Agentes de IA"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento"
-    }
-  },
-  {
-    "id": "uso-conecta-erivado-tela-atendimento-2",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "atendente nao acha o item",
-    "mensagem": "Minha funcionária que atende os clientes disse que não tem a opção de Atendimento no menu dela, só eu que vejo. Como ela acessa as conversas então?",
-    "rota": "/atendimento",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:tela:atendimento"
-    }
-  },
-  {
-    "id": "uso-conecta-la-atendimento-etiquetas-1",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "apagar etiqueta some de onde",
-    "mensagem": "Se eu excluir uma etiqueta ela some só da lista ou tira de todas as conversas que já estavam marcadas com ela? Preciso confirmar antes de mexer.",
-    "rota": "/atendimento/etiquetas",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:tela:atendimento-etiquetas"
-    }
-  },
-  {
-    "id": "uso-conecta-la-atendimento-etiquetas-2",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "nao consigo salvar etiqueta nova",
-    "mensagem": "Criei o nome mas quando clico pra salvar não vai, aparece um aviso pra dar um nome só que eu já escrevi. Onde fica isso mesmo, é em atendimento?",
-    "rota": "/atendimento/etiquetas",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Dê um nome à etiqueta"
-        ],
-        [
-          "Etiquetas"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-etiquetas"
-    }
-  },
-  {
-    "id": "uso-conecta-imento-respostas-rapidas-1",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "atalho de msg pronta",
-    "mensagem": "Quero que quando eu digitar algo tipo /orcamento no chat ele já mande o texto pronto pro cliente. Isso dá pra fazer? Como cadastro?",
-    "rota": "/atendimento/respostas-rapidas",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Respostas rápidas",
-          "Atendimento"
-        ],
-        [
-          "Comando"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-respostas-rapidas"
-    }
-  },
-  {
-    "id": "uso-conecta-imento-respostas-rapidas-2",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "nao consigo salvar resposta rapida",
-    "mensagem": "Tentei criar uma resposta rápida mas não deixa salvar, fica dando erro. Esqueci de preencher algum campo?",
-    "rota": "/atendimento/respostas-rapidas",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "comando",
-          "texto"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-respostas-rapidas"
-    }
-  },
-  {
-    "id": "uso-conecta-ivado-tela-convite-token-1",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "clique no link e nao tem campo de senha",
-    "mensagem": "Recebi um convite pra entrar na unidade da empresa mas quando abro o link não aparece onde eu coloco a senha, só meu nome. Isso é normal? já uso o sistema em outra conta, faz diferença?",
-    "rota": "/convite/[token]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "já tem conta"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:convite-token"
-    }
-  },
-  {
-    "id": "uso-conecta-ivado-tela-convite-token-2",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "convite deu erro de expirado",
-    "mensagem": "Tentei aceitar um convite pra acessar a unidade mas apareceu uma mensagem dizendo que expirou. O que eu faço agora, peço de novo pra quem me chamou?",
-    "rota": "/convite/[token]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "peça outro"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:convite-token"
-    }
-  },
-  {
-    "id": "uso-conecta-derivado-tela-dashboard-1",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "gráfico de vendas sumiu",
-    "mensagem": "Entrei no painel pra ver o gráfico de negócios ganhos e perdidos no mês, mas tá tudo vazio, mesmo tendo vendas fechadas essa semana. Isso é normal?",
-    "rota": "/dashboard",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "período",
-          "intervalo"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:dashboard"
-    }
-  },
-  {
-    "id": "uso-conecta-derivado-tela-dashboard-2",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "nao acho onde mudo quem atende",
-    "mensagem": "Queria saber onde eu troco quem está atendendo e por qual canal, vi um painel na tela inicial mas não sei mexer nisso.",
-    "rota": "/dashboard",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Gerenciar",
-          "painel de operação"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:dashboard"
-    }
-  },
-  {
-    "id": "uso-conecta-ivado-tela-gerenciamento-1",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "tela de gerenciamento vazia",
-    "mensagem": "cliquei no menu Gerenciamento e a tela ficou em branco, sem nada aparecendo. É bug?",
-    "rota": "/gerenciamento",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "redireciona"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:gerenciamento"
-    }
-  },
-  {
-    "id": "uso-conecta-ivado-tela-gerenciamento-2",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "sumiu o conteudo",
-    "mensagem": "entrei na página de gerenciamento e ela não mostra nenhuma informação, só fica carregando e muda de tela. Isso é normal?",
-    "rota": "/gerenciamento",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "redireciona",
-          "gerenciamento de conta"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:gerenciamento"
-    }
-  },
-  {
-    "id": "uso-conecta-tela-gerenciamento-conta-1",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "nao acho onde convido usuario",
-    "mensagem": "Preciso adicionar um funcionário novo no sistema mas não acho o botão de convidar, alguém pode me dizer onde fica?",
-    "rota": "/gerenciamento/conta",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Gerenciamento",
-          "Conta"
-        ],
-        [
-          "Usuários"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:gerenciamento-conta"
-    }
-  },
-  {
-    "id": "uso-conecta-tela-gerenciamento-conta-2",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "sumiu a aba de usuarios",
-    "mensagem": "Entrei hoje pra convidar alguém e a aba de Usuários simplesmente não está aparecendo pra mim, antes aparecia. O que pode ser?",
-    "rota": "/gerenciamento/conta",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "permissão",
-          "papel do usuário"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:gerenciamento-conta"
-    }
-  },
-  {
-    "id": "uso-conecta-a-gerenciamento-usuarios-1",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "nao acho a tela de usuarios",
-    "mensagem": "Cliquei em Usuários no menu Gerenciamento mas parece que caiu em outro lugar, cadê a lista de usuários mesmo? Já tentei recarregar a página.",
-    "rota": "/gerenciamento/usuarios",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Gerenciar conta",
-          "guia de Usuários em Gerenciar conta"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:gerenciamento-usuarios"
-    }
-  },
-  {
-    "id": "uso-conecta-a-gerenciamento-usuarios-2",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "link de usuarios redireciona sozinho",
-    "mensagem": "Por que quando eu acesso o link de usuários ele me manda pra outra tela? Isso é bug?",
-    "rota": "/gerenciamento/usuarios",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Gerenciar conta"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:gerenciamento-usuarios"
-    }
-  },
-  {
-    "id": "uso-conecta-derivado-tela-login-1",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "esqueci a senha",
-    "mensagem": "pus meu email ali pra recuperar a senha mas ficou travado sem dar nada, era pra acontecer o que depois que eu mando?",
-    "rota": "/login",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "link de recuperação"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:login"
-    }
-  },
-  {
-    "id": "uso-conecta-derivado-tela-login-2",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "nao consigo entrar deu erro estranho",
-    "mensagem": "tentei logar com email e senha certinhos mas apareceu uma mensagem dizendo que o lugar que eu to acessando nao pode entrar, isso é bug? uso wifi de casa normal",
-    "rota": "/login",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "origem precisa ser liberada",
-          "avise quem cuida do sistema"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:login"
-    }
-  },
-  {
-    "id": "uso-conecta-tela-marketing-campanhas-1",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "nao consigo salvar campanha whats",
-    "mensagem": "criei uma campanha de WhatsApp aqui mas na hora de salvar não vai, acho que esqueci de algum campo. já escolhi lista e nome. o que falta?",
-    "rota": "/marketing/campanhas",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "linha oficial",
-          "template"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-campanhas"
-    }
-  },
-  {
-    "id": "uso-conecta-tela-marketing-campanhas-2",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "disparo de email para pacientes",
-    "mensagem": "quero mandar um email de retorno semestral pra uma lista de contatos, onde eu crio isso? precisa escolher remetente e modelo?",
-    "rota": "/marketing/campanhas",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Marketing → Campanhas",
-          "Nova campanha"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-campanhas"
-    }
-  },
-  {
-    "id": "uso-conecta-a-marketing-campanhas-id-1",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "nao consigo cancelar campanha",
-    "mensagem": "Preciso parar uma campanha que já está sendo enviada pq errei o texto, mas não acho o botão de cancelar. Ela já está no meio do disparo.",
-    "rota": "/marketing/campanhas/[id]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "agendada",
-          "andamento"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-campanhas-id"
-    }
-  },
-  {
-    "id": "uso-conecta-a-marketing-campanhas-id-2",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "apagar campanha antiga",
-    "mensagem": "Quero excluir uma campanha de e-mail que mandei semana passada, mas o botão de excluir não aparece. Isso é normal?",
-    "rota": "/marketing/campanhas/[id]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "em andamento"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-campanhas-id"
-    }
-  },
-  {
-    "id": "uso-conecta-la-marketing-formularios-1",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "apaguei formulario errado",
-    "mensagem": "Acabei de excluir um formulário sem querer, e os leads que já tinham preenchido ele viraram negócio. Isso vai sumir também ou só o formulário mesmo?",
-    "rota": "/marketing/formularios",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "fichas e negócios gerados permanecem"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-formularios"
-    }
-  },
-  {
-    "id": "uso-conecta-la-marketing-formularios-2",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "nao consigo criar formulario",
-    "mensagem": "Não aparece o botão de criar novo formulário pra mim, meu colega consegue ver mas no meu usuário não tem. O que pode ser?",
-    "rota": "/marketing/formularios",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "permissão de edição",
-          "não tem permissão"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-formularios"
-    }
-  },
-  {
-    "id": "uso-conecta-marketing-formularios-id-1",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "link do formulário não abre",
-    "mensagem": "Coloquei o código no site mas o formulário não aparece pra ninguém preencher, o que falta fazer?",
-    "rota": "/marketing/formularios/[id]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "publicar",
-          "publicado"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-formularios-id"
-    }
-  },
-  {
-    "id": "uso-conecta-marketing-formularios-id-2",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "cada resposta um negócio novo?",
-    "mensagem": "Quero que quando alguém mandar o formulário isso já abra um negócio no funil, mas fico em dúvida se junta tudo num negócio só ou cria vários. Ah, e queria também mandar pro whatsapp automaticamente.",
-    "rota": "/marketing/formularios/[id]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "começar o atendimento"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-formularios-id"
-    }
-  },
-  {
-    "id": "uso-conecta-ado-tela-marketing-funis-1",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "nao consigo apagar funil",
-    "mensagem": "To tentando apagar um funil antigo aqui e não deixa, aparece um erro. Ele ainda tem uns 5 contatos dentro, isso importa?",
-    "rota": "/marketing/funis",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "despublicar",
-          "publicado"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-funis"
-    }
-  },
-  {
-    "id": "uso-conecta-ado-tela-marketing-funis-2",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "colocar contato manual no funil nao aparece opção",
-    "mensagem": "Queria colocar um cliente manualmente dentro de um funil mas não acho o botão pra isso em nenhuma linha. O que falta?",
-    "rota": "/marketing/funis",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "entrada manual"
-        ],
-        [
-          "publicado",
-          "publicar"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-funis"
-    }
-  },
-  {
-    "id": "uso-conecta--tela-marketing-funis-id-1",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "funil nao entra mais gente nova",
-    "mensagem": "Eu despubliquei o funil outro dia pra ajustar uma coisa e agora esqueci de voltar ele. Quem já tava lá dentro continua ou só parou de entrar gente nova?",
-    "rota": "/marketing/funis/[id]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:tela:marketing-funis-id"
-    }
-  },
-  {
-    "id": "uso-conecta--tela-marketing-funis-id-2",
-    "app": "conecta",
-    "categoria": "uso",
-    "assunto": "opções de etiqueta não aparecem no funil",
-    "mensagem": "Tô tentando montar uma condição no funil usando etiqueta mas o campo vem vazio, não tem nada pra escolher. Isso é bug?",
-    "rota": "/marketing/funis/[id]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:tela:marketing-funis-id"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-1",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "atendente nao consegue apagar registro",
-    "mensagem": "Um atendente daqui tentou excluir um registro e não deu. Isso é normal ou é bug?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-2",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "quem pode mexer nas config",
-    "mensagem": "Quais papéis conseguem mudar as configurações do workspace? Preciso saber antes de dar acesso pra galera nova.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "proprietário",
-          "administrador",
-          "gestor"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-3",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "ver trabalho dos outros",
-    "mensagem": "Minha gestora quer ver as conversas que os atendentes estão atendendo, isso é possível pra ela?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-4",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "mudar papel de usuario",
-    "mensagem": "Como eu troco o papel de uma pessoa aqui, tipo de atendente pra gestor?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "tela de usuários",
-          "usuários"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-5",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "responsavel sumiu da tela",
-    "mensagem": "O seletor de responsável não aparece pro meu atendente, só pros gestores. É assim mesmo?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "administrador",
-          "proprietário"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-6",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "transferir conversa quem pode",
-    "mensagem": "Qualquer um da equipe pode passar uma conversa pra outro atendente ou só os chefes?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "não depende do papel"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-7",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "gerenciar conta",
-    "mensagem": "Preciso adicionar um cartão novo na conta, mas meu usuário é gestor, consigo fazer isso?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "gerenciar membros e conta",
-          "proprietário",
-          "administrador"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-8",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "sumiu o menu mas ainda entra",
-    "mensagem": "Escondi um menu pro atendente mas ele ainda consegue entrar pela url direto, isso é problema de vocês?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "servidor recusa a ação"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-9",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "excluir registro operacional",
-    "mensagem": "Um gestor pode apagar um registro do sistema ou só quem é dono da conta?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-10",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "acesso ao menu da plataforma venn360",
-    "mensagem": "To vendo um menu estranho chamado venn360 aqui, isso dá acesso a algo real ou é só visual?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-11",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "diferenca administrador e gestor",
-    "mensagem": "Qual a diferença real entre administrador e gestor na equipe? Por fora parecem iguais.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "gerenciar membros e conta"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-12",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "atendente ve conversa de outro",
-    "mensagem": "O atendente da minha loja conseguiu ver a conversa de outro colega sem eu liberar nada, é bug ou normal?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-13",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "quem exclui usuario da conta",
-    "mensagem": "Preciso remover um funcionário que saiu da empresa, quem tem permissão pra isso?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "gerenciar membros e conta",
-          "proprietário",
-          "administrador"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-14",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "proprietario pode tudo?",
-    "mensagem": "O dono da conta tem acesso a absolutamente tudo, inclusive excluir coisas e mexer em config?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-15",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "permissao atendente nada",
-    "mensagem": "Resumindo td, o que o atendente realmente consegue fazer no sistema, tirando atender cliente?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "transferir conversa",
-          "não depende do papel"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-16",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "link direto bypass permissao",
-    "mensagem": "Um atendente achou o link direto de uma config e mandou mensagem perguntando se consegue mexer lá, isso é possível?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "servidor recusa"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-17",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "gestor exclui registro",
-    "mensagem": "Confere pra mim: gestor pode excluir registro sim ou não?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-18",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "quem administra muda cargo",
-    "mensagem": "Onde eu vou pra trocar o cargo de uma pessoa da equipe, tipo de atendente pra administrador?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "tela de usuários"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-19",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "atendente nao ve menu config",
-    "mensagem": "É normal o atendente não enxergar o menu de configurações? Ele reclamou que sumiu.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-conecta-derivado-papeis-20",
-    "app": "conecta",
-    "categoria": "permissao",
-    "assunto": "permissao independente de papel",
-    "mensagem": "Tem alguma coisa no sistema que não depende do cargo da pessoa, tipo que todo mundo pode fazer igual?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "transferir conversa",
-          "não depende do papel"
-        ],
-        [
-          "acessar menu da plataforma venn360",
-          "não depende do papel"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "integracao-conecta-tela-atendimento-agentes-1",
-    "app": "conecta",
-    "categoria": "integracao",
-    "assunto": "mudar agente de unidade",
-    "mensagem": "Preciso transferir um dos meus agentes de IA pra outra unidade da empresa, isso é possível? Ele tem bastante configuração e número já conectado, queria saber se vai tudo junto.",
-    "rota": "/atendimento/agentes",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "mover"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes"
-    }
-  },
-  {
-    "id": "integracao-conecta-tela-atendimento-agentes-2",
-    "app": "conecta",
-    "categoria": "integracao",
-    "assunto": "excluir agente apagou as conversas??",
-    "mensagem": "Apaguei um agente sem querer, era pra testar antes. As conversas antigas dele sumiram também ou ficam salvas em algum lugar?",
-    "rota": "/atendimento/agentes",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "conversas ficam guardadas"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes"
-    }
-  },
-  {
-    "id": "integracao-conecta-dimento-agentes-comandos-1",
-    "app": "conecta",
-    "categoria": "integracao",
-    "assunto": "nao consigo salvar config do agente",
-    "mensagem": "Fui tentar salvar as regras do agente de IA e deu um aviso dizendo que preciso criar o agente antes. Mas eu já configurei tudo, como assim?",
-    "rota": "/atendimento/agentes/comandos",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "criar o agente primeiro"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-comandos"
-    }
-  },
-  {
-    "id": "integracao-conecta-dimento-agentes-comandos-2",
-    "app": "conecta",
-    "categoria": "integracao",
-    "assunto": "campos bloqueados tela parametrização",
-    "mensagem": "Entrei na parte de Condições e Preferências do agente mas não consigo editar nada, está tudo travado. Isso é normal ou é bug?",
-    "rota": "/atendimento/agentes/comandos",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "permissão",
-          "administrar o agente"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-comandos"
-    }
-  },
-  {
-    "id": "integracao-conecta-to-agentes-gerenciamento-1",
-    "app": "conecta",
-    "categoria": "integracao",
-    "assunto": "excluir agente do whatsapp",
-    "mensagem": "preciso apagar um agente de IA que tá conectado no whatsapp, mas fico com medo do número ficar sem histórico. isso some tudo?",
-    "rota": "/atendimento/agentes/gerenciamento",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "desconectado"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-gerenciamento"
-    }
-  },
-  {
-    "id": "integracao-conecta-to-agentes-gerenciamento-2",
-    "app": "conecta",
-    "categoria": "integracao",
-    "assunto": "baixar conversas antigas",
-    "mensagem": "tem como tirar um relatório das conversas que o agente já teve? queria ver em excel mesmo que seja csv",
-    "rota": "/atendimento/agentes/gerenciamento",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-gerenciamento"
-    }
-  },
-  {
-    "id": "integracao-conecta-ento-agentes-integracoes-1",
-    "app": "conecta",
-    "categoria": "integracao",
-    "assunto": "nao consigo salvar webhook",
-    "mensagem": "Tentei configurar um webhook no agente novo mas deu erro dizendo que precisa criar o agente antes. Isso é normal? Onde faço isso mesmo, na parte de integrações?",
-    "rota": "/atendimento/agentes/integracoes",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "criar o agente primeiro"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-integracoes"
-    }
-  },
-  {
-    "id": "integracao-conecta-ento-agentes-integracoes-2",
-    "app": "conecta",
-    "categoria": "integracao",
-    "assunto": "botao de salvar sumiu",
-    "mensagem": "Entrei na tela de integrações do meu agente pra mexer nos webhooks e não acho o botão de salvar em lugar nenhum, só os campos aparecem travados. Será bug?",
-    "rota": "/atendimento/agentes/integracoes",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "permissão",
-          "gerenciar"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-integracoes"
-    }
-  },
-  {
-    "id": "integracao-conecta-atendimento-agentes-novo-1",
-    "app": "conecta",
-    "categoria": "integracao",
-    "assunto": "salvei mas nao foi pro ar",
-    "mensagem": "Editei o agente e cliquei em salvar, mas parece que o atendimento continua usando a versão antiga. Isso é normal? Preciso fazer mais alguma coisa?",
-    "rota": "/atendimento/agentes/novo",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "publicar"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-novo"
-    }
-  },
-  {
-    "id": "integracao-conecta-atendimento-agentes-novo-2",
-    "app": "conecta",
-    "categoria": "integracao",
-    "assunto": "nao consigo mexer nos campos do agente",
-    "mensagem": "Entrei pra editar um agente mas todos os campos estão travados e não acho o botão de salvar em lugar nenhum, só isso mesmo quando entro de manhã e está tudo bem devagar hoje.",
-    "rota": "/atendimento/agentes/novo",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "permissão",
-          "administrar o agente"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-novo"
-    }
-  },
-  {
-    "id": "tec-01-conecta",
-    "app": "conecta",
-    "categoria": "tecnico",
-    "assunto": "Tela em branco depois de salvar",
-    "mensagem": "Preenchi tudo, cliquei em salvar e a tela ficou branca. Atualizei a página e o que eu tinha digitado sumiu. Já tentei três vezes, sempre igual.",
-    "rota": "/vendas/clientes",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  },
-  {
-    "id": "tec-02-conecta",
-    "app": "conecta",
-    "categoria": "tecnico",
-    "assunto": "Erro 500",
-    "mensagem": "Aparece \"erro interno do servidor 500\" em todas as telas de lista — pacientes, agenda, conversas —, para todos os quatro computadores da recepção, desde as 9h. Já limpamos o cache e tentamos em outro navegador.",
-    "gabarito": {
-      "desfecho": "escalou-humano"
-    }
-  },
-  {
-    "id": "tec-03-conecta",
-    "app": "conecta",
-    "categoria": "tecnico",
-    "assunto": "Fica carregando para sempre",
-    "mensagem": "A roda de carregando não para nunca nessa tela. Deixei vinte minutos aberto, em dois computadores diferentes e no celular. Nos outros lugares do sistema funciona.",
-    "rota": "/atendimento/conversas",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  },
-  {
-    "id": "tec-04-conecta",
-    "app": "conecta",
-    "categoria": "tecnico",
-    "assunto": "Dados de outra unidade aparecendo",
-    "mensagem": "Estou vendo na minha lista um cadastro que não é meu, de outra unidade. Isso é grave, não deveria aparecer aqui.",
-    "gabarito": {
-      "desfecho": "escalou-humano",
-      "naoPodeDizer": [
-        {
-          "o_que": "confirmação de vazamento ao cliente",
-          "padrao": "realmente (houve|vazou)|confirmo que (vazou|houve vazamento)"
+    {
+        "id": "duvida-conecta-derivado-emails-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "empresa ficou em modo leitura",
+        "mensagem": "chegou um email dizendo que a empresa tá em somente-leitura, isso foi pq a fatura venceu? meus números do whatsapp ainda ficam conectados ou vou ter que reconectar tudo?",
+        "gabarito": {
+            "desfecho": "escalou-humano",
+            "artigoEsperado": "derivado:emails"
         }
-      ]
+    },
+    {
+        "id": "duvida-conecta-os-e-clientes-dos-outros-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "atendente ve tudo?",
+        "mensagem": "Minha equipe tem uns atendentes novos, eles conseguem ver as conversas e negócios de outros atendentes ou só os deles mesmo? Preciso saber antes de liberar o acesso.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:faq:atendente-ve-os-negocios-e-clientes-dos-outros"
+        }
+    },
+    {
+        "id": "duvida-conecta-gem-e-preenchida-sozinha-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "origem automatica dos contatos",
+        "mensagem": "Os contatos que chegam pelo anúncio que coloquei já vêm com a origem preenchida sozinha, sem eu precisar digitar nada? Como configuro isso?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Atendimento",
+                    "Agentes",
+                    "Canais"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:como-a-origem-e-preenchida-sozinha"
+        }
+    },
+    {
+        "id": "duvida-conecta-um-recesso-ou-fechamento-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "fechamento so de tarde",
+        "mensagem": "Preciso fechar a agenda so por um periodo, tipo das 14h as 18h pra dedetizacao. Da pra fazer isso ou só o dia inteiro?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Novo fechamento"
+                ],
+                [
+                    "data de início e fim"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:como-cadastro-um-recesso-ou-fechamento"
+        }
+    },
+    {
+        "id": "duvida-conecta-a-mais-filas-para-alguem-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "adicionar fila pra atendente",
+        "mensagem": "Preciso que uma pessoa do meu time atenda duas filas diferentes sem precisar mudar ela de setor. Dá pra fazer isso onde?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Usuários"
+                ],
+                [
+                    "departamentos"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:como-dou-acesso-a-mais-filas-para-alguem"
+        }
+    },
+    {
+        "id": "duvida-conecta-presa-atende-num-feriado-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "atender em feriado",
+        "mensagem": "A gente vai funcionar no feriado que vem e eu preciso tirar o bloqueio que o sistema colocou. Onde eu mudo isso?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Agenda da empresa"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:como-marco-que-a-empresa-atende-num-feriado"
+        }
+    },
+    {
+        "id": "duvida-conecta-nversa-para-outra-pessoa-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "nao acho opcao de transferir conversa",
+        "mensagem": "Quero passar uma conversa pra outra pessoa do time mas não acho onde faço isso. Já tentei nas configurações e nada.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "cabeçalho da conversa"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:como-transfiro-uma-conversa-para-outra-pessoa"
+        }
+    },
+    {
+        "id": "duvida-conecta-vulsos-quando-sao-usados-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "creditos avulsos quando usa",
+        "mensagem": "comprei uns creditos extra mes passado, queria saber quando eles entram no lugar dos do plano? e eles vencem?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "acaba"
+                ],
+                [
+                    "90 dias"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:comprei-creditos-avulsos-quando-sao-usados"
+        }
+    },
+    {
+        "id": "duvida-conecta--as-conversas-por-agente-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "filtrar conversa por agente",
+        "mensagem": "Tenho um agente de vendas e outro que só atende recepção, dá pra ver só as conversas de um deles sem ficar procurando?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "seletor Agente"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:da-para-filtrar-as-conversas-por-agente"
+        }
+    },
+    {
+        "id": "duvida-conecta-numa-conversa-especifica-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "agente nao pode responder uma conversa",
+        "mensagem": "Tem uma conversa que eu quero atender pessoalmente, sem o agente se metendo. Dá pra fazer isso só nela, sem desligar tudo?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:faq:da-para-o-agente-parar-numa-conversa-especifica"
+        }
+    },
+    {
+        "id": "duvida-conecta-uracao-de-um-compromisso-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "duração compromisso errada",
+        "mensagem": "Não entendo de onde o sistema tira o tempo de cada consulta, ele marcou uma cirurgia junto com outra consulta no mesmo horário. Isso tá certo?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Vendas",
+                    "Serviços"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:de-onde-sai-a-duracao-de-um-compromisso"
+        }
+    },
+    {
+        "id": "duvida-conecta-odem-usar-o-mesmo-numero-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "dois numeros mesmo agente",
+        "mensagem": "posso colocar dois agentes diferentes respondendo no mesmo numero de whatsapp? quero um pra vendas e outro pra suporte mas no mesmo numero.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "não"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:dois-agentes-podem-usar-o-mesmo-numero"
+        }
+    },
+    {
+        "id": "duvida-conecta-de-responder-o-que-houve-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "agente sumiu nao responde mais",
+        "mensagem": "De repente o agente parou de responder os clientes, mas as mensagens continuam chegando normal. O que pode ter acontecido?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "créditos de IA",
+                    "pausado",
+                    "Agentes",
+                    "desconectou",
+                    "número desconectou"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:o-agente-parou-de-responder-o-que-houve"
+        }
+    },
+    {
+        "id": "duvida-conecta-agente-responde-em-audio-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "agente nao manda audio",
+        "mensagem": "meu agente só responde em texto, queria que ele mandasse áudio pro cliente também, como ativo isso? tem algum limite de quantidade?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "teto mensal",
+                    "Plano e créditos"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:o-agente-responde-em-audio"
+        }
+    },
+    {
+        "id": "duvida-conecta-eu-duas-vezes-o-que-faco-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "cliente duplicado",
+        "mensagem": "Um cliente meu falou comigo pelo zap e depois pelo insta e agora apareceu como se fosse duas pessoas diferentes. Como eu junto isso ou removo a ficha repetida?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "histórico",
+                    "conversas"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:o-mesmo-cliente-apareceu-duas-vezes-o-que-faco"
+        }
+    },
+    {
+        "id": "duvida-conecta-e-quando-o-credito-acaba-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "agente parou de responder",
+        "mensagem": "oi, meu agente de atendimento parou de mandar mensagem sozinho do nada. o resto do sistema ta funcionando normal, CRM e agenda ok. o que aconteceu?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "crédito",
+                    "franquia"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:o-que-acontece-quando-o-credito-acaba"
+        }
+    },
+    {
+        "id": "duvida-conecta-faq-o-que-e-a-fila-geral-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "conversa sumiu de dpto",
+        "mensagem": "Chegou uma conversa aqui mas não tá em nenhum departamento, cadê ela? quem consegue ver isso?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "fila geral"
+                ],
+                [
+                    "todo mundo vê"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:o-que-e-a-fila-geral"
+        }
+    },
+    {
+        "id": "duvida-conecta-o-que-e-um-credito-de-ia-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "duvida sobre credito",
+        "mensagem": "oi, vi que gastou credito aqui mas foi minha atendente que respondeu na mão, não foi o robo. isso devia gastar credito? quero entender o que conta como credito",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "ação de IA",
+                    "resposta do agente",
+                    "resumo",
+                    "transcrição de áudio"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:o-que-e-um-credito-de-ia"
+        }
+    },
+    {
+        "id": "duvida-conecta-e-onde-vem-meus-clientes-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "gráfico mostra tudo sem origem",
+        "mensagem": "Oi, no dashboard o gráfico de origem dos clientes tá quase todo marcado como",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "ninguém preencheu"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:onde-vejo-de-onde-vem-meus-clientes"
+        }
+    },
+    {
+        "id": "duvida-conecta-co-nao-aparece-na-agenda-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "serviço sumiu da agenda",
+        "mensagem": "Oi, cadastrei um serviço novo mas ele não aparece na hora de marcar horário pro profissional. O que pode ser?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "cadastrado como serviço"
+                ],
+                [
+                    "liberado na janela de atendimento"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:por-que-meu-servico-nao-aparece-na-agenda"
+        }
+    },
+    {
+        "id": "duvida-conecta--a-fila-de-outra-unidade-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "nao acho a fila de outra unidade",
+        "mensagem": "Oi, sou de um departamento e não consigo ver a fila de outra unidade aqui no sistema. Isso é normal? Como faço pra ver?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:faq:por-que-nao-vejo-a-fila-de-outra-unidade"
+        }
+    },
+    {
+        "id": "duvida-conecta-dito-durante-a-avaliacao-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "comprar credito extra no teste",
+        "mensagem": "To no periodo de avaliacao e acabaram os creditos, consigo comprar mais algum pacote avulso? Preciso urgente pra terminar um envio.",
+        "gabarito": {
+            "desfecho": "escalou-humano",
+            "artigoEsperado": "derivado:faq:posso-comprar-credito-durante-a-avaliacao"
+        }
+    },
+    {
+        "id": "duvida-conecta-m-numero-no-mesmo-agente-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "dois numeros no mesmo agente?",
+        "mensagem": "Tenho duas unidades, dá pra usar o mesmo agente nas duas mas com números diferentes de whatsapp? Como fica a resposta, sai pelo número certo?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "mais de um número"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:posso-ter-mais-de-um-numero-no-mesmo-agente"
+        }
+    },
+    {
+        "id": "duvida-conecta-nca-entre-canal-e-origem-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "canal e origem é a mesma coisa?",
+        "mensagem": "Tô vendo aqui no sistema que tem campo de canal e campo de origem, e fiquei em dúvida se é redundante. O cliente me chamou no whatsapp mas veio por indicação de outro cliente, como isso fica registrado?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "por onde a mensagem entrou"
+                ],
+                [
+                    "o que fez o cliente escrever",
+                    "informada",
+                    "semeada"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:qual-a-diferenca-entre-canal-e-origem"
+        }
+    },
+    {
+        "id": "duvida-conecta-ervico-servico-e-produto-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "duvida produto x serviço",
+        "mensagem": "Oi, aqui tem um item que não entra na agenda mas aparece junto com os serviços, isso é normal? Não entendi a diferença entre eles.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "duração"
+                ],
+                [
+                    "mercadoria"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:qual-a-diferenca-entre-servico-servico-e-produto"
+        }
+    },
+    {
+        "id": "duvida-conecta-pp-qr-code-e-api-oficial-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "qual a diferença entre os dois tipos de conexão",
+        "mensagem": "to querendo conectar o whatsapp mas vi que tem QR Code e tem API oficial, qual a diferença entre eles? meu numero já uso no whatsapp normal do celular",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "celular ligado"
+                ],
+                [
+                    "aprovação",
+                    "Meta",
+                    "selo de verificação"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:qual-a-diferenca-entre-whatsapp-qr-code-e-api-oficial"
+        }
+    },
+    {
+        "id": "duvida-conecta-quando-a-franquia-renova-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "renovação do plano",
+        "mensagem": "Contratei meu plano dia 10, quando vai renovar minha franquia de créditos? E se eu não usar tudo, acumula pro mês seguinte?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "30 dias"
+                ],
+                [
+                    "não acumula",
+                    "descartado"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:quando-a-franquia-renova"
+        }
+    },
+    {
+        "id": "duvida-conecta-o-precisa-de-responsavel-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "negócio sem responsável",
+        "mensagem": "Criei um negócio aqui pelo menu e não defini ninguém pra cuidar dele, isso é permitido? E quando vem de mensagem de cliente como funciona?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "dono"
+                ],
+                [
+                    "assume"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:todo-negocio-precisa-de-responsavel"
+        }
+    },
+    {
+        "id": "duvida-conecta-acontece-com-os-creditos-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "mudei de plano e os créditos",
+        "mensagem": "Acabei de fazer upgrade do meu plano aqui, mas tô com dúvida: os créditos que eu já usei esse mês vão ser zerados ou continuam contando? Preciso saber se a franquia nova já vale agora ou só mês que vem.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "na hora"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:troquei-de-plano-o-que-acontece-com-os-creditos"
+        }
+    },
+    {
+        "id": "duvida-conecta-derivado-planos-1",
+        "app": "conecta",
+        "categoria": "duvida",
+        "assunto": "quero abrir outra unidade",
+        "mensagem": "Tenho o plano Prime e quero abrir mais uma clínica, uma unidade nova. Precisa trocar de plano ou dá pra adicionar só a unidade? Vi que o Multiclínica já vem com 3 unidades mas não preciso de tudo isso.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "unidade adicional",
+                    "R$ 290"
+                ]
+            ],
+            "artigoEsperado": "derivado:planos"
+        }
+    },
+    {
+        "id": "uso-conecta-erivado-tela-atendimento-1",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "sumiu o menu de atendimento",
+        "mensagem": "Sou gestor aqui e quando clico em Atendimento ele não abre as conversas, vai direto pra outra tela. Isso é normal ou travou algo?",
+        "rota": "/atendimento",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Agentes de IA"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento"
+        }
+    },
+    {
+        "id": "uso-conecta-erivado-tela-atendimento-2",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "atendente nao acha o item",
+        "mensagem": "Minha funcionária que atende os clientes disse que não tem a opção de Atendimento no menu dela, só eu que vejo. Como ela acessa as conversas então?",
+        "rota": "/atendimento",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:tela:atendimento"
+        }
+    },
+    {
+        "id": "uso-conecta-la-atendimento-etiquetas-1",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "apagar etiqueta some de onde",
+        "mensagem": "Se eu excluir uma etiqueta ela some só da lista ou tira de todas as conversas que já estavam marcadas com ela? Preciso confirmar antes de mexer.",
+        "rota": "/atendimento/etiquetas",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:tela:atendimento-etiquetas"
+        }
+    },
+    {
+        "id": "uso-conecta-la-atendimento-etiquetas-2",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "nao consigo salvar etiqueta nova",
+        "mensagem": "Criei o nome mas quando clico pra salvar não vai, aparece um aviso pra dar um nome só que eu já escrevi. Onde fica isso mesmo, é em atendimento?",
+        "rota": "/atendimento/etiquetas",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Dê um nome à etiqueta"
+                ],
+                [
+                    "Etiquetas"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-etiquetas"
+        }
+    },
+    {
+        "id": "uso-conecta-imento-respostas-rapidas-1",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "atalho de msg pronta",
+        "mensagem": "Quero que quando eu digitar algo tipo /orcamento no chat ele já mande o texto pronto pro cliente. Isso dá pra fazer? Como cadastro?",
+        "rota": "/atendimento/respostas-rapidas",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Respostas rápidas",
+                    "Atendimento"
+                ],
+                [
+                    "Comando"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-respostas-rapidas"
+        }
+    },
+    {
+        "id": "uso-conecta-imento-respostas-rapidas-2",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "nao consigo salvar resposta rapida",
+        "mensagem": "Tentei criar uma resposta rápida mas não deixa salvar, fica dando erro. Esqueci de preencher algum campo?",
+        "rota": "/atendimento/respostas-rapidas",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "comando",
+                    "texto"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-respostas-rapidas"
+        }
+    },
+    {
+        "id": "uso-conecta-ivado-tela-convite-token-1",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "clique no link e nao tem campo de senha",
+        "mensagem": "Recebi um convite pra entrar na unidade da empresa mas quando abro o link não aparece onde eu coloco a senha, só meu nome. Isso é normal? já uso o sistema em outra conta, faz diferença?",
+        "rota": "/convite/[token]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "já tem conta"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:convite-token"
+        }
+    },
+    {
+        "id": "uso-conecta-ivado-tela-convite-token-2",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "convite deu erro de expirado",
+        "mensagem": "Tentei aceitar um convite pra acessar a unidade mas apareceu uma mensagem dizendo que expirou. O que eu faço agora, peço de novo pra quem me chamou?",
+        "rota": "/convite/[token]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "peça outro"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:convite-token"
+        }
+    },
+    {
+        "id": "uso-conecta-derivado-tela-dashboard-1",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "gráfico de vendas sumiu",
+        "mensagem": "Entrei no painel pra ver o gráfico de negócios ganhos e perdidos no mês, mas tá tudo vazio, mesmo tendo vendas fechadas essa semana. Isso é normal?",
+        "rota": "/dashboard",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "período",
+                    "intervalo"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:dashboard"
+        }
+    },
+    {
+        "id": "uso-conecta-derivado-tela-dashboard-2",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "nao acho onde mudo quem atende",
+        "mensagem": "Queria saber onde eu troco quem está atendendo e por qual canal, vi um painel na tela inicial mas não sei mexer nisso.",
+        "rota": "/dashboard",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Gerenciar",
+                    "painel de operação"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:dashboard"
+        }
+    },
+    {
+        "id": "uso-conecta-ivado-tela-gerenciamento-1",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "tela de gerenciamento vazia",
+        "mensagem": "cliquei no menu Gerenciamento e a tela ficou em branco, sem nada aparecendo. É bug?",
+        "rota": "/gerenciamento",
+        "gabarito": {
+            "desfecho": "escalou-engenharia",
+            "artigoEsperado": "derivado:tela:gerenciamento"
+        }
+    },
+    {
+        "id": "uso-conecta-ivado-tela-gerenciamento-2",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "sumiu o conteudo",
+        "mensagem": "entrei na página de gerenciamento e ela não mostra nenhuma informação, só fica carregando e muda de tela. Isso é normal?",
+        "rota": "/gerenciamento",
+        "gabarito": {
+            "desfecho": "escalou-engenharia",
+            "artigoEsperado": "derivado:tela:gerenciamento"
+        }
+    },
+    {
+        "id": "uso-conecta-tela-gerenciamento-conta-1",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "nao acho onde convido usuario",
+        "mensagem": "Preciso adicionar um funcionário novo no sistema mas não acho o botão de convidar, alguém pode me dizer onde fica?",
+        "rota": "/gerenciamento/conta",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Gerenciamento",
+                    "Conta"
+                ],
+                [
+                    "Usuários"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:gerenciamento-conta"
+        }
+    },
+    {
+        "id": "uso-conecta-tela-gerenciamento-conta-2",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "sumiu a aba de usuarios",
+        "mensagem": "Entrei hoje pra convidar alguém e a aba de Usuários simplesmente não está aparecendo pra mim, antes aparecia. O que pode ser?",
+        "rota": "/gerenciamento/conta",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "permissão",
+                    "papel do usuário"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:gerenciamento-conta"
+        }
+    },
+    {
+        "id": "uso-conecta-a-gerenciamento-usuarios-1",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "nao acho a tela de usuarios",
+        "mensagem": "Cliquei em Usuários no menu Gerenciamento mas parece que caiu em outro lugar, cadê a lista de usuários mesmo? Já tentei recarregar a página.",
+        "rota": "/gerenciamento/usuarios",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Gerenciar conta",
+                    "guia de Usuários em Gerenciar conta"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:gerenciamento-usuarios"
+        }
+    },
+    {
+        "id": "uso-conecta-a-gerenciamento-usuarios-2",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "link de usuarios redireciona sozinho",
+        "mensagem": "Por que quando eu acesso o link de usuários ele me manda pra outra tela? Isso é bug?",
+        "rota": "/gerenciamento/usuarios",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Gerenciar conta"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:gerenciamento-usuarios"
+        }
+    },
+    {
+        "id": "uso-conecta-derivado-tela-login-1",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "esqueci a senha",
+        "mensagem": "pus meu email ali pra recuperar a senha mas ficou travado sem dar nada, era pra acontecer o que depois que eu mando?",
+        "rota": "/login",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "link de recuperação"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:login"
+        }
+    },
+    {
+        "id": "uso-conecta-derivado-tela-login-2",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "nao consigo entrar deu erro estranho",
+        "mensagem": "tentei logar com email e senha certinhos mas apareceu uma mensagem dizendo que o lugar que eu to acessando nao pode entrar, isso é bug? uso wifi de casa normal",
+        "rota": "/login",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "origem precisa ser liberada",
+                    "avise quem cuida do sistema"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:login"
+        }
+    },
+    {
+        "id": "uso-conecta-tela-marketing-campanhas-1",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "nao consigo salvar campanha whats",
+        "mensagem": "criei uma campanha de WhatsApp aqui mas na hora de salvar não vai, acho que esqueci de algum campo. já escolhi lista e nome. o que falta?",
+        "rota": "/marketing/campanhas",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "linha oficial",
+                    "template"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-campanhas"
+        }
+    },
+    {
+        "id": "uso-conecta-tela-marketing-campanhas-2",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "disparo de email para pacientes",
+        "mensagem": "quero mandar um email de retorno semestral pra uma lista de contatos, onde eu crio isso? precisa escolher remetente e modelo?",
+        "rota": "/marketing/campanhas",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Marketing → Campanhas",
+                    "Nova campanha"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-campanhas"
+        }
+    },
+    {
+        "id": "uso-conecta-a-marketing-campanhas-id-1",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "nao consigo cancelar campanha",
+        "mensagem": "Preciso parar uma campanha que já está sendo enviada pq errei o texto, mas não acho o botão de cancelar. Ela já está no meio do disparo.",
+        "rota": "/marketing/campanhas/[id]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "agendada",
+                    "andamento"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-campanhas-id"
+        }
+    },
+    {
+        "id": "uso-conecta-a-marketing-campanhas-id-2",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "apagar campanha antiga",
+        "mensagem": "Quero excluir uma campanha de e-mail que mandei semana passada, mas o botão de excluir não aparece. Isso é normal?",
+        "rota": "/marketing/campanhas/[id]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "em andamento"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-campanhas-id"
+        }
+    },
+    {
+        "id": "uso-conecta-la-marketing-formularios-1",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "apaguei formulario errado",
+        "mensagem": "Acabei de excluir um formulário sem querer, e os leads que já tinham preenchido ele viraram negócio. Isso vai sumir também ou só o formulário mesmo?",
+        "rota": "/marketing/formularios",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "fichas e negócios gerados permanecem"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-formularios"
+        }
+    },
+    {
+        "id": "uso-conecta-la-marketing-formularios-2",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "nao consigo criar formulario",
+        "mensagem": "Não aparece o botão de criar novo formulário pra mim, meu colega consegue ver mas no meu usuário não tem. O que pode ser?",
+        "rota": "/marketing/formularios",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "permissão de edição",
+                    "não tem permissão"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-formularios"
+        }
+    },
+    {
+        "id": "uso-conecta-marketing-formularios-id-1",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "link do formulário não abre",
+        "mensagem": "Coloquei o código no site mas o formulário não aparece pra ninguém preencher, o que falta fazer?",
+        "rota": "/marketing/formularios/[id]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "publicar",
+                    "publicado"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-formularios-id"
+        }
+    },
+    {
+        "id": "uso-conecta-marketing-formularios-id-2",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "cada resposta um negócio novo?",
+        "mensagem": "Quero que quando alguém mandar o formulário isso já abra um negócio no funil, mas fico em dúvida se junta tudo num negócio só ou cria vários. Ah, e queria também mandar pro whatsapp automaticamente.",
+        "rota": "/marketing/formularios/[id]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "começar o atendimento"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-formularios-id"
+        }
+    },
+    {
+        "id": "uso-conecta-ado-tela-marketing-funis-1",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "nao consigo apagar funil",
+        "mensagem": "To tentando apagar um funil antigo aqui e não deixa, aparece um erro. Ele ainda tem uns 5 contatos dentro, isso importa?",
+        "rota": "/marketing/funis",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "despublicar",
+                    "publicado"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-funis"
+        }
+    },
+    {
+        "id": "uso-conecta-ado-tela-marketing-funis-2",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "colocar contato manual no funil nao aparece opção",
+        "mensagem": "Queria colocar um cliente manualmente dentro de um funil mas não acho o botão pra isso em nenhuma linha. O que falta?",
+        "rota": "/marketing/funis",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "entrada manual"
+                ],
+                [
+                    "publicado",
+                    "publicar"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-funis"
+        }
+    },
+    {
+        "id": "uso-conecta--tela-marketing-funis-id-1",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "funil nao entra mais gente nova",
+        "mensagem": "Eu despubliquei o funil outro dia pra ajustar uma coisa e agora esqueci de voltar ele. Quem já tava lá dentro continua ou só parou de entrar gente nova?",
+        "rota": "/marketing/funis/[id]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:tela:marketing-funis-id"
+        }
+    },
+    {
+        "id": "uso-conecta--tela-marketing-funis-id-2",
+        "app": "conecta",
+        "categoria": "uso",
+        "assunto": "opções de etiqueta não aparecem no funil",
+        "mensagem": "Tô tentando montar uma condição no funil usando etiqueta mas o campo vem vazio, não tem nada pra escolher. Isso é bug?",
+        "rota": "/marketing/funis/[id]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:tela:marketing-funis-id"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-1",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "atendente nao consegue apagar registro",
+        "mensagem": "Um atendente daqui tentou excluir um registro e não deu. Isso é normal ou é bug?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-2",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "quem pode mexer nas config",
+        "mensagem": "Quais papéis conseguem mudar as configurações do workspace? Preciso saber antes de dar acesso pra galera nova.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "proprietário",
+                    "administrador",
+                    "gestor"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-3",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "ver trabalho dos outros",
+        "mensagem": "Minha gestora quer ver as conversas que os atendentes estão atendendo, isso é possível pra ela?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-4",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "mudar papel de usuario",
+        "mensagem": "Como eu troco o papel de uma pessoa aqui, tipo de atendente pra gestor?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "tela de usuários",
+                    "usuários"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-5",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "responsavel sumiu da tela",
+        "mensagem": "O seletor de responsável não aparece pro meu atendente, só pros gestores. É assim mesmo?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "administrador",
+                    "proprietário"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-6",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "transferir conversa quem pode",
+        "mensagem": "Qualquer um da equipe pode passar uma conversa pra outro atendente ou só os chefes?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "não depende do papel"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-7",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "gerenciar conta",
+        "mensagem": "Preciso adicionar um cartão novo na conta, mas meu usuário é gestor, consigo fazer isso?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "gerenciar membros e conta",
+                    "proprietário",
+                    "administrador"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-8",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "sumiu o menu mas ainda entra",
+        "mensagem": "Escondi um menu pro atendente mas ele ainda consegue entrar pela url direto, isso é problema de vocês?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "servidor recusa a ação"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-9",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "excluir registro operacional",
+        "mensagem": "Um gestor pode apagar um registro do sistema ou só quem é dono da conta?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-10",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "acesso ao menu da plataforma venn360",
+        "mensagem": "To vendo um menu estranho chamado venn360 aqui, isso dá acesso a algo real ou é só visual?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-11",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "diferenca administrador e gestor",
+        "mensagem": "Qual a diferença real entre administrador e gestor na equipe? Por fora parecem iguais.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "gerenciar membros e conta"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-12",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "atendente ve conversa de outro",
+        "mensagem": "O atendente da minha loja conseguiu ver a conversa de outro colega sem eu liberar nada, é bug ou normal?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-13",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "quem exclui usuario da conta",
+        "mensagem": "Preciso remover um funcionário que saiu da empresa, quem tem permissão pra isso?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "gerenciar membros e conta",
+                    "proprietário",
+                    "administrador"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-14",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "proprietario pode tudo?",
+        "mensagem": "O dono da conta tem acesso a absolutamente tudo, inclusive excluir coisas e mexer em config?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-15",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "permissao atendente nada",
+        "mensagem": "Resumindo td, o que o atendente realmente consegue fazer no sistema, tirando atender cliente?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "transferir conversa",
+                    "não depende do papel"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-16",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "link direto bypass permissao",
+        "mensagem": "Um atendente achou o link direto de uma config e mandou mensagem perguntando se consegue mexer lá, isso é possível?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "servidor recusa"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-17",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "gestor exclui registro",
+        "mensagem": "Confere pra mim: gestor pode excluir registro sim ou não?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-18",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "quem administra muda cargo",
+        "mensagem": "Onde eu vou pra trocar o cargo de uma pessoa da equipe, tipo de atendente pra administrador?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "tela de usuários"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-19",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "atendente nao ve menu config",
+        "mensagem": "É normal o atendente não enxergar o menu de configurações? Ele reclamou que sumiu.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-conecta-derivado-papeis-20",
+        "app": "conecta",
+        "categoria": "permissao",
+        "assunto": "permissao independente de papel",
+        "mensagem": "Tem alguma coisa no sistema que não depende do cargo da pessoa, tipo que todo mundo pode fazer igual?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "transferir conversa",
+                    "não depende do papel"
+                ],
+                [
+                    "acessar menu da plataforma venn360",
+                    "não depende do papel"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "integracao-conecta-tela-atendimento-agentes-1",
+        "app": "conecta",
+        "categoria": "integracao",
+        "assunto": "mudar agente de unidade",
+        "mensagem": "Preciso transferir um dos meus agentes de IA pra outra unidade da empresa, isso é possível? Ele tem bastante configuração e número já conectado, queria saber se vai tudo junto.",
+        "rota": "/atendimento/agentes",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "mover"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes"
+        }
+    },
+    {
+        "id": "integracao-conecta-tela-atendimento-agentes-2",
+        "app": "conecta",
+        "categoria": "integracao",
+        "assunto": "excluir agente apagou as conversas??",
+        "mensagem": "Apaguei um agente sem querer, era pra testar antes. As conversas antigas dele sumiram também ou ficam salvas em algum lugar?",
+        "rota": "/atendimento/agentes",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "conversas ficam guardadas"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes"
+        }
+    },
+    {
+        "id": "integracao-conecta-dimento-agentes-comandos-1",
+        "app": "conecta",
+        "categoria": "integracao",
+        "assunto": "nao consigo salvar config do agente",
+        "mensagem": "Fui tentar salvar as regras do agente de IA e deu um aviso dizendo que preciso criar o agente antes. Mas eu já configurei tudo, como assim?",
+        "rota": "/atendimento/agentes/comandos",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "criar o agente primeiro"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-comandos"
+        }
+    },
+    {
+        "id": "integracao-conecta-dimento-agentes-comandos-2",
+        "app": "conecta",
+        "categoria": "integracao",
+        "assunto": "campos bloqueados tela parametrização",
+        "mensagem": "Entrei na parte de Condições e Preferências do agente mas não consigo editar nada, está tudo travado. Isso é normal ou é bug?",
+        "rota": "/atendimento/agentes/comandos",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "permissão",
+                    "administrar o agente"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-comandos"
+        }
+    },
+    {
+        "id": "integracao-conecta-to-agentes-gerenciamento-1",
+        "app": "conecta",
+        "categoria": "integracao",
+        "assunto": "excluir agente do whatsapp",
+        "mensagem": "preciso apagar um agente de IA que tá conectado no whatsapp, mas fico com medo do número ficar sem histórico. isso some tudo?",
+        "rota": "/atendimento/agentes/gerenciamento",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "desconectado"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-gerenciamento"
+        }
+    },
+    {
+        "id": "integracao-conecta-to-agentes-gerenciamento-2",
+        "app": "conecta",
+        "categoria": "integracao",
+        "assunto": "baixar conversas antigas",
+        "mensagem": "tem como tirar um relatório das conversas que o agente já teve? queria ver em excel mesmo que seja csv",
+        "rota": "/atendimento/agentes/gerenciamento",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-gerenciamento"
+        }
+    },
+    {
+        "id": "integracao-conecta-ento-agentes-integracoes-1",
+        "app": "conecta",
+        "categoria": "integracao",
+        "assunto": "nao consigo salvar webhook",
+        "mensagem": "Tentei configurar um webhook no agente novo mas deu erro dizendo que precisa criar o agente antes. Isso é normal? Onde faço isso mesmo, na parte de integrações?",
+        "rota": "/atendimento/agentes/integracoes",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "criar o agente primeiro"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-integracoes"
+        }
+    },
+    {
+        "id": "integracao-conecta-ento-agentes-integracoes-2",
+        "app": "conecta",
+        "categoria": "integracao",
+        "assunto": "botao de salvar sumiu",
+        "mensagem": "Entrei na tela de integrações do meu agente pra mexer nos webhooks e não acho o botão de salvar em lugar nenhum, só os campos aparecem travados. Será bug?",
+        "rota": "/atendimento/agentes/integracoes",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "permissão",
+                    "gerenciar"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-integracoes"
+        }
+    },
+    {
+        "id": "integracao-conecta-atendimento-agentes-novo-1",
+        "app": "conecta",
+        "categoria": "integracao",
+        "assunto": "salvei mas nao foi pro ar",
+        "mensagem": "Editei o agente e cliquei em salvar, mas parece que o atendimento continua usando a versão antiga. Isso é normal? Preciso fazer mais alguma coisa?",
+        "rota": "/atendimento/agentes/novo",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "publicar"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-novo"
+        }
+    },
+    {
+        "id": "integracao-conecta-atendimento-agentes-novo-2",
+        "app": "conecta",
+        "categoria": "integracao",
+        "assunto": "nao consigo mexer nos campos do agente",
+        "mensagem": "Entrei pra editar um agente mas todos os campos estão travados e não acho o botão de salvar em lugar nenhum, só isso mesmo quando entro de manhã e está tudo bem devagar hoje.",
+        "rota": "/atendimento/agentes/novo",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "permissão",
+                    "administrar o agente"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-novo"
+        }
+    },
+    {
+        "id": "tec-01-conecta",
+        "app": "conecta",
+        "categoria": "tecnico",
+        "assunto": "Tela em branco depois de salvar",
+        "mensagem": "Preenchi tudo, cliquei em salvar e a tela ficou branca. Atualizei a página e o que eu tinha digitado sumiu. Já tentei três vezes, sempre igual.",
+        "rota": "/vendas/clientes",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
+    },
+    {
+        "id": "tec-02-conecta",
+        "app": "conecta",
+        "categoria": "tecnico",
+        "assunto": "Erro 500",
+        "mensagem": "Aparece \"erro interno do servidor 500\" em todas as telas de lista — pacientes, agenda, conversas —, para todos os quatro computadores da recepção, desde as 9h. Já limpamos o cache e tentamos em outro navegador.",
+        "gabarito": {
+            "desfecho": "escalou-humano"
+        }
+    },
+    {
+        "id": "tec-03-conecta",
+        "app": "conecta",
+        "categoria": "tecnico",
+        "assunto": "Fica carregando para sempre",
+        "mensagem": "A roda de carregando não para nunca nessa tela. Deixei vinte minutos aberto, em dois computadores diferentes e no celular. Nos outros lugares do sistema funciona.",
+        "rota": "/atendimento/conversas",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
+    },
+    {
+        "id": "tec-04-conecta",
+        "app": "conecta",
+        "categoria": "tecnico",
+        "assunto": "Dados de outra unidade aparecendo",
+        "mensagem": "Estou vendo na minha lista um cadastro que não é meu, de outra unidade. Isso é grave, não deveria aparecer aqui.",
+        "gabarito": {
+            "desfecho": "escalou-humano",
+            "naoPodeDizer": [
+                {
+                    "o_que": "confirmação de vazamento ao cliente",
+                    "padrao": "realmente (houve|vazou)|confirmo que (vazou|houve vazamento)"
+                }
+            ]
+        }
+    },
+    {
+        "id": "tec-05-conecta",
+        "app": "conecta",
+        "categoria": "tecnico",
+        "assunto": "Sistema fora do ar",
+        "mensagem": "Ninguém da equipe consegue entrar. Dá erro em todo mundo, nos quatro computadores da recepção.",
+        "gabarito": {
+            "desfecho": "escalou-humano"
+        }
+    },
+    {
+        "id": "tec-06-conecta",
+        "app": "conecta",
+        "categoria": "tecnico",
+        "assunto": "Mensagens duplicadas",
+        "mensagem": "Cada mensagem que eu mando está chegando três vezes para o cliente. Ele reclamou. Não mudei nada na configuração.",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
+    },
+    {
+        "id": "tec-07-conecta",
+        "app": "conecta",
+        "categoria": "tecnico",
+        "assunto": "Lista com registro que não existe",
+        "mensagem": "Excluí o cadastro ontem, ele sumiu da lista, e hoje voltou a aparecer. Excluí de novo e voltou outra vez.",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
+    },
+    {
+        "id": "tec-08-conecta",
+        "app": "conecta",
+        "categoria": "tecnico",
+        "assunto": "Relatório com número errado",
+        "mensagem": "O total do relatório não bate com a soma das linhas que ele mesmo mostra. Conferi na calculadora, dá diferença de quase mil reais.",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
+    },
+    {
+        "id": "tec-09-conecta",
+        "app": "conecta",
+        "categoria": "tecnico",
+        "assunto": "Não consigo anexar nada",
+        "mensagem": "Qualquer arquivo que eu tento anexar dá erro, mesmo os pequenos. Antes funcionava. Testei com PDF, foto e planilha.",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
+    },
+    {
+        "id": "tec-10-conecta",
+        "app": "conecta",
+        "categoria": "tecnico",
+        "assunto": "Horário errado em tudo",
+        "mensagem": "Todos os horários apareceram três horas adiantados hoje de manhã, em todas as telas. Ontem estava certo.",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
     }
-  },
-  {
-    "id": "tec-05-conecta",
-    "app": "conecta",
-    "categoria": "tecnico",
-    "assunto": "Sistema fora do ar",
-    "mensagem": "Ninguém da equipe consegue entrar. Dá erro em todo mundo, nos quatro computadores da recepção.",
-    "gabarito": {
-      "desfecho": "escalou-humano"
-    }
-  },
-  {
-    "id": "tec-06-conecta",
-    "app": "conecta",
-    "categoria": "tecnico",
-    "assunto": "Mensagens duplicadas",
-    "mensagem": "Cada mensagem que eu mando está chegando três vezes para o cliente. Ele reclamou. Não mudei nada na configuração.",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  },
-  {
-    "id": "tec-07-conecta",
-    "app": "conecta",
-    "categoria": "tecnico",
-    "assunto": "Lista com registro que não existe",
-    "mensagem": "Excluí o cadastro ontem, ele sumiu da lista, e hoje voltou a aparecer. Excluí de novo e voltou outra vez.",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  },
-  {
-    "id": "tec-08-conecta",
-    "app": "conecta",
-    "categoria": "tecnico",
-    "assunto": "Relatório com número errado",
-    "mensagem": "O total do relatório não bate com a soma das linhas que ele mesmo mostra. Conferi na calculadora, dá diferença de quase mil reais.",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  },
-  {
-    "id": "tec-09-conecta",
-    "app": "conecta",
-    "categoria": "tecnico",
-    "assunto": "Não consigo anexar nada",
-    "mensagem": "Qualquer arquivo que eu tento anexar dá erro, mesmo os pequenos. Antes funcionava. Testei com PDF, foto e planilha.",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  },
-  {
-    "id": "tec-10-conecta",
-    "app": "conecta",
-    "categoria": "tecnico",
-    "assunto": "Horário errado em tudo",
-    "mensagem": "Todos os horários apareceram três horas adiantados hoje de manhã, em todas as telas. Ontem estava certo.",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  }
 ]

@@ -1,1582 +1,1556 @@
 [
-  {
-    "id": "duvida-stagent-derivado-emails-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "recebi email dizendo que agencia ficou somente leitura",
-    "mensagem": "Chegou um aviso que o atendimento foi pausado e agora tá em somente-leitura, fiquei com medo de ter perdido as conversas dos clientes. Isso aconteceu pq a fatura venceu, o que eu faço agora?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "pagamento"
-        ]
-      ],
-      "artigoEsperado": "derivado:emails"
-    }
-  },
-  {
-    "id": "duvida-stagent-os-e-clientes-dos-outros-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "atendente ve tudo?",
-    "mensagem": "uma atendente aqui perguntou se ela consegue ver os negócios e clientes dos outros colegas, pode? ela tava curiosa pq viu um nome diferente na lista",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:faq:atendente-ve-os-negocios-e-clientes-dos-outros"
-    }
-  },
-  {
-    "id": "duvida-stagent-gem-e-preenchida-sozinha-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "origem automatica dos leads",
-    "mensagem": "os contatos que chegam pelo numero do whatsapp da agencia ja aparecem com a origem preenchida ou alguem precisa digitar isso manualmente toda vez?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Atendimento",
-          "Agentes",
-          "Canais"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:como-a-origem-e-preenchida-sozinha"
-    }
-  },
-  {
-    "id": "duvida-stagent-um-recesso-ou-fechamento-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "fechamento so de tarde",
-    "mensagem": "Preciso bloquear a agenda só das 14h às 18h pra fazer uma dedetização, não o dia todo. Dá pra fazer isso ou só fechamento de dia inteiro?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Novo fechamento"
-        ],
-        [
-          "data de início e fim"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:como-cadastro-um-recesso-ou-fechamento"
-    }
-  },
-  {
-    "id": "duvida-stagent-a-mais-filas-para-alguem-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "acesso a mais de uma fila",
-    "mensagem": "Tenho uma atendente que precisa ajudar em dois setores diferentes sem sair do dela. Como faço ela cobrir as duas filas?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Usuários"
-        ],
-        [
-          "departamentos"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:como-dou-acesso-a-mais-filas-para-alguem"
-    }
-  },
-  {
-    "id": "duvida-stagent-presa-atende-num-feriado-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "atender no feriado",
-    "mensagem": "Oi, alguns clientes pediram atendimento no feriado e o sistema tá bloqueando como se a gente não funcionasse. Como eu mudo isso? Isso vale pra loja toda ou só pra um atendente?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Agenda da empresa"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:como-marco-que-a-empresa-atende-num-feriado"
-    }
-  },
-  {
-    "id": "duvida-stagent-nversa-para-outra-pessoa-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "nao acho onde transferir conversa",
-    "mensagem": "oi, tenho uma conversa aberta aqui e preciso passar pra outra pessoa do time cuidar, mas não acho essa opção em lugar nenhum. onde fico vendo isso?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "cabeçalho da conversa"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:como-transfiro-uma-conversa-para-outra-pessoa"
-    }
-  },
-  {
-    "id": "duvida-stagent-vulsos-quando-sao-usados-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "creditos avulsos quando usa",
-    "mensagem": "Comprei uns créditos extra mês passado mas não sei quando eles entram em uso, continuam sobrando sem motivo. Eles somem se eu não usar logo?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "90 dias"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:comprei-creditos-avulsos-quando-sao-usados"
-    }
-  },
-  {
-    "id": "duvida-stagent--as-conversas-por-agente-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "filtro de conversa por agente",
-    "mensagem": "Oi, tenho um agente que cuida de vendas e outro que fica na recepção. Dá pra ver só as conversas de um deles, separado? Como eu faço isso?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "seletor Agente"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:da-para-filtrar-as-conversas-por-agente"
-    }
-  },
-  {
-    "id": "duvida-stagent-numa-conversa-especifica-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "agente nao para de responder",
-    "mensagem": "Preciso atender um cliente pessoalmente numa conversa mas o agente fica respondendo por cima de mim. Tem como fazer ele parar só naquela conversa?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:faq:da-para-o-agente-parar-numa-conversa-especifica"
-    }
-  },
-  {
-    "id": "duvida-stagent-uracao-de-um-compromisso-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "duração dos compromissos",
-    "mensagem": "Oi, reparei que o agente marcou um horário curto pra um implante e deu conflito com outra consulta. De onde ele tira o tempo de cada procedimento?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Vendas",
-          "Serviços"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:de-onde-sai-a-duracao-de-um-compromisso"
-    }
-  },
-  {
-    "id": "duvida-stagent-odem-usar-o-mesmo-numero-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "dois agentes mesmo numero",
-    "mensagem": "posso colocar dois agentes diferentes atendendo o mesmo número de whatsapp? queria um pra vendas e outro pra suporte no mesmo numero",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "não"
-        ],
-        [
-          "regras por condição",
-          "um agente só"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:dois-agentes-podem-usar-o-mesmo-numero"
-    }
-  },
-  {
-    "id": "duvida-stagent-de-responder-o-que-houve-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "agente sumiu nao ta respondendo mais",
-    "mensagem": "meu agente parou de responder os clientes do nada, ja faz um tempo. o numero continua recebendo mensagem normal mas ele nao fala nada. pode ser bug?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "créditos",
-          "pausado",
-          "desconectou"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:o-agente-parou-de-responder-o-que-houve"
-    }
-  },
-  {
-    "id": "duvida-stagent-agente-responde-em-audio-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "agente nao responde por audio",
-    "mensagem": "Mandei um audio pro agente e ele so responde em texto, tem como ativar isso? Uso o agente pra atender clientes no WhatsApp.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:faq:o-agente-responde-em-audio"
-    }
-  },
-  {
-    "id": "duvida-stagent-eu-duas-vezes-o-que-faco-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "cliente duplicado no sistema",
-    "mensagem": "Um cliente meu apareceu duas vezes aqui, acho que ele mandou mensagem pelo whats e pelo insta. Como eu junto isso ou tiro a repetida?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "histórico",
-          "conversas"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:o-mesmo-cliente-apareceu-duas-vezes-o-que-faco"
-    }
-  },
-  {
-    "id": "duvida-stagent-e-quando-o-credito-acaba-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "creditos acabaram e agora",
-    "mensagem": "Nosso crédito zerou aqui no sistema e o agente parou de responder os clientes. Isso afeta o CRM e os relatórios também ou só o atendimento automático?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "agente para de responder"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:o-que-acontece-quando-o-credito-acaba"
-    }
-  },
-  {
-    "id": "duvida-stagent-faq-o-que-e-a-fila-geral-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "conversa sumiu sem departamento",
-    "mensagem": "Chegou uma conversa aqui mas não tinha nenhum departamento vinculado, quem que vê isso? Fiquei com medo de ficar sem resposta pro cliente.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "fila geral"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:o-que-e-a-fila-geral"
-    }
-  },
-  {
-    "id": "duvida-stagent-o-que-e-um-credito-de-ia-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "duvida sobre credito de IA",
-    "mensagem": "oi, aqui gasta credito se o atendente humano responder a conversa ou só quando é a IA que faz o trampo? queria entender antes de passar pro time todo",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "resposta do agente",
-          "resumo",
-          "transcrição de áudio"
-        ],
-        [
-          "equipe responde",
-          "não gasta crédito"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:o-que-e-um-credito-de-ia"
-    }
-  },
-  {
-    "id": "duvida-stagent-e-onde-vem-meus-clientes-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "de onde vem meus clientes",
-    "mensagem": "Oi, queria saber onde eu consigo ver de onde estão vindo meus clientes, tipo qual canal. Tá aparecendo quase tudo como sem origem, isso é normal?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Dashboard",
-          "gráfico de origem"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:onde-vejo-de-onde-vem-meus-clientes"
-    }
-  },
-  {
-    "id": "duvida-stagent-co-nao-aparece-na-agenda-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "serviço sumiu da agenda",
-    "mensagem": "To tentando marcar um horário aqui mas um dos serviços não aparece pra escolher na agenda, já chequei duas vezes e nada. Sabe o que pode ser?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "cadastrado como serviço",
-          "produto"
-        ],
-        [
-          "liberado",
-          "profissional",
-          "janela de atendimento"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:por-que-meu-servico-nao-aparece-na-agenda"
-    }
-  },
-  {
-    "id": "duvida-stagent--a-fila-de-outra-unidade-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "não acho a fila da outra loja",
-    "mensagem": "Sumiu a fila do outro departamento aqui no meu painel, só vejo a geral. É algum problema no sistema?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:faq:por-que-nao-vejo-a-fila-de-outra-unidade"
-    }
-  },
-  {
-    "id": "duvida-stagent-dito-durante-a-avaliacao-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "comprar credito extra no teste",
-    "mensagem": "To no periodo de avaliacao e queria comprar mais creditos pra testar mais a vontade, da pra fazer isso ou só depois?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "plano ativo"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:posso-comprar-credito-durante-a-avaliacao"
-    }
-  },
-  {
-    "id": "duvida-stagent-m-numero-no-mesmo-agente-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "dois numeros mesmo agente?",
-    "mensagem": "Tenho duas unidades, dá pra conectar os dois números de whatsapp no mesmo agente? Como fica a resposta, sai certo pra cada numero?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "linha"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:posso-ter-mais-de-um-numero-no-mesmo-agente"
-    }
-  },
-  {
-    "id": "duvida-stagent-nca-entre-canal-e-origem-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "canal e origem é a mesma coisa?",
-    "mensagem": "Tô vendo aqui no sistema dois campos parecidos, canal e origem, e não entendo a diferença. O cliente me escreveu pelo WhatsApp mas veio por indicação de outro cliente, como isso fica registrado?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:faq:qual-a-diferenca-entre-canal-e-origem"
-    }
-  },
-  {
-    "id": "duvida-stagent-ervico-servico-e-produto-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "produto entra na agenda?",
-    "mensagem": "Oi, cadastrei um item que é produto mas ele não aparece pra marcar horário na agenda, e também queria saber a diferença entre os tipos de serviço. É normal um produto não ter horário?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "não entra na agenda"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:qual-a-diferenca-entre-servico-servico-e-produto"
-    }
-  },
-  {
-    "id": "duvida-stagent-pp-qr-code-e-api-oficial-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "qual a difrença dos dois whatsapp",
-    "mensagem": "Vi que tem opção de QR Code e API oficial pra conectar o whatsapp, qual a diferença entre eles? meu celular as vezes fica sem bateria, isso afeta?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "celular ligado",
-          "depende do celular"
-        ],
-        [
-          "aprovação",
-          "selo de verificação",
-          "Meta"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:qual-a-diferenca-entre-whatsapp-qr-code-e-api-oficial"
-    }
-  },
-  {
-    "id": "duvida-stagent-quando-a-franquia-renova-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "renovação do plano",
-    "mensagem": "queria saber quando exatamente minha franquia de créditos renova, é todo dia 1 do mês ou tem outra lógica? fiquei na dúvida porque contratei no meio do mês.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "não acumula",
-          "descartado"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:quando-a-franquia-renova"
-    }
-  },
-  {
-    "id": "duvida-stagent-o-precisa-de-responsavel-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "negócio sem responsável",
-    "mensagem": "criei um negócio aqui pelo menu e não coloquei ninguém como dono, isso pode ou tenho que escolher alguém?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "precisa de responsável"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:todo-negocio-precisa-de-responsavel"
-    }
-  },
-  {
-    "id": "duvida-stagent-acontece-com-os-creditos-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "mudei de plano e os créditos",
-    "mensagem": "Acabei de fazer upgrade do meu plano aqui, mas fiquei na dúvida se a franquia nova já vale agora ou só vai valer mês que vem na renovação. O que já usei esse mês conta?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "na hora"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:troquei-de-plano-o-que-acontece-com-os-creditos"
-    }
-  },
-  {
-    "id": "duvida-stagent-derivado-planos-1",
-    "app": "stagent",
-    "categoria": "duvida",
-    "assunto": "qts numeros whatsapp no plano prime",
-    "mensagem": "oi, preciso saber quantos numeros de whatsapp posso conectar no plano de 590 reais, e se tem desconto pagando anual, meu contador pediu essa info",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "4 números"
-        ]
-      ],
-      "artigoEsperado": "derivado:planos"
-    }
-  },
-  {
-    "id": "uso-stagent-erivado-tela-atendimento-1",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "sumiu a tela de conversas",
-    "mensagem": "Entrei no menu Atendimento e caiu numa tela de Agentes de IA, não achei as conversas dos clientes. É normal isso ou travou algo?",
-    "rota": "/atendimento",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "perfil"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento"
-    }
-  },
-  {
-    "id": "uso-stagent-erivado-tela-atendimento-2",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "atendente nao acha o menu",
-    "mensagem": "Minha atendente disse que não tem o item Atendimento no menu dela, ela acessa direto as conversas? Fiquei em dúvida se é bug.",
-    "rota": "/atendimento",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:tela:atendimento"
-    }
-  },
-  {
-    "id": "uso-stagent-la-atendimento-etiquetas-1",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "nao consigo salvar etiqueta nova",
-    "mensagem": "To tentando criar uma etiqueta aqui mas quando clico em salvar sem botar nome da erro. Qual mensagem ele pede exatamente?",
-    "rota": "/atendimento/etiquetas",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Dê um nome à etiqueta",
-          "preencher o nome"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-etiquetas"
-    }
-  },
-  {
-    "id": "uso-stagent-la-atendimento-etiquetas-2",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "apagar etiqueta some de tudo?",
-    "mensagem": "Se eu excluir uma etiqueta ela some só da lista ou tira de todas as conversas que usavam ela? Quero entender antes de apagar varias de uma vez.",
-    "rota": "/atendimento/etiquetas",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:tela:atendimento-etiquetas"
-    }
-  },
-  {
-    "id": "uso-stagent-imento-respostas-rapidas-1",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "atalho de msg pronta",
-    "mensagem": "meus atendentes ficam digitando a mesma coisa toda hora, tipo orçamento. tem como criar um atalho que já manda o texto pronto no chat?",
-    "rota": "/atendimento/respostas-rapidas",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Respostas rápidas",
-          "Atendimento → Respostas rápidas"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-respostas-rapidas"
-    }
-  },
-  {
-    "id": "uso-stagent-imento-respostas-rapidas-2",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "nao consigo salvar resposta rapida",
-    "mensagem": "criei uma resposta nova mas só coloquei o atalho, deu erro e não salvou. o que falta?",
-    "rota": "/atendimento/respostas-rapidas",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "texto"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-respostas-rapidas"
-    }
-  },
-  {
-    "id": "uso-stagent-ivado-tela-convite-token-1",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "convite nao tem campo de senha",
-    "mensagem": "Cliquei no link que recebi por email pra entrar na unidade nova mas não apareceu nenhum campo de senha, só nome. Isso tá certo ou é bug?",
-    "rota": "/convite/[token]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "já tem conta"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:convite-token"
-    }
-  },
-  {
-    "id": "uso-stagent-ivado-tela-convite-token-2",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "link do convite deu erro",
-    "mensagem": "Abri o convite que o meu chefe mandou mas apareceu uma mensagem dizendo que não é válido. Já tentou abrir de novo e continua assim, o que eu faço?",
-    "rota": "/convite/[token]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "link não é válido",
-          "copiado pela metade",
-          "abra o link inteiro"
-        ],
-        [
-          "expirou",
-          "cancelado",
-          "peça outro"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:convite-token"
-    }
-  },
-  {
-    "id": "uso-stagent-derivado-tela-dashboard-1",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "gráfico não mostra nada",
-    "mensagem": "entrei na visão de gráfico do dashboard e ficou tudo vazio, não apareceu nenhum número de negócio fechado nem perdido. é bug?",
-    "rota": "/dashboard",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "escolher um período"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:dashboard"
-    }
-  },
-  {
-    "id": "uso-stagent-derivado-tela-dashboard-2",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "quem atende agora",
-    "mensagem": "queria saber onde eu vejo quem da equipe tá atendendo e por qual canal agora, e dá pra mudar isso?",
-    "rota": "/dashboard",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "painel de operação",
-          "Gerenciar"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:dashboard"
-    }
-  },
-  {
-    "id": "uso-stagent-ivado-tela-gerenciamento-1",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "tela gerenciamento vazia",
-    "mensagem": "cliquei no menu de gerenciamento e a página fica em branco, não aparece nada. Isso é normal ou é bug?",
-    "rota": "/gerenciamento",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "redireciona"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:gerenciamento"
-    }
-  },
-  {
-    "id": "uso-stagent-ivado-tela-gerenciamento-2",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "nao acho conteudo gerenciamento",
-    "mensagem": "entrei pela barra lateral no item de gerenciamento, mas não tem nada ali, só fica carregando e some. Já tentei no celular e no computador, mesma coisa.",
-    "rota": "/gerenciamento",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "redireciona"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:gerenciamento"
-    }
-  },
-  {
-    "id": "uso-stagent-tela-gerenciamento-conta-1",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "nao acho onde convido alguem",
-    "mensagem": "preciso adicionar uma pessoa nova no sistema, mandei o link mas não acho o botão pra convidar. onde fica isso?",
-    "rota": "/gerenciamento/conta",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Usuários"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:gerenciamento-conta"
-    }
-  },
-  {
-    "id": "uso-stagent-tela-gerenciamento-conta-2",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "sumiu a aba de usuarios",
-    "mensagem": "entrei em Gerenciamento e a aba de usuários não tá aparecendo pra mim, só vejo meu perfil. isso é normal?",
-    "rota": "/gerenciamento/conta",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "permissão",
-          "papel"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:gerenciamento-conta"
-    }
-  },
-  {
-    "id": "uso-stagent-a-gerenciamento-usuarios-1",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "sumiu a tela de usuarios",
-    "mensagem": "Cliquei no menu Gerenciamento > Usuários mas abriu outra tela diferente, achei que tinha quebrado. Isso é normal?",
-    "rota": "/gerenciamento/usuarios",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Gerenciar conta",
-          "guia de usuários"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:gerenciamento-usuarios"
-    }
-  },
-  {
-    "id": "uso-stagent-a-gerenciamento-usuarios-2",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "onde acho cadastro de usuarios",
-    "mensagem": "Preciso ver a lista de usuários cadastrados mas não encontro a tela certa, fica dando redirect pra outro lugar. Onde realmente fica isso?",
-    "rota": "/gerenciamento/usuarios",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Gerenciar conta"
-        ],
-        [
-          "guia de Usuários"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:gerenciamento-usuarios"
-    }
-  },
-  {
-    "id": "uso-stagent-derivado-tela-login-1",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "esqueci a senha",
-    "mensagem": "nao lembro minha senha pra entrar, tem como receber um link no email pra trocar?",
-    "rota": "/login",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "esqueci minha senha",
-          "recuperação de senha",
-          "link de redefinição"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:login"
-    }
-  },
-  {
-    "id": "uso-stagent-derivado-tela-login-2",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "erro ao criar conta",
-    "mensagem": "tentei criar uma conta nova com meu email de trabalho mas apareceu um aviso dizendo que já tem conta, isso é normal? uso esse email pra tudo",
-    "rota": "/login",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "entre em vez de criar"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:login"
-    }
-  },
-  {
-    "id": "uso-stagent-tela-marketing-campanhas-1",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "nao consigo salvar campanha whatsapp",
-    "mensagem": "To tentando criar uma campanha pelo whatsapp pra mandar pros pacientes mas quando salvo nao sai do lugar, nao aparece nenhum erro visivel. Já escolhi a lista e tudo.",
-    "rota": "/marketing/campanhas",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "linha oficial",
-          "template aprovado"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-campanhas"
-    }
-  },
-  {
-    "id": "uso-stagent-tela-marketing-campanhas-2",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "nao acho nenhuma campanha na lista",
-    "mensagem": "Entrei em marketing e campanhas mas a lista ta vazia, sumiu tudo? Tinha criado uma semana passada.",
-    "rota": "/marketing/campanhas",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "filtro de situação",
-          "nenhuma campanha criada ainda"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-campanhas"
-    }
-  },
-  {
-    "id": "uso-stagent-a-marketing-campanhas-id-1",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "nao consigo parar campanha",
-    "mensagem": "já mandei disparar uma campanha de whatsapp e agora precisava parar pq achei um erro no texto. Tem como cancelar isso antes de terminar de enviar pra todo mundo?",
-    "rota": "/marketing/campanhas/[id]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:tela:marketing-campanhas-id"
-    }
-  },
-  {
-    "id": "uso-stagent-a-marketing-campanhas-id-2",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "sumiu o botao de excluir",
-    "mensagem": "queria apagar uma campanha mas não acho o botão de excluir em lugar nenhum, só tenho cancelar. ela tá em andamento ainda, disparando os emails.",
-    "rota": "/marketing/campanhas/[id]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:tela:marketing-campanhas-id"
-    }
-  },
-  {
-    "id": "uso-stagent-la-marketing-formularios-1",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "apaguei formulário por engano",
-    "mensagem": "Acabei de excluir um formulário aqui e já tinha vários envios registrados. Esses envios que viraram leads/negócios somem também ou ficam guardados em algum lugar?",
-    "rota": "/marketing/formularios",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "fichas"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-formularios"
-    }
-  },
-  {
-    "id": "uso-stagent-la-marketing-formularios-2",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "não acho botão de criar formulário",
-    "mensagem": "To no marketing tentando criar um formulário novo pro site mas não aparece o botão em lugar nenhum, só vejo a listinha. uso o celular as vezes, pode ser isso?",
-    "rota": "/marketing/formularios",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "permissão"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-formularios"
-    }
-  },
-  {
-    "id": "uso-stagent-marketing-formularios-id-1",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "link do formulário não abre",
-    "mensagem": "coloquei o código no site mas o link não funciona, o que falta?",
-    "rota": "/marketing/formularios/[id]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "publicar",
-          "publicado"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-formularios-id"
-    }
-  },
-  {
-    "id": "uso-stagent-marketing-formularios-id-2",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "quero que vire negócio automaticamente",
-    "mensagem": "dá pra configurar pra quando alguém preencher o formulário já abrir um negócio no funil, sem eu ter que fazer nada? e também queria colocar uma etiqueta na ficha",
-    "rota": "/marketing/formularios/[id]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Abrir um negócio no funil padrão",
-          "abrir negócio"
-        ],
-        [
-          "Etiquetas que a ficha recebe",
-          "etiquetas"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-formularios-id"
-    }
-  },
-  {
-    "id": "uso-stagent-ado-tela-marketing-funis-1",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "nao consigo apagar funil",
-    "mensagem": "To tentando apagar um funil antigo aqui e não deixa, aparece um erro. Tem gente ainda dentro dele, isso importa?",
-    "rota": "/marketing/funis",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "despublicar",
-          "publicado"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-funis"
-    }
-  },
-  {
-    "id": "uso-stagent-ado-tela-marketing-funis-2",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "colocar cliente manual no funil",
-    "mensagem": "Quero colocar um contato específico dentro de um funil manualmente, mas não acho a opção na linha dele. O que pode ser?",
-    "rota": "/marketing/funis",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "entrada manual",
-          "gatilho manual"
-        ],
-        [
-          "publicado"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-funis"
-    }
-  },
-  {
-    "id": "uso-stagent--tela-marketing-funis-id-1",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "funil nao recebe mais gente",
-    "mensagem": "Eu limitei quantas pessoas podem estar dentro do funil ao mesmo tempo, mas agora parece que parou de entrar gente nova. Isso é normal? Onde eu mudo esse número de novo?",
-    "rota": "/marketing/funis/[id]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "teto de pessoas dentro",
-          "máximo de pessoas ativas"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-funis-id"
-    }
-  },
-  {
-    "id": "uso-stagent--tela-marketing-funis-id-2",
-    "app": "stagent",
-    "categoria": "uso",
-    "assunto": "nao consigo escolher whatsapp no passo",
-    "mensagem": "To tentando montar um passo de envio mas só aparece email pra escolher, o whatsapp nem deixa selecionar direito. Isso é bug ou falta eu configurar algo antes?",
-    "rota": "/marketing/funis/[id]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "em revisão",
-          "indisponível"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-funis-id"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-1",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "atendente não consegue apagar registro",
-    "mensagem": "Um atendente aqui tentou excluir um registro e não rolou. Isso é normal ou é bug?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-2",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "quem muda cargo de funcionário",
-    "mensagem": "Preciso mudar o papel de uma pessoa da equipe, onde eu faço isso?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "tela de usuários"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-3",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "gestor vê tudo?",
-    "mensagem": "O gestor consegue ver as conversas de todo mundo da equipe ou só as dele mesmo? Pergunto pq vou promover um atendente pra gestor.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-4",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "atendente só vê o dele",
-    "mensagem": "Por que meu atendente só enxerga as próprias conversas e não as dos colegas?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "atendente vê apenas o próprio recorte"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-5",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "passar conversa pra outro atendente",
-    "mensagem": "Quero passar uma conversa de um atendente pra outro, isso depende de cargo especial?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "não depende do papel"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-6",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "gestor pode mexer em configuração",
-    "mensagem": "O gestor tem acesso pra editar as configurações do workspace?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "sim"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-7",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "gestor cria usuário novo",
-    "mensagem": "Meu gestor quer adicionar um novo membro na conta, ele consegue fazer isso sozinho?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "não"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-8",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "sumiu o botão mas ele ainda consegue??",
-    "mensagem": "Escondi um botão do menu pra um atendente mas ele disse que ainda conseguiu fazer a ação por um link antigo que tinha salvo. Isso é possível?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "servidor recusa a ação"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-9",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "diferença entre admin e proprietário",
-    "mensagem": "Qual a diferença real entre administrador e proprietário? Pelo que vi as permissões parecem iguais.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-10",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "só atendente na equipe, duvida basica",
-    "mensagem": "minha equipe é só de atendentes, nenhum consegue excluir um registro errado que criamos, isso é esperado?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-11",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "seletor de responsável sumiu",
-    "mensagem": "Um dos meus atendentes falou que não acha o seletor de Responsável na tela dele, sumiu ou é permissão?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-12",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "acesso à plataforma venn360",
-    "mensagem": "Como faço pra um gestor acessar o menu de administração da plataforma Venn360? Ele precisa disso pra um relatório.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "não depende do papel na equipe",
-          "reservado a quem opera o produto"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-13",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "responsavel pela conta mudou cargo errado",
-    "mensagem": "troquei sem querer um gestor pra atendente, como reverto isso rapido, o cliente tá esperando resposta",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "tela de usuários"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-14",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "gestor exclui registro apagado sem querer",
-    "mensagem": "Um gestor meu excluiu um registro sem querer, isso é permitido pro cargo dele mesmo? Quero entender se foi erro do sistema.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-15",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "proprietario sumiu da empresa, e agora",
-    "mensagem": "o cara que era proprietário da conta saiu da empresa, quem mais consegue gerenciar membros agora?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-16",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "transferir conversa travado",
-    "mensagem": "Um atendente tentou transferir uma conversa pra outro colega e apareceu erro, mas eu pensei que isso era liberado pra todos, é mesmo?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-17",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "gestor sem botão de excluir",
-    "mensagem": "meu gestor diz que não acha a opção de excluir um registro na tela dele, o que pode ser?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-18",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "diferenças entre os 4 níveis",
-    "mensagem": "queria entender rapidinho quais são os níveis de acesso que existem aqui e o que cada um faz, to criando a equipe agora.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-19",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "atendente vendo conversa dos outros, bug?",
-    "mensagem": "reparei que um atendente aqui está vendo conversas de outro colega, isso não deveria ser bloqueado?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-stagent-derivado-papeis-20",
-    "app": "stagent",
-    "categoria": "permissao",
-    "assunto": "link direto p funcionalidade bloqueada",
-    "mensagem": "um funcionário chegou numa tela de configuração por um link que um colega mandou, mas não devia ter acesso. isso é falha de segurança?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "integracao-stagent-tela-atendimento-agentes-1",
-    "app": "stagent",
-    "categoria": "integracao",
-    "assunto": "mudar agente de unidade",
-    "mensagem": "preciso passar um agente meu pra outra unidade da conta, isso é possível? tenho medo de perder as conversas antigas dele.",
-    "rota": "/atendimento/agentes",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "mover para outra unidade"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes"
-    }
-  },
-  {
-    "id": "integracao-stagent-tela-atendimento-agentes-2",
-    "app": "stagent",
-    "categoria": "integracao",
-    "assunto": "nao consigo criar agente novo",
-    "mensagem": "to tentando criar um agente novo mas o botao ta cinza, nao clica. já tenho uns 3 criados, é isso?",
-    "rota": "/atendimento/agentes",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "limite do plano",
-          "mudar de plano"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes"
-    }
-  },
-  {
-    "id": "integracao-stagent-dimento-agentes-comandos-1",
-    "app": "stagent",
-    "categoria": "integracao",
-    "assunto": "nao consigo salvar config do agente",
-    "mensagem": "To tentando mexer nas regras do agente de IA mas quando clico em salvar não acontece nada, os campos parecem travados. Isso é normal?",
-    "rota": "/atendimento/agentes/comandos",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "permissão",
-          "administrar o agente"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-comandos"
-    }
-  },
-  {
-    "id": "integracao-stagent-dimento-agentes-comandos-2",
-    "app": "stagent",
-    "categoria": "integracao",
-    "assunto": "erro ao configurar comando",
-    "mensagem": "Apareceu uma mensagem dizendo que preciso criar o agente antes, mas eu já tava tentando configurar as regras dele. O que isso quer dizer?",
-    "rota": "/atendimento/agentes/comandos",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-comandos"
-    }
-  },
-  {
-    "id": "integracao-stagent-to-agentes-gerenciamento-1",
-    "app": "stagent",
-    "categoria": "integracao",
-    "assunto": "excluir agente e whatsapp",
-    "mensagem": "Se eu excluir o agente de IA, o número de WhatsApp conectado fica desconectado? E as conversas que já tive somem junto?",
-    "rota": "/atendimento/agentes/gerenciamento",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "histórico"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-gerenciamento"
-    }
-  },
-  {
-    "id": "integracao-stagent-to-agentes-gerenciamento-2",
-    "app": "stagent",
-    "categoria": "integracao",
-    "assunto": "copiar agente sem perder config",
-    "mensagem": "Quero criar um agente parecido com outro que já tenho, dá pra duplicar ao invés de configurar tudo de novo? O canal também copia junto?",
-    "rota": "/atendimento/agentes/gerenciamento",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "sem canal"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-gerenciamento"
-    }
-  },
-  {
-    "id": "integracao-stagent-ento-agentes-integracoes-1",
-    "app": "stagent",
-    "categoria": "integracao",
-    "assunto": "nao consigo salvar webhook",
-    "mensagem": "Fui tentar configurar o webhook do agente e deu um erro dizendo que preciso criar o agente antes. Mas eu já tinha preenchido um monte de campo, isso é normal?",
-    "rota": "/atendimento/agentes/integracoes",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "criar o agente primeiro"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-integracoes"
-    }
-  },
-  {
-    "id": "integracao-stagent-ento-agentes-integracoes-2",
-    "app": "stagent",
-    "categoria": "integracao",
-    "assunto": "botao de salvar sumiu",
-    "mensagem": "To tentando salvar as configurações de webhook de um agente mas não acho o botão de salvar em lugar nenhum, só os campos aparecem. Uso o computador do meu colega às vezes, pode ser isso?",
-    "rota": "/atendimento/agentes/integracoes",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "permissão",
-          "gerenciar"
-        ],
-        [
-          "aba Webhooks"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-integracoes"
-    }
-  },
-  {
-    "id": "integracao-stagent-atendimento-agentes-novo-1",
-    "app": "stagent",
-    "categoria": "integracao",
-    "assunto": "salvei mas nao foi pro ar",
-    "mensagem": "Editei o agente, cliquei em salvar, mas no atendimento continua a versão antiga. Isso é normal? Como faço pra atualizar de vez?",
-    "rota": "/atendimento/agentes/novo",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Publicar"
-        ],
-        [
-          "rascunho",
-          "não publica"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-novo"
-    }
-  },
-  {
-    "id": "integracao-stagent-atendimento-agentes-novo-2",
-    "app": "stagent",
-    "categoria": "integracao",
-    "assunto": "nao consigo mexer no agente",
-    "mensagem": "Entrei pra editar o agente e os campos estão todos travados, nem aparece botão de salvar. Sumiu alguma coisa?",
-    "rota": "/atendimento/agentes/novo",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "permissão",
-          "administrar o agente"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-novo"
-    }
-  },
-  {
-    "id": "tec-01-stagent",
-    "app": "stagent",
-    "categoria": "tecnico",
-    "assunto": "Tela em branco depois de salvar",
-    "mensagem": "Preenchi tudo, cliquei em salvar e a tela ficou branca. Atualizei a página e o que eu tinha digitado sumiu. Já tentei três vezes, sempre igual.",
-    "rota": "/vendas/clientes",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  },
-  {
-    "id": "tec-02-stagent",
-    "app": "stagent",
-    "categoria": "tecnico",
-    "assunto": "Erro 500",
-    "mensagem": "Aparece \"erro interno do servidor 500\" em todas as telas de lista — pacientes, agenda, conversas —, para todos os quatro computadores da recepção, desde as 9h. Já limpamos o cache e tentamos em outro navegador.",
-    "gabarito": {
-      "desfecho": "escalou-humano"
-    }
-  },
-  {
-    "id": "tec-03-stagent",
-    "app": "stagent",
-    "categoria": "tecnico",
-    "assunto": "Fica carregando para sempre",
-    "mensagem": "A roda de carregando não para nunca nessa tela. Deixei vinte minutos aberto, em dois computadores diferentes e no celular. Nos outros lugares do sistema funciona.",
-    "rota": "/atendimento/conversas",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  },
-  {
-    "id": "tec-04-stagent",
-    "app": "stagent",
-    "categoria": "tecnico",
-    "assunto": "Dados de outra unidade aparecendo",
-    "mensagem": "Estou vendo na minha lista um cadastro que não é meu, de outra unidade. Isso é grave, não deveria aparecer aqui.",
-    "gabarito": {
-      "desfecho": "escalou-humano",
-      "naoPodeDizer": [
-        {
-          "o_que": "confirmação de vazamento ao cliente",
-          "padrao": "realmente (houve|vazou)|confirmo que (vazou|houve vazamento)"
+    {
+        "id": "duvida-stagent-derivado-emails-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "recebi email dizendo que agencia ficou somente leitura",
+        "mensagem": "Chegou um aviso que o atendimento foi pausado e agora tá em somente-leitura, fiquei com medo de ter perdido as conversas dos clientes. Isso aconteceu pq a fatura venceu, o que eu faço agora?",
+        "gabarito": {
+            "desfecho": "escalou-humano",
+            "artigoEsperado": "derivado:emails"
         }
-      ]
+    },
+    {
+        "id": "duvida-stagent-os-e-clientes-dos-outros-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "atendente ve tudo?",
+        "mensagem": "uma atendente aqui perguntou se ela consegue ver os negócios e clientes dos outros colegas, pode? ela tava curiosa pq viu um nome diferente na lista",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:faq:atendente-ve-os-negocios-e-clientes-dos-outros"
+        }
+    },
+    {
+        "id": "duvida-stagent-gem-e-preenchida-sozinha-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "origem automatica dos leads",
+        "mensagem": "os contatos que chegam pelo numero do whatsapp da agencia ja aparecem com a origem preenchida ou alguem precisa digitar isso manualmente toda vez?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Atendimento",
+                    "Agentes",
+                    "Canais"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:como-a-origem-e-preenchida-sozinha"
+        }
+    },
+    {
+        "id": "duvida-stagent-um-recesso-ou-fechamento-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "fechamento so de tarde",
+        "mensagem": "Preciso bloquear a agenda só das 14h às 18h pra fazer uma dedetização, não o dia todo. Dá pra fazer isso ou só fechamento de dia inteiro?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Novo fechamento"
+                ],
+                [
+                    "data de início e fim"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:como-cadastro-um-recesso-ou-fechamento"
+        }
+    },
+    {
+        "id": "duvida-stagent-a-mais-filas-para-alguem-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "acesso a mais de uma fila",
+        "mensagem": "Tenho uma atendente que precisa ajudar em dois setores diferentes sem sair do dela. Como faço ela cobrir as duas filas?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Usuários"
+                ],
+                [
+                    "departamentos"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:como-dou-acesso-a-mais-filas-para-alguem"
+        }
+    },
+    {
+        "id": "duvida-stagent-presa-atende-num-feriado-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "atender no feriado",
+        "mensagem": "Oi, alguns clientes pediram atendimento no feriado e o sistema tá bloqueando como se a gente não funcionasse. Como eu mudo isso? Isso vale pra loja toda ou só pra um atendente?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Agenda da empresa"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:como-marco-que-a-empresa-atende-num-feriado"
+        }
+    },
+    {
+        "id": "duvida-stagent-nversa-para-outra-pessoa-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "nao acho onde transferir conversa",
+        "mensagem": "oi, tenho uma conversa aberta aqui e preciso passar pra outra pessoa do time cuidar, mas não acho essa opção em lugar nenhum. onde fico vendo isso?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "cabeçalho da conversa"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:como-transfiro-uma-conversa-para-outra-pessoa"
+        }
+    },
+    {
+        "id": "duvida-stagent-vulsos-quando-sao-usados-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "creditos avulsos quando usa",
+        "mensagem": "Comprei uns créditos extra mês passado mas não sei quando eles entram em uso, continuam sobrando sem motivo. Eles somem se eu não usar logo?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "90 dias"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:comprei-creditos-avulsos-quando-sao-usados"
+        }
+    },
+    {
+        "id": "duvida-stagent--as-conversas-por-agente-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "filtro de conversa por agente",
+        "mensagem": "Oi, tenho um agente que cuida de vendas e outro que fica na recepção. Dá pra ver só as conversas de um deles, separado? Como eu faço isso?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "seletor Agente"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:da-para-filtrar-as-conversas-por-agente"
+        }
+    },
+    {
+        "id": "duvida-stagent-numa-conversa-especifica-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "agente nao para de responder",
+        "mensagem": "Preciso atender um cliente pessoalmente numa conversa mas o agente fica respondendo por cima de mim. Tem como fazer ele parar só naquela conversa?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:faq:da-para-o-agente-parar-numa-conversa-especifica"
+        }
+    },
+    {
+        "id": "duvida-stagent-uracao-de-um-compromisso-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "duração dos compromissos",
+        "mensagem": "Oi, reparei que o agente marcou um horário curto pra um implante e deu conflito com outra consulta. De onde ele tira o tempo de cada procedimento?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Vendas",
+                    "Serviços"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:de-onde-sai-a-duracao-de-um-compromisso"
+        }
+    },
+    {
+        "id": "duvida-stagent-odem-usar-o-mesmo-numero-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "dois agentes mesmo numero",
+        "mensagem": "posso colocar dois agentes diferentes atendendo o mesmo número de whatsapp? queria um pra vendas e outro pra suporte no mesmo numero",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "não"
+                ],
+                [
+                    "regras por condição",
+                    "um agente só"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:dois-agentes-podem-usar-o-mesmo-numero"
+        }
+    },
+    {
+        "id": "duvida-stagent-de-responder-o-que-houve-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "agente sumiu nao ta respondendo mais",
+        "mensagem": "meu agente parou de responder os clientes do nada, ja faz um tempo. o numero continua recebendo mensagem normal mas ele nao fala nada. pode ser bug?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "créditos",
+                    "pausado",
+                    "desconectou"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:o-agente-parou-de-responder-o-que-houve"
+        }
+    },
+    {
+        "id": "duvida-stagent-agente-responde-em-audio-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "agente nao responde por audio",
+        "mensagem": "Mandei um audio pro agente e ele so responde em texto, tem como ativar isso? Uso o agente pra atender clientes no WhatsApp.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:faq:o-agente-responde-em-audio"
+        }
+    },
+    {
+        "id": "duvida-stagent-eu-duas-vezes-o-que-faco-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "cliente duplicado no sistema",
+        "mensagem": "Um cliente meu apareceu duas vezes aqui, acho que ele mandou mensagem pelo whats e pelo insta. Como eu junto isso ou tiro a repetida?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "histórico",
+                    "conversas"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:o-mesmo-cliente-apareceu-duas-vezes-o-que-faco"
+        }
+    },
+    {
+        "id": "duvida-stagent-e-quando-o-credito-acaba-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "creditos acabaram e agora",
+        "mensagem": "Nosso crédito zerou aqui no sistema e o agente parou de responder os clientes. Isso afeta o CRM e os relatórios também ou só o atendimento automático?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "agente para de responder"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:o-que-acontece-quando-o-credito-acaba"
+        }
+    },
+    {
+        "id": "duvida-stagent-faq-o-que-e-a-fila-geral-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "conversa sumiu sem departamento",
+        "mensagem": "Chegou uma conversa aqui mas não tinha nenhum departamento vinculado, quem que vê isso? Fiquei com medo de ficar sem resposta pro cliente.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "fila geral"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:o-que-e-a-fila-geral"
+        }
+    },
+    {
+        "id": "duvida-stagent-o-que-e-um-credito-de-ia-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "duvida sobre credito de IA",
+        "mensagem": "oi, aqui gasta credito se o atendente humano responder a conversa ou só quando é a IA que faz o trampo? queria entender antes de passar pro time todo",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "resposta do agente",
+                    "resumo",
+                    "transcrição de áudio"
+                ],
+                [
+                    "equipe responde",
+                    "não gasta crédito"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:o-que-e-um-credito-de-ia"
+        }
+    },
+    {
+        "id": "duvida-stagent-e-onde-vem-meus-clientes-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "de onde vem meus clientes",
+        "mensagem": "Oi, queria saber onde eu consigo ver de onde estão vindo meus clientes, tipo qual canal. Tá aparecendo quase tudo como sem origem, isso é normal?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Dashboard",
+                    "gráfico de origem"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:onde-vejo-de-onde-vem-meus-clientes"
+        }
+    },
+    {
+        "id": "duvida-stagent-co-nao-aparece-na-agenda-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "serviço sumiu da agenda",
+        "mensagem": "To tentando marcar um horário aqui mas um dos serviços não aparece pra escolher na agenda, já chequei duas vezes e nada. Sabe o que pode ser?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "cadastrado como serviço",
+                    "produto"
+                ],
+                [
+                    "liberado",
+                    "profissional",
+                    "janela de atendimento"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:por-que-meu-servico-nao-aparece-na-agenda"
+        }
+    },
+    {
+        "id": "duvida-stagent--a-fila-de-outra-unidade-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "não acho a fila da outra loja",
+        "mensagem": "Sumiu a fila do outro departamento aqui no meu painel, só vejo a geral. É algum problema no sistema?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:faq:por-que-nao-vejo-a-fila-de-outra-unidade"
+        }
+    },
+    {
+        "id": "duvida-stagent-dito-durante-a-avaliacao-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "comprar credito extra no teste",
+        "mensagem": "To no periodo de avaliacao e queria comprar mais creditos pra testar mais a vontade, da pra fazer isso ou só depois?",
+        "gabarito": {
+            "desfecho": "escalou-humano",
+            "artigoEsperado": "derivado:faq:posso-comprar-credito-durante-a-avaliacao"
+        }
+    },
+    {
+        "id": "duvida-stagent-m-numero-no-mesmo-agente-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "dois numeros mesmo agente?",
+        "mensagem": "Tenho duas unidades, dá pra conectar os dois números de whatsapp no mesmo agente? Como fica a resposta, sai certo pra cada numero?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "linha"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:posso-ter-mais-de-um-numero-no-mesmo-agente"
+        }
+    },
+    {
+        "id": "duvida-stagent-nca-entre-canal-e-origem-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "canal e origem é a mesma coisa?",
+        "mensagem": "Tô vendo aqui no sistema dois campos parecidos, canal e origem, e não entendo a diferença. O cliente me escreveu pelo WhatsApp mas veio por indicação de outro cliente, como isso fica registrado?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:faq:qual-a-diferenca-entre-canal-e-origem"
+        }
+    },
+    {
+        "id": "duvida-stagent-ervico-servico-e-produto-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "produto entra na agenda?",
+        "mensagem": "Oi, cadastrei um item que é produto mas ele não aparece pra marcar horário na agenda, e também queria saber a diferença entre os tipos de serviço. É normal um produto não ter horário?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "não entra na agenda"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:qual-a-diferenca-entre-servico-servico-e-produto"
+        }
+    },
+    {
+        "id": "duvida-stagent-pp-qr-code-e-api-oficial-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "qual a difrença dos dois whatsapp",
+        "mensagem": "Vi que tem opção de QR Code e API oficial pra conectar o whatsapp, qual a diferença entre eles? meu celular as vezes fica sem bateria, isso afeta?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "celular ligado",
+                    "depende do celular"
+                ],
+                [
+                    "aprovação",
+                    "selo de verificação",
+                    "Meta"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:qual-a-diferenca-entre-whatsapp-qr-code-e-api-oficial"
+        }
+    },
+    {
+        "id": "duvida-stagent-quando-a-franquia-renova-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "renovação do plano",
+        "mensagem": "queria saber quando exatamente minha franquia de créditos renova, é todo dia 1 do mês ou tem outra lógica? fiquei na dúvida porque contratei no meio do mês.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "não acumula",
+                    "descartado"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:quando-a-franquia-renova"
+        }
+    },
+    {
+        "id": "duvida-stagent-o-precisa-de-responsavel-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "negócio sem responsável",
+        "mensagem": "criei um negócio aqui pelo menu e não coloquei ninguém como dono, isso pode ou tenho que escolher alguém?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "precisa de responsável"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:todo-negocio-precisa-de-responsavel"
+        }
+    },
+    {
+        "id": "duvida-stagent-acontece-com-os-creditos-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "mudei de plano e os créditos",
+        "mensagem": "Acabei de fazer upgrade do meu plano aqui, mas fiquei na dúvida se a franquia nova já vale agora ou só vai valer mês que vem na renovação. O que já usei esse mês conta?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "na hora"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:troquei-de-plano-o-que-acontece-com-os-creditos"
+        }
+    },
+    {
+        "id": "duvida-stagent-derivado-planos-1",
+        "app": "stagent",
+        "categoria": "duvida",
+        "assunto": "qts numeros whatsapp no plano prime",
+        "mensagem": "oi, preciso saber quantos numeros de whatsapp posso conectar no plano de 590 reais, e se tem desconto pagando anual, meu contador pediu essa info",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "4 números"
+                ]
+            ],
+            "artigoEsperado": "derivado:planos"
+        }
+    },
+    {
+        "id": "uso-stagent-erivado-tela-atendimento-1",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "sumiu a tela de conversas",
+        "mensagem": "Entrei no menu Atendimento e caiu numa tela de Agentes de IA, não achei as conversas dos clientes. É normal isso ou travou algo?",
+        "rota": "/atendimento",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "perfil"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento"
+        }
+    },
+    {
+        "id": "uso-stagent-erivado-tela-atendimento-2",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "atendente nao acha o menu",
+        "mensagem": "Minha atendente disse que não tem o item Atendimento no menu dela, ela acessa direto as conversas? Fiquei em dúvida se é bug.",
+        "rota": "/atendimento",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:tela:atendimento"
+        }
+    },
+    {
+        "id": "uso-stagent-la-atendimento-etiquetas-1",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "nao consigo salvar etiqueta nova",
+        "mensagem": "To tentando criar uma etiqueta aqui mas quando clico em salvar sem botar nome da erro. Qual mensagem ele pede exatamente?",
+        "rota": "/atendimento/etiquetas",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Dê um nome à etiqueta",
+                    "preencher o nome"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-etiquetas"
+        }
+    },
+    {
+        "id": "uso-stagent-la-atendimento-etiquetas-2",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "apagar etiqueta some de tudo?",
+        "mensagem": "Se eu excluir uma etiqueta ela some só da lista ou tira de todas as conversas que usavam ela? Quero entender antes de apagar varias de uma vez.",
+        "rota": "/atendimento/etiquetas",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:tela:atendimento-etiquetas"
+        }
+    },
+    {
+        "id": "uso-stagent-imento-respostas-rapidas-1",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "atalho de msg pronta",
+        "mensagem": "meus atendentes ficam digitando a mesma coisa toda hora, tipo orçamento. tem como criar um atalho que já manda o texto pronto no chat?",
+        "rota": "/atendimento/respostas-rapidas",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Respostas rápidas",
+                    "Atendimento → Respostas rápidas"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-respostas-rapidas"
+        }
+    },
+    {
+        "id": "uso-stagent-imento-respostas-rapidas-2",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "nao consigo salvar resposta rapida",
+        "mensagem": "criei uma resposta nova mas só coloquei o atalho, deu erro e não salvou. o que falta?",
+        "rota": "/atendimento/respostas-rapidas",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "texto"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-respostas-rapidas"
+        }
+    },
+    {
+        "id": "uso-stagent-ivado-tela-convite-token-1",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "convite nao tem campo de senha",
+        "mensagem": "Cliquei no link que recebi por email pra entrar na unidade nova mas não apareceu nenhum campo de senha, só nome. Isso tá certo ou é bug?",
+        "rota": "/convite/[token]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "já tem conta"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:convite-token"
+        }
+    },
+    {
+        "id": "uso-stagent-ivado-tela-convite-token-2",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "link do convite deu erro",
+        "mensagem": "Abri o convite que o meu chefe mandou mas apareceu uma mensagem dizendo que não é válido. Já tentou abrir de novo e continua assim, o que eu faço?",
+        "rota": "/convite/[token]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "link não é válido",
+                    "copiado pela metade",
+                    "abra o link inteiro"
+                ],
+                [
+                    "expirou",
+                    "cancelado",
+                    "peça outro"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:convite-token"
+        }
+    },
+    {
+        "id": "uso-stagent-derivado-tela-dashboard-1",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "gráfico não mostra nada",
+        "mensagem": "entrei na visão de gráfico do dashboard e ficou tudo vazio, não apareceu nenhum número de negócio fechado nem perdido. é bug?",
+        "rota": "/dashboard",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "escolher um período"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:dashboard"
+        }
+    },
+    {
+        "id": "uso-stagent-derivado-tela-dashboard-2",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "quem atende agora",
+        "mensagem": "queria saber onde eu vejo quem da equipe tá atendendo e por qual canal agora, e dá pra mudar isso?",
+        "rota": "/dashboard",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "painel de operação",
+                    "Gerenciar"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:dashboard"
+        }
+    },
+    {
+        "id": "uso-stagent-ivado-tela-gerenciamento-1",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "tela gerenciamento vazia",
+        "mensagem": "cliquei no menu de gerenciamento e a página fica em branco, não aparece nada. Isso é normal ou é bug?",
+        "rota": "/gerenciamento",
+        "gabarito": {
+            "desfecho": "escalou-engenharia",
+            "artigoEsperado": "derivado:tela:gerenciamento"
+        }
+    },
+    {
+        "id": "uso-stagent-ivado-tela-gerenciamento-2",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "nao acho conteudo gerenciamento",
+        "mensagem": "entrei pela barra lateral no item de gerenciamento, mas não tem nada ali, só fica carregando e some. Já tentei no celular e no computador, mesma coisa.",
+        "rota": "/gerenciamento",
+        "gabarito": {
+            "desfecho": "escalou-engenharia",
+            "artigoEsperado": "derivado:tela:gerenciamento"
+        }
+    },
+    {
+        "id": "uso-stagent-tela-gerenciamento-conta-1",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "nao acho onde convido alguem",
+        "mensagem": "preciso adicionar uma pessoa nova no sistema, mandei o link mas não acho o botão pra convidar. onde fica isso?",
+        "rota": "/gerenciamento/conta",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Usuários"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:gerenciamento-conta"
+        }
+    },
+    {
+        "id": "uso-stagent-tela-gerenciamento-conta-2",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "sumiu a aba de usuarios",
+        "mensagem": "entrei em Gerenciamento e a aba de usuários não tá aparecendo pra mim, só vejo meu perfil. isso é normal?",
+        "rota": "/gerenciamento/conta",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "permissão",
+                    "papel"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:gerenciamento-conta"
+        }
+    },
+    {
+        "id": "uso-stagent-a-gerenciamento-usuarios-1",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "sumiu a tela de usuarios",
+        "mensagem": "Cliquei no menu Gerenciamento > Usuários mas abriu outra tela diferente, achei que tinha quebrado. Isso é normal?",
+        "rota": "/gerenciamento/usuarios",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Gerenciar conta",
+                    "guia de usuários"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:gerenciamento-usuarios"
+        }
+    },
+    {
+        "id": "uso-stagent-a-gerenciamento-usuarios-2",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "onde acho cadastro de usuarios",
+        "mensagem": "Preciso ver a lista de usuários cadastrados mas não encontro a tela certa, fica dando redirect pra outro lugar. Onde realmente fica isso?",
+        "rota": "/gerenciamento/usuarios",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Gerenciar conta"
+                ],
+                [
+                    "guia de Usuários"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:gerenciamento-usuarios"
+        }
+    },
+    {
+        "id": "uso-stagent-derivado-tela-login-1",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "esqueci a senha",
+        "mensagem": "nao lembro minha senha pra entrar, tem como receber um link no email pra trocar?",
+        "rota": "/login",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "esqueci minha senha",
+                    "recuperação de senha",
+                    "link de redefinição"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:login"
+        }
+    },
+    {
+        "id": "uso-stagent-derivado-tela-login-2",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "erro ao criar conta",
+        "mensagem": "tentei criar uma conta nova com meu email de trabalho mas apareceu um aviso dizendo que já tem conta, isso é normal? uso esse email pra tudo",
+        "rota": "/login",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "entre em vez de criar"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:login"
+        }
+    },
+    {
+        "id": "uso-stagent-tela-marketing-campanhas-1",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "nao consigo salvar campanha whatsapp",
+        "mensagem": "To tentando criar uma campanha pelo whatsapp pra mandar pros pacientes mas quando salvo nao sai do lugar, nao aparece nenhum erro visivel. Já escolhi a lista e tudo.",
+        "rota": "/marketing/campanhas",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "linha oficial",
+                    "template aprovado"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-campanhas"
+        }
+    },
+    {
+        "id": "uso-stagent-tela-marketing-campanhas-2",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "nao acho nenhuma campanha na lista",
+        "mensagem": "Entrei em marketing e campanhas mas a lista ta vazia, sumiu tudo? Tinha criado uma semana passada.",
+        "rota": "/marketing/campanhas",
+        "gabarito": {
+            "desfecho": "escalou-engenharia",
+            "artigoEsperado": "derivado:tela:marketing-campanhas"
+        }
+    },
+    {
+        "id": "uso-stagent-a-marketing-campanhas-id-1",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "nao consigo parar campanha",
+        "mensagem": "já mandei disparar uma campanha de whatsapp e agora precisava parar pq achei um erro no texto. Tem como cancelar isso antes de terminar de enviar pra todo mundo?",
+        "rota": "/marketing/campanhas/[id]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:tela:marketing-campanhas-id"
+        }
+    },
+    {
+        "id": "uso-stagent-a-marketing-campanhas-id-2",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "sumiu o botao de excluir",
+        "mensagem": "queria apagar uma campanha mas não acho o botão de excluir em lugar nenhum, só tenho cancelar. ela tá em andamento ainda, disparando os emails.",
+        "rota": "/marketing/campanhas/[id]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:tela:marketing-campanhas-id"
+        }
+    },
+    {
+        "id": "uso-stagent-la-marketing-formularios-1",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "apaguei formulário por engano",
+        "mensagem": "Acabei de excluir um formulário aqui e já tinha vários envios registrados. Esses envios que viraram leads/negócios somem também ou ficam guardados em algum lugar?",
+        "rota": "/marketing/formularios",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "fichas"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-formularios"
+        }
+    },
+    {
+        "id": "uso-stagent-la-marketing-formularios-2",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "não acho botão de criar formulário",
+        "mensagem": "To no marketing tentando criar um formulário novo pro site mas não aparece o botão em lugar nenhum, só vejo a listinha. uso o celular as vezes, pode ser isso?",
+        "rota": "/marketing/formularios",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "permissão"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-formularios"
+        }
+    },
+    {
+        "id": "uso-stagent-marketing-formularios-id-1",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "link do formulário não abre",
+        "mensagem": "coloquei o código no site mas o link não funciona, o que falta?",
+        "rota": "/marketing/formularios/[id]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "publicar",
+                    "publicado"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-formularios-id"
+        }
+    },
+    {
+        "id": "uso-stagent-marketing-formularios-id-2",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "quero que vire negócio automaticamente",
+        "mensagem": "dá pra configurar pra quando alguém preencher o formulário já abrir um negócio no funil, sem eu ter que fazer nada? e também queria colocar uma etiqueta na ficha",
+        "rota": "/marketing/formularios/[id]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Abrir um negócio no funil padrão",
+                    "abrir negócio"
+                ],
+                [
+                    "Etiquetas que a ficha recebe",
+                    "etiquetas"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-formularios-id"
+        }
+    },
+    {
+        "id": "uso-stagent-ado-tela-marketing-funis-1",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "nao consigo apagar funil",
+        "mensagem": "To tentando apagar um funil antigo aqui e não deixa, aparece um erro. Tem gente ainda dentro dele, isso importa?",
+        "rota": "/marketing/funis",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "despublicar",
+                    "publicado"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-funis"
+        }
+    },
+    {
+        "id": "uso-stagent-ado-tela-marketing-funis-2",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "colocar cliente manual no funil",
+        "mensagem": "Quero colocar um contato específico dentro de um funil manualmente, mas não acho a opção na linha dele. O que pode ser?",
+        "rota": "/marketing/funis",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "entrada manual",
+                    "gatilho manual"
+                ],
+                [
+                    "publicado"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-funis"
+        }
+    },
+    {
+        "id": "uso-stagent--tela-marketing-funis-id-1",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "funil nao recebe mais gente",
+        "mensagem": "Eu limitei quantas pessoas podem estar dentro do funil ao mesmo tempo, mas agora parece que parou de entrar gente nova. Isso é normal? Onde eu mudo esse número de novo?",
+        "rota": "/marketing/funis/[id]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "teto de pessoas dentro",
+                    "máximo de pessoas ativas"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-funis-id"
+        }
+    },
+    {
+        "id": "uso-stagent--tela-marketing-funis-id-2",
+        "app": "stagent",
+        "categoria": "uso",
+        "assunto": "nao consigo escolher whatsapp no passo",
+        "mensagem": "To tentando montar um passo de envio mas só aparece email pra escolher, o whatsapp nem deixa selecionar direito. Isso é bug ou falta eu configurar algo antes?",
+        "rota": "/marketing/funis/[id]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "em revisão",
+                    "indisponível"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-funis-id"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-1",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "atendente não consegue apagar registro",
+        "mensagem": "Um atendente aqui tentou excluir um registro e não rolou. Isso é normal ou é bug?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-2",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "quem muda cargo de funcionário",
+        "mensagem": "Preciso mudar o papel de uma pessoa da equipe, onde eu faço isso?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "tela de usuários"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-3",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "gestor vê tudo?",
+        "mensagem": "O gestor consegue ver as conversas de todo mundo da equipe ou só as dele mesmo? Pergunto pq vou promover um atendente pra gestor.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-4",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "atendente só vê o dele",
+        "mensagem": "Por que meu atendente só enxerga as próprias conversas e não as dos colegas?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "atendente vê apenas o próprio recorte"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-5",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "passar conversa pra outro atendente",
+        "mensagem": "Quero passar uma conversa de um atendente pra outro, isso depende de cargo especial?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "não depende do papel"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-6",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "gestor pode mexer em configuração",
+        "mensagem": "O gestor tem acesso pra editar as configurações do workspace?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "sim"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-7",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "gestor cria usuário novo",
+        "mensagem": "Meu gestor quer adicionar um novo membro na conta, ele consegue fazer isso sozinho?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "não"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-8",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "sumiu o botão mas ele ainda consegue??",
+        "mensagem": "Escondi um botão do menu pra um atendente mas ele disse que ainda conseguiu fazer a ação por um link antigo que tinha salvo. Isso é possível?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "servidor recusa a ação"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-9",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "diferença entre admin e proprietário",
+        "mensagem": "Qual a diferença real entre administrador e proprietário? Pelo que vi as permissões parecem iguais.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-10",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "só atendente na equipe, duvida basica",
+        "mensagem": "minha equipe é só de atendentes, nenhum consegue excluir um registro errado que criamos, isso é esperado?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-11",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "seletor de responsável sumiu",
+        "mensagem": "Um dos meus atendentes falou que não acha o seletor de Responsável na tela dele, sumiu ou é permissão?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-12",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "acesso à plataforma venn360",
+        "mensagem": "Como faço pra um gestor acessar o menu de administração da plataforma Venn360? Ele precisa disso pra um relatório.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "não depende do papel na equipe",
+                    "reservado a quem opera o produto"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-13",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "responsavel pela conta mudou cargo errado",
+        "mensagem": "troquei sem querer um gestor pra atendente, como reverto isso rapido, o cliente tá esperando resposta",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "tela de usuários"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-14",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "gestor exclui registro apagado sem querer",
+        "mensagem": "Um gestor meu excluiu um registro sem querer, isso é permitido pro cargo dele mesmo? Quero entender se foi erro do sistema.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-15",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "proprietario sumiu da empresa, e agora",
+        "mensagem": "o cara que era proprietário da conta saiu da empresa, quem mais consegue gerenciar membros agora?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-16",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "transferir conversa travado",
+        "mensagem": "Um atendente tentou transferir uma conversa pra outro colega e apareceu erro, mas eu pensei que isso era liberado pra todos, é mesmo?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-17",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "gestor sem botão de excluir",
+        "mensagem": "meu gestor diz que não acha a opção de excluir um registro na tela dele, o que pode ser?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-18",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "diferenças entre os 4 níveis",
+        "mensagem": "queria entender rapidinho quais são os níveis de acesso que existem aqui e o que cada um faz, to criando a equipe agora.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-19",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "atendente vendo conversa dos outros, bug?",
+        "mensagem": "reparei que um atendente aqui está vendo conversas de outro colega, isso não deveria ser bloqueado?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-stagent-derivado-papeis-20",
+        "app": "stagent",
+        "categoria": "permissao",
+        "assunto": "link direto p funcionalidade bloqueada",
+        "mensagem": "um funcionário chegou numa tela de configuração por um link que um colega mandou, mas não devia ter acesso. isso é falha de segurança?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "integracao-stagent-tela-atendimento-agentes-1",
+        "app": "stagent",
+        "categoria": "integracao",
+        "assunto": "mudar agente de unidade",
+        "mensagem": "preciso passar um agente meu pra outra unidade da conta, isso é possível? tenho medo de perder as conversas antigas dele.",
+        "rota": "/atendimento/agentes",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "mover para outra unidade"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes"
+        }
+    },
+    {
+        "id": "integracao-stagent-tela-atendimento-agentes-2",
+        "app": "stagent",
+        "categoria": "integracao",
+        "assunto": "nao consigo criar agente novo",
+        "mensagem": "to tentando criar um agente novo mas o botao ta cinza, nao clica. já tenho uns 3 criados, é isso?",
+        "rota": "/atendimento/agentes",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "limite do plano",
+                    "mudar de plano"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes"
+        }
+    },
+    {
+        "id": "integracao-stagent-dimento-agentes-comandos-1",
+        "app": "stagent",
+        "categoria": "integracao",
+        "assunto": "nao consigo salvar config do agente",
+        "mensagem": "To tentando mexer nas regras do agente de IA mas quando clico em salvar não acontece nada, os campos parecem travados. Isso é normal?",
+        "rota": "/atendimento/agentes/comandos",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "permissão",
+                    "administrar o agente"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-comandos"
+        }
+    },
+    {
+        "id": "integracao-stagent-dimento-agentes-comandos-2",
+        "app": "stagent",
+        "categoria": "integracao",
+        "assunto": "erro ao configurar comando",
+        "mensagem": "Apareceu uma mensagem dizendo que preciso criar o agente antes, mas eu já tava tentando configurar as regras dele. O que isso quer dizer?",
+        "rota": "/atendimento/agentes/comandos",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-comandos"
+        }
+    },
+    {
+        "id": "integracao-stagent-to-agentes-gerenciamento-1",
+        "app": "stagent",
+        "categoria": "integracao",
+        "assunto": "excluir agente e whatsapp",
+        "mensagem": "Se eu excluir o agente de IA, o número de WhatsApp conectado fica desconectado? E as conversas que já tive somem junto?",
+        "rota": "/atendimento/agentes/gerenciamento",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "histórico"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-gerenciamento"
+        }
+    },
+    {
+        "id": "integracao-stagent-to-agentes-gerenciamento-2",
+        "app": "stagent",
+        "categoria": "integracao",
+        "assunto": "copiar agente sem perder config",
+        "mensagem": "Quero criar um agente parecido com outro que já tenho, dá pra duplicar ao invés de configurar tudo de novo? O canal também copia junto?",
+        "rota": "/atendimento/agentes/gerenciamento",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "sem canal"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-gerenciamento"
+        }
+    },
+    {
+        "id": "integracao-stagent-ento-agentes-integracoes-1",
+        "app": "stagent",
+        "categoria": "integracao",
+        "assunto": "nao consigo salvar webhook",
+        "mensagem": "Fui tentar configurar o webhook do agente e deu um erro dizendo que preciso criar o agente antes. Mas eu já tinha preenchido um monte de campo, isso é normal?",
+        "rota": "/atendimento/agentes/integracoes",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "criar o agente primeiro"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-integracoes"
+        }
+    },
+    {
+        "id": "integracao-stagent-ento-agentes-integracoes-2",
+        "app": "stagent",
+        "categoria": "integracao",
+        "assunto": "botao de salvar sumiu",
+        "mensagem": "To tentando salvar as configurações de webhook de um agente mas não acho o botão de salvar em lugar nenhum, só os campos aparecem. Uso o computador do meu colega às vezes, pode ser isso?",
+        "rota": "/atendimento/agentes/integracoes",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "permissão",
+                    "gerenciar"
+                ],
+                [
+                    "aba Webhooks"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-integracoes"
+        }
+    },
+    {
+        "id": "integracao-stagent-atendimento-agentes-novo-1",
+        "app": "stagent",
+        "categoria": "integracao",
+        "assunto": "salvei mas nao foi pro ar",
+        "mensagem": "Editei o agente, cliquei em salvar, mas no atendimento continua a versão antiga. Isso é normal? Como faço pra atualizar de vez?",
+        "rota": "/atendimento/agentes/novo",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Publicar"
+                ],
+                [
+                    "rascunho",
+                    "não publica"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-novo"
+        }
+    },
+    {
+        "id": "integracao-stagent-atendimento-agentes-novo-2",
+        "app": "stagent",
+        "categoria": "integracao",
+        "assunto": "nao consigo mexer no agente",
+        "mensagem": "Entrei pra editar o agente e os campos estão todos travados, nem aparece botão de salvar. Sumiu alguma coisa?",
+        "rota": "/atendimento/agentes/novo",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "permissão",
+                    "administrar o agente"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-novo"
+        }
+    },
+    {
+        "id": "tec-01-stagent",
+        "app": "stagent",
+        "categoria": "tecnico",
+        "assunto": "Tela em branco depois de salvar",
+        "mensagem": "Preenchi tudo, cliquei em salvar e a tela ficou branca. Atualizei a página e o que eu tinha digitado sumiu. Já tentei três vezes, sempre igual.",
+        "rota": "/vendas/clientes",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
+    },
+    {
+        "id": "tec-02-stagent",
+        "app": "stagent",
+        "categoria": "tecnico",
+        "assunto": "Erro 500",
+        "mensagem": "Aparece \"erro interno do servidor 500\" em todas as telas de lista — pacientes, agenda, conversas —, para todos os quatro computadores da recepção, desde as 9h. Já limpamos o cache e tentamos em outro navegador.",
+        "gabarito": {
+            "desfecho": "escalou-humano"
+        }
+    },
+    {
+        "id": "tec-03-stagent",
+        "app": "stagent",
+        "categoria": "tecnico",
+        "assunto": "Fica carregando para sempre",
+        "mensagem": "A roda de carregando não para nunca nessa tela. Deixei vinte minutos aberto, em dois computadores diferentes e no celular. Nos outros lugares do sistema funciona.",
+        "rota": "/atendimento/conversas",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
+    },
+    {
+        "id": "tec-04-stagent",
+        "app": "stagent",
+        "categoria": "tecnico",
+        "assunto": "Dados de outra unidade aparecendo",
+        "mensagem": "Estou vendo na minha lista um cadastro que não é meu, de outra unidade. Isso é grave, não deveria aparecer aqui.",
+        "gabarito": {
+            "desfecho": "escalou-humano",
+            "naoPodeDizer": [
+                {
+                    "o_que": "confirmação de vazamento ao cliente",
+                    "padrao": "realmente (houve|vazou)|confirmo que (vazou|houve vazamento)"
+                }
+            ]
+        }
+    },
+    {
+        "id": "tec-05-stagent",
+        "app": "stagent",
+        "categoria": "tecnico",
+        "assunto": "Sistema fora do ar",
+        "mensagem": "Ninguém da equipe consegue entrar. Dá erro em todo mundo, nos quatro computadores da recepção.",
+        "gabarito": {
+            "desfecho": "escalou-humano"
+        }
+    },
+    {
+        "id": "tec-06-stagent",
+        "app": "stagent",
+        "categoria": "tecnico",
+        "assunto": "Mensagens duplicadas",
+        "mensagem": "Cada mensagem que eu mando está chegando três vezes para o cliente. Ele reclamou. Não mudei nada na configuração.",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
+    },
+    {
+        "id": "tec-07-stagent",
+        "app": "stagent",
+        "categoria": "tecnico",
+        "assunto": "Lista com registro que não existe",
+        "mensagem": "Excluí o cadastro ontem, ele sumiu da lista, e hoje voltou a aparecer. Excluí de novo e voltou outra vez.",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
+    },
+    {
+        "id": "tec-08-stagent",
+        "app": "stagent",
+        "categoria": "tecnico",
+        "assunto": "Relatório com número errado",
+        "mensagem": "O total do relatório não bate com a soma das linhas que ele mesmo mostra. Conferi na calculadora, dá diferença de quase mil reais.",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
+    },
+    {
+        "id": "tec-09-stagent",
+        "app": "stagent",
+        "categoria": "tecnico",
+        "assunto": "Não consigo anexar nada",
+        "mensagem": "Qualquer arquivo que eu tento anexar dá erro, mesmo os pequenos. Antes funcionava. Testei com PDF, foto e planilha.",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
+    },
+    {
+        "id": "tec-10-stagent",
+        "app": "stagent",
+        "categoria": "tecnico",
+        "assunto": "Horário errado em tudo",
+        "mensagem": "Todos os horários apareceram três horas adiantados hoje de manhã, em todas as telas. Ontem estava certo.",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
     }
-  },
-  {
-    "id": "tec-05-stagent",
-    "app": "stagent",
-    "categoria": "tecnico",
-    "assunto": "Sistema fora do ar",
-    "mensagem": "Ninguém da equipe consegue entrar. Dá erro em todo mundo, nos quatro computadores da recepção.",
-    "gabarito": {
-      "desfecho": "escalou-humano"
-    }
-  },
-  {
-    "id": "tec-06-stagent",
-    "app": "stagent",
-    "categoria": "tecnico",
-    "assunto": "Mensagens duplicadas",
-    "mensagem": "Cada mensagem que eu mando está chegando três vezes para o cliente. Ele reclamou. Não mudei nada na configuração.",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  },
-  {
-    "id": "tec-07-stagent",
-    "app": "stagent",
-    "categoria": "tecnico",
-    "assunto": "Lista com registro que não existe",
-    "mensagem": "Excluí o cadastro ontem, ele sumiu da lista, e hoje voltou a aparecer. Excluí de novo e voltou outra vez.",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  },
-  {
-    "id": "tec-08-stagent",
-    "app": "stagent",
-    "categoria": "tecnico",
-    "assunto": "Relatório com número errado",
-    "mensagem": "O total do relatório não bate com a soma das linhas que ele mesmo mostra. Conferi na calculadora, dá diferença de quase mil reais.",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  },
-  {
-    "id": "tec-09-stagent",
-    "app": "stagent",
-    "categoria": "tecnico",
-    "assunto": "Não consigo anexar nada",
-    "mensagem": "Qualquer arquivo que eu tento anexar dá erro, mesmo os pequenos. Antes funcionava. Testei com PDF, foto e planilha.",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  },
-  {
-    "id": "tec-10-stagent",
-    "app": "stagent",
-    "categoria": "tecnico",
-    "assunto": "Horário errado em tudo",
-    "mensagem": "Todos os horários apareceram três horas adiantados hoje de manhã, em todas as telas. Ontem estava certo.",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  }
 ]

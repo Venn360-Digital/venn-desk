@@ -125,7 +125,10 @@ function escopoComBase(caso: CasoDaBateria, artigos: KbArticle[], obs: Observaca
                     if (artigo.chave == null) continue
                     obs.artigosDevolvidos.push({ chave: artigo.chave, tamanho: artigo.corpo.length })
                     if (!obs.vistos.some((v) => v.chave === artigo.chave)) {
-                        obs.vistos.push({ chave: artigo.chave, texto: artigo.corpo, aberto: false })
+                        /// Título E corpo: o gerador ancora o gabarito nos dois,
+                        /// e o nome da tela mora no título. Conferir só o corpo
+                        /// reprovava quem tinha achado o artigo certo.
+                        obs.vistos.push({ chave: artigo.chave, texto: `${artigo.titulo}\n${artigo.corpo}`, aberto: false })
                     }
                 }
                 return achados
@@ -136,7 +139,7 @@ function escopoComBase(caso: CasoDaBateria, artigos: KbArticle[], obs: Observaca
                 if (artigo?.chave != null) {
                     obs.artigosLidos.push(artigo.chave)
                     const visto = obs.vistos.find((v) => v.chave === artigo.chave)
-                    if (visto === undefined) obs.vistos.push({ chave: artigo.chave, texto: artigo.corpo, aberto: true })
+                    if (visto === undefined) obs.vistos.push({ chave: artigo.chave, texto: `${artigo.titulo}\n${artigo.corpo}`, aberto: true })
                     else visto.aberto = true
                 }
                 return artigo

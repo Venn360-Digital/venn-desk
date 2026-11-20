@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { Extrator } from '../conhecimento/extrair/com-modelo.ts'
-import { exigeEscalonamento, fonteDaCategoria, gerarCasosDeArtigo, servePraCliente, tecnicosDoApp } from './gerar-bateria.ts'
+import { desfechoPelaPergunta, exigeEscalonamento, fonteDaCategoria, gerarCasosDeArtigo, servePraCliente, tecnicosDoApp } from './gerar-bateria.ts'
 import { DISTRIBUICAO, TOTAL_POR_APP } from './bateria.ts'
 
 const ARTIGO = {
@@ -266,5 +266,47 @@ describe('para quem cada caso técnico escala', () => {
         const localizados = t.filter((c) => c.gabarito.desfecho === 'escalou-engenharia')
         expect(localizados.length).toBe(7)
         expect(localizados.some((c) => c.assunto.includes('Relatório com número errado'))).toBe(true)
+    })
+})
+
+describe('desfechoPelaPergunta', () => {
+    it('pergunta financeira pede escalonamento, mesmo de artigo neutro', () => {
+        /**
+         * De um artigo de e-mails o gerador tirou "o atendimento foi pausado
+         * por falta de pagamento, perdi as conversas?", com gabarito
+         * "respondeu". O agente escalou — porque a instrução dele manda — e a
+         * bateria o reprovou por obedecer (20/11/2026).
+         */
+        expect(desfechoPelaPergunta('aviso', 'o atendimento foi pausado por falta de pagamento')).toBe('escalou-humano')
+        expect(desfechoPelaPergunta('créditos', 'queria comprar créditos pra testar à vontade')).toBe('escalou-humano')
+        expect(desfechoPelaPergunta('sócio saiu', 'o proprietário saiu da empresa, quem gerencia agora?')).toBe('escalou-humano')
+    })
+
+    it('pergunta que descreve DEFEITO pede engenharia: não há artigo que responda', () => {
+        expect(desfechoPelaPergunta('menu', 'cliquei no gerenciamento e a página fica em branco')).toBe('escalou-engenharia')
+        expect(desfechoPelaPergunta('lista', 'só fica carregando e não abre nada')).toBe('escalou-engenharia')
+        expect(desfechoPelaPergunta('relatório', 'o total não bate com a soma das linhas')).toBe('escalou-engenharia')
+    })
+
+    it('"deu erro" e "dono da conta" NÃO forçam desfecho: o artigo responde', () => {
+        /**
+         * Os dois primeiros padrões que escrevi eram largos demais e tiravam de
+         * "respondeu" três casos legítimos: senha incorreta e permissão negada
+         * dizem "deu erro" sem ser defeito, e "sou dono da conta, posso tudo?"
+         * é pergunta de papéis, não de titularidade.
+         */
+        expect(desfechoPelaPergunta('esqueci a senha', 'tentei entrar e deu erro de senha incorreta')).toBeNull()
+        expect(desfechoPelaPergunta('link do convite deu erro', 'apareceu que o convite expirou, e agora?')).toBeNull()
+        expect(desfechoPelaPergunta('permissões', 'sou dono da conta, posso fazer absolutamente tudo?')).toBeNull()
+        expect(desfechoPelaPergunta('exclusão', 'uma atendente tentou excluir um cadastro e deu erro, o que houve?')).toBeNull()
+        /// "travou algo?" é pergunta retórica sobre um redirecionamento que o
+        /// artigo da tela documenta. Só vale como defeito com sujeito.
+        expect(desfechoPelaPergunta('sumiu a tela', 'entrei no Atendimento e caiu na tela de Agentes, é normal ou travou algo?')).toBeNull()
+        expect(desfechoPelaPergunta('parou', 'o sistema travou na hora de salvar')).toBe('escalou-engenharia')
+    })
+
+    it('pergunta de uso comum não força desfecho nenhum', () => {
+        expect(desfechoPelaPergunta('duração', 'de onde sai a duração de um procedimento?')).toBeNull()
+        expect(desfechoPelaPergunta('etiquetas', 'como eu crio uma etiqueta nova?')).toBeNull()
     })
 })

@@ -68,7 +68,9 @@ Sobre os termos do gabarito, e isto é o mais fácil de errar:
 - Nunca use como termo algo que a própria pergunta já diz. Se o cliente escreveu "apareceu que preciso criar o agente primeiro", exigir "criar o agente primeiro" mede se o agente repete o cliente, não se ele ajuda.
 - Use só o que uma resposta AO CLIENTE pode dizer. Nunca nome de papel em maiúsculas (OWNER, ADMIN), nome de campo do banco, nome de arquivo, rota de API, nem símbolo solto: a resposta é proibida de citar isso, e exigi-lo seria exigir o erro.
 
-NÃO escreva pergunta cuja resposta não esteja no artigo. NÃO repita o título do artigo dentro da pergunta — o cliente não o conhece.`
+NÃO escreva pergunta cuja resposta não esteja no artigo. NÃO repita o título do artigo dentro da pergunta — o cliente não o conhece.
+
+NÃO escreva pergunta que descreva um DEFEITO ("a página fica em branco", "dá erro ao salvar", "fica carregando para sempre", "o total não bate"): essas não têm resposta em artigo nenhum, e já existem num conjunto separado. Pergunte sobre como o produto funciona, não sobre ele parar de funcionar.`
 
 export interface ArtigoParaGerar {
     chave: string
@@ -128,6 +130,10 @@ export async function gerarCasosDeArtigo(p: {
             )
             .filter((grupo) => grupo.length > 0)
 
+        /// O artigo de origem decide, e a pergunta gerada pode sobrepor: um
+        /// artigo neutro rende pergunta financeira ou de defeito.
+        const desfechoForcado = escalar ? ('escalou-humano' as const) : desfechoPelaPergunta(c.assunto, c.mensagem)
+
         return {
             id: `${p.categoria}-${p.app}-${p.artigo.chave.replace(/[^a-z0-9]+/gi, '-').slice(-24)}-${i + 1}`,
             app: p.app,
@@ -135,11 +141,12 @@ export async function gerarCasosDeArtigo(p: {
             assunto: c.assunto,
             mensagem: c.mensagem,
             ...(p.rota === undefined ? {} : { rota: p.rota }),
-            gabarito: escalar
-                ? /// Assunto de pessoa: o desfecho certo é o escalonamento, e
-                  /// de quem escala não se exige conteúdo.
-                  { desfecho: 'escalou-humano' as const, artigoEsperado: p.artigo.chave }
-                : { desfecho: 'respondeu' as const, precisaDizer: grupos, artigoEsperado: p.artigo.chave },
+            gabarito:
+                desfechoForcado !== null
+                    ? /// De quem escala não se exige conteúdo: o escalonamento
+                      /// É a resposta.
+                      { desfecho: desfechoForcado, artigoEsperado: p.artigo.chave }
+                    : { desfecho: 'respondeu' as const, precisaDizer: grupos, artigoEsperado: p.artigo.chave },
         }
     })
 }
@@ -174,13 +181,37 @@ export function servePraCliente(termo: string): boolean {
  * agente — e foi o que aconteceu em 20/11/2026 com o artigo de e-mails de
  * cobrança: o agente escalou certo e a bateria o reprovou.
  */
-const ASSUNTO_DE_PESSOA = /cobran|pagament|fatura|mensalidade|reembols|lgpd|dados pessoais|cancelamento|vazament|somente-leitura/i
+const ASSUNTO_DE_PESSOA =
+    /cobran|pagament|fatura|mensalidade|reembols|comprar|compra de|lgpd|dados pessoais|cancelamento|encerrar contrato|vazament|somente-leitura|titularidade|propriet[^ ]* (saiu|deixou|mudou)/i
 
 export function exigeEscalonamento(artigo: { chave: string; titulo: string; corpo: string }): boolean {
     /// Pelo título e pelo começo do corpo: o assunto do artigo, não uma menção
     /// de passagem no meio dele.
     return ASSUNTO_DE_PESSOA.test(`${artigo.titulo}\n${artigo.corpo.slice(0, 400)}`)
 }
+
+/**
+ * A pergunta GERADA também decide o desfecho, não só o artigo de origem.
+ *
+ * Medido em 20/11/2026: de um artigo neutro de e-mails o gerador tirou "o
+ * atendimento foi pausado por falta de pagamento, perdi as conversas?", e o
+ * gabarito saiu como "respondeu". O agente escalou — porque a instrução dele
+ * manda escalar assunto financeiro — e a bateria o reprovou por obedecer.
+ */
+export function desfechoPelaPergunta(assunto: string, mensagem: string): 'escalou-humano' | 'escalou-engenharia' | null {
+    const texto = `${assunto}\n${mensagem}`
+    if (ASSUNTO_DE_PESSOA.test(texto)) return 'escalou-humano'
+    /**
+     * Pergunta que descreve DEFEITO não tem resposta na base, e o gerador
+     * inventava algumas: "cliquei no menu e a página fica em branco" saiu de um
+     * artigo de tela. O agente escalou para engenharia, certo, e era reprovado.
+     */
+    if (SINTOMA_DE_DEFEITO.test(texto)) return 'escalou-engenharia'
+    return null
+}
+
+const SINTOMA_DE_DEFEITO =
+    /(p[áa]gina|tela)[^,.!?]{0,24}(branco|branca)|fica carregando|n[ãa]o carrega|erro interno|erro inesperado|erro 500|algo deu errado|sumiu (tudo|os dados)|voltou a aparecer|n[ãa]o bate com|(sistema|p[áa]gina|tela|app|site) travou|travou (tudo|o sistema)|n[ãa]o abre nada|parou de funcionar/i
 
 /**
  * Quais artigos alimentam cada categoria.

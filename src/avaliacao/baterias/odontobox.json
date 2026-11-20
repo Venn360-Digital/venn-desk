@@ -1,1589 +1,1584 @@
 [
-  {
-    "id": "duvida-odontobox-derivado-emails-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "recebi email dizendo clinica em somente leitura",
-    "mensagem": "chegou um aviso que minha clínica tá em somente-leitura, não entendi o motivo, a gente ainda usa o sistema todo dia.",
-    "gabarito": {
-      "desfecho": "escalou-humano",
-      "artigoEsperado": "derivado:emails"
-    }
-  },
-  {
-    "id": "duvida-odontobox-s-e-pacientes-dos-outros-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "atendente vê tudo?",
-    "mensagem": "uma funcionária minha que é atendente, ela consegue ver os pacientes de outros atendentes ou só os dela mesmo? quero saber antes de liberar acesso pra ela",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "paciente com quem fala"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:atendente-ve-os-negocios-e-pacientes-dos-outros"
-    }
-  },
-  {
-    "id": "duvida-odontobox-gem-e-preenchida-sozinha-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "origem automatica",
-    "mensagem": "Toda vez que chega lead do anuncio da agencia eu tenho que ficar preenchendo a origem na mão? Tem como isso vir sozinho?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Atendimento",
-          "Agentes",
-          "Canais"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:como-a-origem-e-preenchida-sozinha"
-    }
-  },
-  {
-    "id": "duvida-odontobox-um-recesso-ou-fechamento-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "fechamento soh de tarde",
-    "mensagem": "preciso bloquear a agenda só das 14h às 18h por causa de uma dedetização, dá pra fazer isso ou só dia inteiro?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Novo fechamento"
-        ],
-        [
-          "data de início e fim"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:como-cadastro-um-recesso-ou-fechamento"
-    }
-  },
-  {
-    "id": "duvida-odontobox-a-mais-filas-para-alguem-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "acesso a mais de uma fila",
-    "mensagem": "Preciso que uma atendente consiga ver as conversas de duas filas diferentes sem ter que ficar mudando de setor toda hora. Dá pra fazer isso?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Usuários"
-        ],
-        [
-          "departamentos"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:como-dou-acesso-a-mais-filas-para-alguem"
-    }
-  },
-  {
-    "id": "duvida-odontobox-inica-atende-num-feriado-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "atender em feriado",
-    "mensagem": "A clínica vai abrir num feriado nacional e o sistema já bloqueia esse dia. Como eu faço pra liberar o atendimento nesse dia pra todos os profissionais?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Conta",
-          "Agenda da clínica"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:como-marco-que-a-clinica-atende-num-feriado"
-    }
-  },
-  {
-    "id": "duvida-odontobox-nversa-para-outra-pessoa-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "nao consigo transferir conversa",
-    "mensagem": "Preciso passar uma conversa pra outra atendente mas não acho a opção, tem como fazer isso ou só quem é admin consegue?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "cabeçalho da conversa"
-        ],
-        [
-          "permissão"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:como-transfiro-uma-conversa-para-outra-pessoa"
-    }
-  },
-  {
-    "id": "duvida-odontobox-vulsos-quando-sao-usados-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "creditos avulsos quando usa",
-    "mensagem": "Comprei uns créditos extra mês passado mas ainda não sei quando eles entram em ação. Preciso usar antes do crédito do plano ou só depois?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "90 dias"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:comprei-creditos-avulsos-quando-sao-usados"
-    }
-  },
-  {
-    "id": "duvida-odontobox--as-conversas-por-agente-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "filtrar conversa por agente",
-    "mensagem": "Tenho um agente de vendas e outro de recepção, dá pra ver as conversas separadas por cada um? Como faço isso?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "seletor Agente"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:da-para-filtrar-as-conversas-por-agente"
-    }
-  },
-  {
-    "id": "duvida-odontobox-numa-conversa-especifica-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "agente respondendo junto comigo",
-    "mensagem": "Entrei numa conversa pra ajudar um cliente e o agente ficou respondendo também, meio bagunçado. Dá pra fazer ele parar só naquela conversa?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:faq:da-para-o-agente-parar-numa-conversa-especifica"
-    }
-  },
-  {
-    "id": "duvida-odontobox-uracao-de-um-compromisso-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "duração compromisso",
-    "mensagem": "A agenda tá marcando tempos diferentes pra cada consulta e eu não sei de onde ela tira isso. É automático ou eu configuro em algum lugar?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Vendas",
-          "Procedimentos"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:de-onde-sai-a-duracao-de-um-compromisso"
-    }
-  },
-  {
-    "id": "duvida-odontobox-odem-usar-o-mesmo-numero-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "dois agentes mesmo numero",
-    "mensagem": "dá pra colocar dois agentes diferentes atendendo o mesmo número de whatsapp? queria um pra vendas e outro pra suporte",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:faq:dois-agentes-podem-usar-o-mesmo-numero"
-    }
-  },
-  {
-    "id": "duvida-odontobox-de-responder-o-que-houve-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "agente nao responde mais",
-    "mensagem": "o agente de atendimento parou de responder os pacientes do nada, as conversas continuam chegando normal mas ele nao fala nada. o que pode ser?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "créditos de IA acabaram",
-          "número desconectou"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:o-agente-parou-de-responder-o-que-houve"
-    }
-  },
-  {
-    "id": "duvida-odontobox-agente-responde-em-audio-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "agente nao manda audio",
-    "mensagem": "o agente só responde em texto aqui, queria que mandasse áudio pro paciente também, tem como ativar isso?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "voz"
-        ],
-        [
-          "Plano e créditos"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:o-agente-responde-em-audio"
-    }
-  },
-  {
-    "id": "duvida-odontobox-eu-duas-vezes-o-que-faco-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "paciente duplicado",
-    "mensagem": "Uma paciente minha apareceu com duas fichas, acho que ela mandou mensagem pelo whats e depois pelo insta. Como faço pra juntar ou tirar uma?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "mantenha a que tem o histórico"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:o-mesmo-paciente-apareceu-duas-vezes-o-que-faco"
-    }
-  },
-  {
-    "id": "duvida-odontobox-e-quando-o-credito-acaba-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "agente parou de responder",
-    "mensagem": "De repente o agente automático parou de responder os pacientes do nada, mas o resto do sistema tá funcionando normal. Isso é problema do crédito ter acabado?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "franquia"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:o-que-acontece-quando-o-credito-acaba"
-    }
-  },
-  {
-    "id": "duvida-odontobox-faq-o-que-e-a-fila-geral-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "conversa sumiu sem departamento",
-    "mensagem": "Chegou uma conversa aqui mas não tem departamento nenhum marcado, quem consegue ver ela? Fiquei com medo de ficar sem resposta pro cliente.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "fila geral"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:o-que-e-a-fila-geral"
-    }
-  },
-  {
-    "id": "duvida-odontobox-o-que-e-um-credito-de-ia-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "credito de IA, nao entendi",
-    "mensagem": "Toda vez que respondo uma conversa eu manualmente, isso consome crédito? Fiquei com medo de gastar tudo sem querer.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "não gasta crédito"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:o-que-e-um-credito-de-ia"
-    }
-  },
-  {
-    "id": "duvida-odontobox--onde-vem-meus-pacientes-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "nao consigo ver de onde vem os pacientes",
-    "mensagem": "Queria saber de onde vem a maioria dos meus pacientes, tipo indicação, instagram, etc. Mas no painel só aparece 'Sem origem' em quase tudo, isso é normal?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Dashboard",
-          "gráfico de origem"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:onde-vejo-de-onde-vem-meus-pacientes"
-    }
-  },
-  {
-    "id": "duvida-odontobox-co-nao-aparece-na-agenda-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "serviço sumiu da agenda",
-    "mensagem": "Cadastrei um serviço novo mas ele não aparece pra marcar na agenda do dentista, o que pode ser?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "cadastrado como serviço",
-          "liberado na janela de atendimento",
-          "profissional"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:por-que-meu-servico-nao-aparece-na-agenda"
-    }
-  },
-  {
-    "id": "duvida-odontobox--a-fila-de-outra-unidade-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "nao acho fila de outra unidade",
-    "mensagem": "To tentando ver a fila da outra unidade aqui mas só aparece a daqui. isso é normal? trabalho em duas unidades e preciso acompanhar as duas.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "departamento"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:por-que-nao-vejo-a-fila-de-outra-unidade"
-    }
-  },
-  {
-    "id": "duvida-odontobox-dito-durante-a-avaliacao-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "comprar credito extra no teste gratis",
-    "mensagem": "To no periodo de avaliação e queria comprar uns créditos extras pra testar mais, da pra fazer isso ou só depois?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "plano ativo"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:posso-comprar-credito-durante-a-avaliacao"
-    }
-  },
-  {
-    "id": "duvida-odontobox-m-numero-no-mesmo-agente-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "dois numeros mesmo agente",
-    "mensagem": "Tenho duas unidades e queria usar o mesmo agente pros dois whatsapp, dá pra conectar os dois numeros nele ou tenho que criar outro agente?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "linha"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:posso-ter-mais-de-um-numero-no-mesmo-agente"
-    }
-  },
-  {
-    "id": "duvida-odontobox-nca-entre-canal-e-origem-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "canal e origem é a mesma coisa?",
-    "mensagem": "Fiquei confusa, o sistema tem um campo de canal e outro de origem do paciente, isso não é redundante não? Me explica a diferença porque não entendi.",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "WhatsApp, Instagram, site"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:qual-a-diferenca-entre-canal-e-origem"
-    }
-  },
-  {
-    "id": "duvida-odontobox-ervico-servico-e-produto-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "produto na agenda nao aparece",
-    "mensagem": "To tentando marcar um produto aqui mas ele nao aparece pra agendar na agenda, sumiu ou é normal?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "mercadoria"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:qual-a-diferenca-entre-servico-servico-e-produto"
-    }
-  },
-  {
-    "id": "duvida-odontobox-pp-qr-code-e-api-oficial-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "qual a diferença do qr code pra api",
-    "mensagem": "to em dúvida se conecto pelo qr code ou faço a tal api oficial, meu celular as vezes fica sem bateria durante o dia. qual a diferença real entre as duas?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "depende do celular ligado"
-        ],
-        [
-          "selo de verificação"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:qual-a-diferenca-entre-whatsapp-qr-code-e-api-oficial"
-    }
-  },
-  {
-    "id": "duvida-odontobox-quando-a-franquia-renova-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "renovação da franquia",
-    "mensagem": "Contratei o plano dia 10, a franquia de créditos renova no começo do mês que vem ou só depois de 30 dias da contratação? E o que sobra esse mês acumula pro próximo?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "não acumula",
-          "descartado"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:quando-a-franquia-renova"
-    }
-  },
-  {
-    "id": "duvida-odontobox-o-precisa-de-responsavel-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "negócio sem responsável",
-    "mensagem": "criei um negócio aqui pelo menu e não defini ninguém pra cuidar dele, isso pode? tenho que colocar um responsável sempre?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "dono"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:todo-negocio-precisa-de-responsavel"
-    }
-  },
-  {
-    "id": "duvida-odontobox-acontece-com-os-creditos-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "mudei de plano e os créditos",
-    "mensagem": "Troquei de plano agora de manhã, mas não sei se a franquia de créditos já mudou ou só vai valer mês que vem. Já tinha usado uns créditos antes de trocar, isso conta?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "na hora"
-        ]
-      ],
-      "artigoEsperado": "derivado:faq:troquei-de-plano-o-que-acontece-com-os-creditos"
-    }
-  },
-  {
-    "id": "duvida-odontobox-derivado-planos-1",
-    "app": "odontobox",
-    "categoria": "duvida",
-    "assunto": "dúvida sobre integração CliniCorp",
-    "mensagem": "Oi, tenho o plano mais baratinho de vocês e quero saber se consigo integrar com o CliniCorp, uso bastante o sistema deles. Se não der, preciso trocar de plano?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Prime",
-          "Multiclínica"
-        ]
-      ],
-      "artigoEsperado": "derivado:planos"
-    }
-  },
-  {
-    "id": "uso-odontobox-erivado-tela-atendimento-1",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "sumiu a tela de atendimento",
-    "mensagem": "Entrei no menu de Atendimento mas caiu direto numa tela de Agentes de IA, isso é normal? Queria ver as conversas mesmo.",
-    "rota": "/atendimento",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "perfil"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento"
-    }
-  },
-  {
-    "id": "uso-odontobox-erivado-tela-atendimento-2",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "atendente não acha o menu",
-    "mensagem": "Uma colega minha que é atendente disse que não tem o item Atendimento no menu dela, só entra direto em Conversas. É assim mesmo ou é bug?",
-    "rota": "/atendimento",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "atendente comum"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento"
-    }
-  },
-  {
-    "id": "uso-odontobox-la-atendimento-etiquetas-1",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "apagar etiqueta some de tudo?",
-    "mensagem": "se eu excluir uma etiqueta ela some dos pacientes que já tinham ela marcada? quero ter certeza antes de apagar aqui, é a etiqueta de retorno que ninguém mais usa.",
-    "rota": "/atendimento/etiquetas",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:tela:atendimento-etiquetas"
-    }
-  },
-  {
-    "id": "uso-odontobox-la-atendimento-etiquetas-2",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "nao acho botao de criar etiqueta",
-    "mensagem": "entrei na tela de etiquetas mas não tem o botão pra criar nova, sumiu. uso o celular da clínica pra acessar.",
-    "rota": "/atendimento/etiquetas",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "permissão de edição",
-          "não tem permissão"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-etiquetas"
-    }
-  },
-  {
-    "id": "uso-odontobox-imento-respostas-rapidas-1",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "como criar atalho de msg pronta",
-    "mensagem": "Queria configurar algo tipo /orcamento pra não ficar digitando a mesma mensagem toda hora no chat com cliente. Dá pra fazer isso onde?",
-    "rota": "/atendimento/respostas-rapidas",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Atendimento",
-          "Respostas rápidas"
-        ],
-        [
-          "comando"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-respostas-rapidas"
-    }
-  },
-  {
-    "id": "uso-odontobox-imento-respostas-rapidas-2",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "erro ao apagar resposta em lote",
-    "mensagem": "Selecionei várias respostas rápidas pra excluir de uma vez e só algumas sumiram, apareceu um aviso estranho. É normal isso acontecer?",
-    "rota": "/atendimento/respostas-rapidas",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "não puderam ser excluídas"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-respostas-rapidas"
-    }
-  },
-  {
-    "id": "uso-odontobox-ivado-tela-convite-token-1",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "convite nao aparece senha",
-    "mensagem": "Cliquei no link do convite que recebi mas não tem campo pra eu colocar senha nenhuma, só meu nome. Isso tá certo? Já uso o sistema em outra empresa.",
-    "rota": "/convite/[token]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "já tem conta"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:convite-token"
-    }
-  },
-  {
-    "id": "uso-odontobox-ivado-tela-convite-token-2",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "link do convite deu erro",
-    "mensagem": "abri o link do email e apareceu que o convite expirou, e agora? to com pressa pra acessar a unidade",
-    "rota": "/convite/[token]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "peça outro",
-          "quem te convidou"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:convite-token"
-    }
-  },
-  {
-    "id": "uso-odontobox-derivado-tela-dashboard-1",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "gráfico de negócio perdido não aparece",
-    "mensagem": "Entrei na visão de gráfico do painel pra ver os negócios perdidos desse mês mas não apareceu nada, só uma frase estranha. É bug?",
-    "rota": "/dashboard",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:tela:dashboard"
-    }
-  },
-  {
-    "id": "uso-odontobox-derivado-tela-dashboard-2",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "onde vejo quem tá atendendo agora",
-    "mensagem": "Preciso saber rapidinho quem da equipe tá atendendo e por qual canal nesse momento, tem isso em algum lugar da tela inicial?",
-    "rota": "/dashboard",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "painel de operação",
-          "operação agora"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:dashboard"
-    }
-  },
-  {
-    "id": "uso-odontobox-ivado-tela-gerenciamento-1",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "tela gerenciamento vazia",
-    "mensagem": "entrei no menu de gerenciamento e não apareceu nada, só ficou em branco um segundo. isso é normal?",
-    "rota": "/gerenciamento",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "redireciona",
-          "gerenciamento de conta"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:gerenciamento"
-    }
-  },
-  {
-    "id": "uso-odontobox-ivado-tela-gerenciamento-2",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "sumiu a pagina",
-    "mensagem": "cliquei em gerenciamento e caiu direto em outra tela, achei que tinha dado erro. era pra ser assim mesmo?",
-    "rota": "/gerenciamento",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "redireciona"
-        ],
-        [
-          "gerenciamento de conta",
-          "conta"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:gerenciamento"
-    }
-  },
-  {
-    "id": "uso-odontobox-tela-gerenciamento-conta-1",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "nao acho onde convido alguem",
-    "mensagem": "preciso adicionar um funcionário novo no sistema, mas não acho o botão pra convidar. onde fica isso?",
-    "rota": "/gerenciamento/conta",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Usuários"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:gerenciamento-conta"
-    }
-  },
-  {
-    "id": "uso-odontobox-tela-gerenciamento-conta-2",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "sumiu a aba de usuarios",
-    "mensagem": "a aba de usuários da minha conta sumiu do nada, antes eu via ela. o que aconteceu?",
-    "rota": "/gerenciamento/conta",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "permissão"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:gerenciamento-conta"
-    }
-  },
-  {
-    "id": "uso-odontobox-a-gerenciamento-usuarios-1",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "nao acho a tela de usuarios",
-    "mensagem": "Cliquei em Gerenciamento > Usuários mas não achei a listinha de usuários, sumiu? uso no celular também, pode ser isso?",
-    "rota": "/gerenciamento/usuarios",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Gerenciar conta",
-          "guia de usuários"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:gerenciamento-usuarios"
-    }
-  },
-  {
-    "id": "uso-odontobox-a-gerenciamento-usuarios-2",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "redirecionamento estranho",
-    "mensagem": "Toda vez que entro no link de usuários ele me joga pra outra tela, isso é bug ou é normal?",
-    "rota": "/gerenciamento/usuarios",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Gerenciar conta"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:gerenciamento-usuarios"
-    }
-  },
-  {
-    "id": "uso-odontobox-derivado-tela-login-1",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "esqueci a senha",
-    "mensagem": "Não lembro minha senha, tem como recuperar? Tentei entrar e deu erro de senha incorreta.",
-    "rota": "/login",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "esqueci minha senha",
-          "recuperação de senha",
-          "link de redefinição"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:login"
-    }
-  },
-  {
-    "id": "uso-odontobox-derivado-tela-login-2",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "nao consigo criar conta",
-    "mensagem": "Tentei criar uma conta com meu e-mail do trabalho mas apareceu uma mensagem dizendo que já existe. Isso é possível? Eu nunca usei esse sistema antes.",
-    "rota": "/login",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "já tem conta",
-          "entre em vez de criar"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:login"
-    }
-  },
-  {
-    "id": "uso-odontobox-tela-marketing-campanhas-1",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "erro ao criar campanha wpp",
-    "mensagem": "To tentando criar uma campanha de whatsapp aqui mas não deixa salvar, fica dando erro. já escolhi a lista e o nome, o que mais falta?",
-    "rota": "/marketing/campanhas",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "linha oficial",
-          "template aprovado",
-          "template"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-campanhas"
-    }
-  },
-  {
-    "id": "uso-odontobox-tela-marketing-campanhas-2",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "nao acho onde fica as campanhas de email",
-    "mensagem": "Preciso mandar um email pra lista de pacientes de retorno, onde eu crio isso? e o remetente tem que ser algum email específico?",
-    "rota": "/marketing/campanhas",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Marketing"
-        ],
-        [
-          "domínio da unidade",
-          "endereço de e-mail do domínio"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-campanhas"
-    }
-  },
-  {
-    "id": "uso-odontobox-a-marketing-campanhas-id-1",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "cancelar disparo que já tá rolando",
-    "mensagem": "Minha campanha de whatsapp já começou a disparar mas quero parar, tem como cancelar sem afetar quem já recebeu?",
-    "rota": "/marketing/campanhas/[id]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:tela:marketing-campanhas-id"
-    }
-  },
-  {
-    "id": "uso-odontobox-a-marketing-campanhas-id-2",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "nao consigo excluir campanha",
-    "mensagem": "Quero apagar uma campanha de email mas o botão de excluir não aparece, é bug?",
-    "rota": "/marketing/campanhas/[id]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "em andamento"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-campanhas-id"
-    }
-  },
-  {
-    "id": "uso-odontobox-la-marketing-formularios-1",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "apaguei formulario e sumiu os leads??",
-    "mensagem": "Excluí um formulário sem querer, era o de orçamento. Os leads que vieram por ele e viraram negócio no CRM também somem ou ficam guardados?",
-    "rota": "/marketing/formularios",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "negócios gerados permanecem"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-formularios"
-    }
-  },
-  {
-    "id": "uso-odontobox-la-marketing-formularios-2",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "nao consigo criar formulario novo",
-    "mensagem": "Toda vez que clico pra adicionar um formulário na página de marketing, aparece uma mensagem pedindo nome, mas eu nem digitei ainda nada. Como faço isso direito?",
-    "rota": "/marketing/formularios",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "dar um nome"
-        ],
-        [
-          "Formulários"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-formularios"
-    }
-  },
-  {
-    "id": "uso-odontobox-marketing-formularios-id-1",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "link do formulario nao abre",
-    "mensagem": "coloquei o codigo no site mas o link do formulario nao ta funcionando, o que falta?",
-    "rota": "/marketing/formularios/[id]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "publicar",
-          "publicado"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-formularios-id"
-    }
-  },
-  {
-    "id": "uso-odontobox-marketing-formularios-id-2",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "quero que cada envio vire negocio",
-    "mensagem": "preciso que quando alguem preencher o formulario abra um negocio pra mim no funil, da pra configurar isso?",
-    "rota": "/marketing/formularios/[id]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "abrir negócio",
-          "funil padrão"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-formularios-id"
-    }
-  },
-  {
-    "id": "uso-odontobox-ado-tela-marketing-funis-1",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "nao consigo apagar funil",
-    "mensagem": "To tentando apagar um funil antigo aqui mas da erro, tem gente ainda dentro dele eu acho. Como faço pra conseguir apagar?",
-    "rota": "/marketing/funis",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "despublicar",
-          "despublique"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-funis"
-    }
-  },
-  {
-    "id": "uso-odontobox-ado-tela-marketing-funis-2",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "colocar cliente manual no funil",
-    "mensagem": "Preciso colocar um contato específico dentro de um funil que já criei, mas não acho essa opção em nenhum lugar. O funil já tá publicado, o que pode ser?",
-    "rota": "/marketing/funis",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "entrada manual",
-          "gatilho manual"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-funis"
-    }
-  },
-  {
-    "id": "uso-odontobox--tela-marketing-funis-id-1",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "funil nao sai do ar",
-    "mensagem": "criei um funil de marketing mas quero parar ele de pegar gente nova sem apagar tudo, tem como? to com pressa pq ta mandando mensagem errada",
-    "rota": "/marketing/funis/[id]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "despublicar"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-funis-id"
-    }
-  },
-  {
-    "id": "uso-odontobox--tela-marketing-funis-id-2",
-    "app": "odontobox",
-    "categoria": "uso",
-    "assunto": "nao consigo escolher whatsapp no funil",
-    "mensagem": "fui configurar o canal do passo do funil e só aparece email, o whatsapp ta lá mas não dá pra selecionar direito. isso é bug ou falta eu configurar algo?",
-    "rota": "/marketing/funis/[id]",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "em revisão",
-          "indisponível"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:marketing-funis-id"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-1",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "atendente não consegue excluir registro",
-    "mensagem": "minha atendente tentou apagar um registro antigo e não deu, isso é normal?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-2",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "mudar papel de usuario",
-    "mensagem": "como faço pra mudar o papel de uma pessoa da minha equipe, tipo de atendente pra gestor?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "tela de usuários",
-          "usuários"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-3",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "gestor ve tudo?",
-    "mensagem": "meu gestor consegue ver o trabalho de todo mundo da equipe ou só o dele mesmo?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-4",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "atendente ve trabalho dos outros",
-    "mensagem": "minha atendente queria ver o que os outros atendentes estão fazendo, rolou colocar permissão pra isso?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-5",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "quem pode gerenciar conta",
-    "mensagem": "quero saber quem pode gerenciar os membros e as configurações da conta aqui no sistema, pq preciso adicionar mais gente",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "proprietário",
-          "administrador"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-6",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "gestor edita configuração?",
-    "mensagem": "meu gestor pode mexer nas configurações do workspace ou só o admin mesmo?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-7",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "transferir atendimento",
-    "mensagem": "um atendente comum consegue passar uma conversa pra outro colega ou só quem é chefe?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "não depende do papel"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-8",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "esconder botão resolve?",
-    "mensagem": "dá pra eu simplesmente esconder o botão de excluir pro atendente não ver, ao invés de mexer em permissão?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "servidor recusa a ação"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-9",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "seletor responsavel sumiu",
-    "mensagem": "minha atendente reclamou que não acha o campo pra escolher o responsável da conversa, isso é defeito?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-10",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "quem acessa venn360",
-    "mensagem": "vi um menu chamado venn360 mas não aparece pra mim, só pro meu chefe, é assim mesmo?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "reservado a quem opera o produto",
-          "não depende do papel"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-11",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "proprietario pode tudo?",
-    "mensagem": "sou dono da conta, confirma que eu posso fazer absolutamente tudo no sistema?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-12",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "atendente apaga cadastro de paciente",
-    "mensagem": "uma funcionaria nova que é só atendente tentou excluir um cadastro de paciente e deu erro, o que houve?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-13",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "quem muda permissao da equipe",
-    "mensagem": "quem é que decide e muda as permissões de cada funcionário aqui, sou só sócia e não sei mexer nisso",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "quem administra a conta",
-          "tela de usuários"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-14",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "gestor adiciona novo usuario?",
-    "mensagem": "meu gestor pode cadastrar um novo atendente sozinho ou isso só o admin faz?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-15",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "link direto burla permissao?",
-    "mensagem": "um funcionário achou um link direto pra uma tela que não devia acessar, isso é furo de segurança?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-16",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "diferenca gestor e administrador",
-    "mensagem": "qual a diferença real entre gestor e administrador aqui no sistema, pq pra mim parece a mesma coisa",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-17",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "atendente transferir pra si mesmo",
-    "mensagem": "um atendente pode pegar uma conversa de outro atendente e jogar pra ele mesmo?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "não depende do papel"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-18",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "excluir configuracao errada",
-    "mensagem": "será que meu funcionário atendente consegue bagunçar as configurações do sistema sem querer?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-19",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "onde fica venn360",
-    "mensagem": "to procurando um tal de venn, mas acho que isso não é pra mim que só uso o sistema no dia a dia né?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "reservado a quem opera o produto"
-        ]
-      ],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "permissao-odontobox-derivado-papeis-20",
-    "app": "odontobox",
-    "categoria": "permissao",
-    "assunto": "ver trabalho da equipe toda",
-    "mensagem": "quero que o administrador consiga ver o que todo mundo da clínica está fazendo no sistema, isso já é padrão?",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [],
-      "artigoEsperado": "derivado:papeis"
-    }
-  },
-  {
-    "id": "integracao-odontobox-tela-atendimento-agentes-1",
-    "app": "odontobox",
-    "categoria": "integracao",
-    "assunto": "mudar agente de unidade",
-    "mensagem": "Preciso passar um agente de IA pra outra filial, mas ele já tem base de conhecimento e número configurado. Se eu mover ele vai perder tudo isso ou vai junto?",
-    "rota": "/atendimento/agentes",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "mover para outra unidade"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes"
-    }
-  },
-  {
-    "id": "integracao-odontobox-tela-atendimento-agentes-2",
-    "app": "odontobox",
-    "categoria": "integracao",
-    "assunto": "duplicar nao conecta whatsapp",
-    "mensagem": "Duplicatei um agente pra testar umas respostas diferentes mas o número de whatsapp não ficou funcionando nele, ele fica desconectado. é normal?",
-    "rota": "/atendimento/agentes",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Integrações"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes"
-    }
-  },
-  {
-    "id": "integracao-odontobox-dimento-agentes-comandos-1",
-    "app": "odontobox",
-    "categoria": "integracao",
-    "assunto": "nao consigo editar comandos do agente",
-    "mensagem": "Entrei em Atendimento > Agentes de IA e os campos de condições e preferências aparecem travados, não dá pra editar nada. Isso é normal?",
-    "rota": "/atendimento/agentes/comandos",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "permissão",
-          "administrar o agente"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-comandos"
-    }
-  },
-  {
-    "id": "integracao-odontobox-dimento-agentes-comandos-2",
-    "app": "odontobox",
-    "categoria": "integracao",
-    "assunto": "erro ao salvar parametrização",
-    "mensagem": "Tentei salvar as regras do agente e deu um aviso dizendo que preciso criar o agente antes. Mas eu já configurei tudo, o que eu faço?",
-    "rota": "/atendimento/agentes/comandos",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "criar o agente primeiro"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-comandos"
-    }
-  },
-  {
-    "id": "integracao-odontobox-to-agentes-gerenciamento-1",
-    "app": "odontobox",
-    "categoria": "integracao",
-    "assunto": "excluir agente e whatsapp",
-    "mensagem": "Preciso apagar um agente mas ele tá conectado no whatsapp da empresa. Se eu excluir, perco todo o histórico de conversas também? É urgente pq é fim de semana.",
-    "rota": "/atendimento/agentes/gerenciamento",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "desconectado"
-        ],
-        [
-          "mensagens continuam guardados"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-gerenciamento"
-    }
-  },
-  {
-    "id": "integracao-odontobox-to-agentes-gerenciamento-2",
-    "app": "odontobox",
-    "categoria": "integracao",
-    "assunto": "baixar conversas",
-    "mensagem": "Quero tirar um relatório das conversas que o agente de IA já teve pra mandar pro meu chefe, tem como exportar isso em algum arquivo?",
-    "rota": "/atendimento/agentes/gerenciamento",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "exportação"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-gerenciamento"
-    }
-  },
-  {
-    "id": "integracao-odontobox-ento-agentes-integracoes-1",
-    "app": "odontobox",
-    "categoria": "integracao",
-    "assunto": "nao consigo salvar webhook",
-    "mensagem": "Tentei configurar um webhook no agente novo e apareceu uma mensagem dizendo que preciso fazer algo antes. O que está acontecendo?",
-    "rota": "/atendimento/agentes/integracoes",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "criar o agente"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-integracoes"
-    }
-  },
-  {
-    "id": "integracao-odontobox-ento-agentes-integracoes-2",
-    "app": "odontobox",
-    "categoria": "integracao",
-    "assunto": "botao de salvar sumiu",
-    "mensagem": "Entrei na tela de integrações do meu agente de IA mas não acho o botão para salvar as configurações de webhook, só tem os campos aparecendo cinza. Uso o computador do trabalho se ajudar.",
-    "rota": "/atendimento/agentes/integracoes",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "permissão",
-          "gerenciar"
-        ],
-        [
-          "aba Webhooks",
-          "Webhooks"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-integracoes"
-    }
-  },
-  {
-    "id": "integracao-odontobox-atendimento-agentes-novo-1",
-    "app": "odontobox",
-    "categoria": "integracao",
-    "assunto": "salvei mas nao foi pro ar",
-    "mensagem": "Editei o agente e cliquei em salvar, mas parece que o atendimento continua usando a versão antiga. Isso é normal? Como faço pra valer pra valer?",
-    "rota": "/atendimento/agentes/novo",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "Publicar"
-        ],
-        [
-          "rascunho"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-novo"
-    }
-  },
-  {
-    "id": "integracao-odontobox-atendimento-agentes-novo-2",
-    "app": "odontobox",
-    "categoria": "integracao",
-    "assunto": "nao consigo editar o agente",
-    "mensagem": "Entrei na tela do agente mas os campos estão travados, nem aparece botão de salvar. Fiz algo errado?",
-    "rota": "/atendimento/agentes/novo",
-    "gabarito": {
-      "desfecho": "respondeu",
-      "precisaDizer": [
-        [
-          "permissão",
-          "administrar o agente"
-        ]
-      ],
-      "artigoEsperado": "derivado:tela:atendimento-agentes-novo"
-    }
-  },
-  {
-    "id": "tec-01-odontobox",
-    "app": "odontobox",
-    "categoria": "tecnico",
-    "assunto": "Tela em branco depois de salvar",
-    "mensagem": "Preenchi tudo, cliquei em salvar e a tela ficou branca. Atualizei a página e o que eu tinha digitado sumiu. Já tentei três vezes, sempre igual.",
-    "rota": "/vendas/clientes",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  },
-  {
-    "id": "tec-02-odontobox",
-    "app": "odontobox",
-    "categoria": "tecnico",
-    "assunto": "Erro 500",
-    "mensagem": "Aparece \"erro interno do servidor 500\" em todas as telas de lista — pacientes, agenda, conversas —, para todos os quatro computadores da recepção, desde as 9h. Já limpamos o cache e tentamos em outro navegador.",
-    "gabarito": {
-      "desfecho": "escalou-humano"
-    }
-  },
-  {
-    "id": "tec-03-odontobox",
-    "app": "odontobox",
-    "categoria": "tecnico",
-    "assunto": "Fica carregando para sempre",
-    "mensagem": "A roda de carregando não para nunca nessa tela. Deixei vinte minutos aberto, em dois computadores diferentes e no celular. Nos outros lugares do sistema funciona.",
-    "rota": "/atendimento/conversas",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  },
-  {
-    "id": "tec-04-odontobox",
-    "app": "odontobox",
-    "categoria": "tecnico",
-    "assunto": "Dados de outra unidade aparecendo",
-    "mensagem": "Estou vendo na minha lista um cadastro que não é meu, de outra unidade. Isso é grave, não deveria aparecer aqui.",
-    "gabarito": {
-      "desfecho": "escalou-humano",
-      "naoPodeDizer": [
-        {
-          "o_que": "confirmação de vazamento ao cliente",
-          "padrao": "realmente (houve|vazou)|confirmo que (vazou|houve vazamento)"
+    {
+        "id": "duvida-odontobox-derivado-emails-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "recebi email dizendo clinica em somente leitura",
+        "mensagem": "chegou um aviso que minha clínica tá em somente-leitura, não entendi o motivo, a gente ainda usa o sistema todo dia.",
+        "gabarito": {
+            "desfecho": "escalou-humano",
+            "artigoEsperado": "derivado:emails"
         }
-      ]
+    },
+    {
+        "id": "duvida-odontobox-s-e-pacientes-dos-outros-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "atendente vê tudo?",
+        "mensagem": "uma funcionária minha que é atendente, ela consegue ver os pacientes de outros atendentes ou só os dela mesmo? quero saber antes de liberar acesso pra ela",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "paciente com quem fala"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:atendente-ve-os-negocios-e-pacientes-dos-outros"
+        }
+    },
+    {
+        "id": "duvida-odontobox-gem-e-preenchida-sozinha-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "origem automatica",
+        "mensagem": "Toda vez que chega lead do anuncio da agencia eu tenho que ficar preenchendo a origem na mão? Tem como isso vir sozinho?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Atendimento",
+                    "Agentes",
+                    "Canais"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:como-a-origem-e-preenchida-sozinha"
+        }
+    },
+    {
+        "id": "duvida-odontobox-um-recesso-ou-fechamento-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "fechamento soh de tarde",
+        "mensagem": "preciso bloquear a agenda só das 14h às 18h por causa de uma dedetização, dá pra fazer isso ou só dia inteiro?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Novo fechamento"
+                ],
+                [
+                    "data de início e fim"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:como-cadastro-um-recesso-ou-fechamento"
+        }
+    },
+    {
+        "id": "duvida-odontobox-a-mais-filas-para-alguem-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "acesso a mais de uma fila",
+        "mensagem": "Preciso que uma atendente consiga ver as conversas de duas filas diferentes sem ter que ficar mudando de setor toda hora. Dá pra fazer isso?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Usuários"
+                ],
+                [
+                    "departamentos"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:como-dou-acesso-a-mais-filas-para-alguem"
+        }
+    },
+    {
+        "id": "duvida-odontobox-inica-atende-num-feriado-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "atender em feriado",
+        "mensagem": "A clínica vai abrir num feriado nacional e o sistema já bloqueia esse dia. Como eu faço pra liberar o atendimento nesse dia pra todos os profissionais?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Conta",
+                    "Agenda da clínica"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:como-marco-que-a-clinica-atende-num-feriado"
+        }
+    },
+    {
+        "id": "duvida-odontobox-nversa-para-outra-pessoa-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "nao consigo transferir conversa",
+        "mensagem": "Preciso passar uma conversa pra outra atendente mas não acho a opção, tem como fazer isso ou só quem é admin consegue?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "cabeçalho da conversa"
+                ],
+                [
+                    "permissão"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:como-transfiro-uma-conversa-para-outra-pessoa"
+        }
+    },
+    {
+        "id": "duvida-odontobox-vulsos-quando-sao-usados-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "creditos avulsos quando usa",
+        "mensagem": "Comprei uns créditos extra mês passado mas ainda não sei quando eles entram em ação. Preciso usar antes do crédito do plano ou só depois?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "90 dias"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:comprei-creditos-avulsos-quando-sao-usados"
+        }
+    },
+    {
+        "id": "duvida-odontobox--as-conversas-por-agente-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "filtrar conversa por agente",
+        "mensagem": "Tenho um agente de vendas e outro de recepção, dá pra ver as conversas separadas por cada um? Como faço isso?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "seletor Agente"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:da-para-filtrar-as-conversas-por-agente"
+        }
+    },
+    {
+        "id": "duvida-odontobox-numa-conversa-especifica-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "agente respondendo junto comigo",
+        "mensagem": "Entrei numa conversa pra ajudar um cliente e o agente ficou respondendo também, meio bagunçado. Dá pra fazer ele parar só naquela conversa?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:faq:da-para-o-agente-parar-numa-conversa-especifica"
+        }
+    },
+    {
+        "id": "duvida-odontobox-uracao-de-um-compromisso-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "duração compromisso",
+        "mensagem": "A agenda tá marcando tempos diferentes pra cada consulta e eu não sei de onde ela tira isso. É automático ou eu configuro em algum lugar?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Vendas",
+                    "Procedimentos"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:de-onde-sai-a-duracao-de-um-compromisso"
+        }
+    },
+    {
+        "id": "duvida-odontobox-odem-usar-o-mesmo-numero-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "dois agentes mesmo numero",
+        "mensagem": "dá pra colocar dois agentes diferentes atendendo o mesmo número de whatsapp? queria um pra vendas e outro pra suporte",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:faq:dois-agentes-podem-usar-o-mesmo-numero"
+        }
+    },
+    {
+        "id": "duvida-odontobox-de-responder-o-que-houve-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "agente nao responde mais",
+        "mensagem": "o agente de atendimento parou de responder os pacientes do nada, as conversas continuam chegando normal mas ele nao fala nada. o que pode ser?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "créditos de IA acabaram",
+                    "número desconectou"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:o-agente-parou-de-responder-o-que-houve"
+        }
+    },
+    {
+        "id": "duvida-odontobox-agente-responde-em-audio-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "agente nao manda audio",
+        "mensagem": "o agente só responde em texto aqui, queria que mandasse áudio pro paciente também, tem como ativar isso?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "voz"
+                ],
+                [
+                    "Plano e créditos"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:o-agente-responde-em-audio"
+        }
+    },
+    {
+        "id": "duvida-odontobox-eu-duas-vezes-o-que-faco-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "paciente duplicado",
+        "mensagem": "Uma paciente minha apareceu com duas fichas, acho que ela mandou mensagem pelo whats e depois pelo insta. Como faço pra juntar ou tirar uma?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "mantenha a que tem o histórico"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:o-mesmo-paciente-apareceu-duas-vezes-o-que-faco"
+        }
+    },
+    {
+        "id": "duvida-odontobox-e-quando-o-credito-acaba-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "agente parou de responder",
+        "mensagem": "De repente o agente automático parou de responder os pacientes do nada, mas o resto do sistema tá funcionando normal. Isso é problema do crédito ter acabado?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "franquia"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:o-que-acontece-quando-o-credito-acaba"
+        }
+    },
+    {
+        "id": "duvida-odontobox-faq-o-que-e-a-fila-geral-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "conversa sumiu sem departamento",
+        "mensagem": "Chegou uma conversa aqui mas não tem departamento nenhum marcado, quem consegue ver ela? Fiquei com medo de ficar sem resposta pro cliente.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "fila geral"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:o-que-e-a-fila-geral"
+        }
+    },
+    {
+        "id": "duvida-odontobox-o-que-e-um-credito-de-ia-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "credito de IA, nao entendi",
+        "mensagem": "Toda vez que respondo uma conversa eu manualmente, isso consome crédito? Fiquei com medo de gastar tudo sem querer.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "não gasta crédito"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:o-que-e-um-credito-de-ia"
+        }
+    },
+    {
+        "id": "duvida-odontobox--onde-vem-meus-pacientes-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "nao consigo ver de onde vem os pacientes",
+        "mensagem": "Queria saber de onde vem a maioria dos meus pacientes, tipo indicação, instagram, etc. Mas no painel só aparece 'Sem origem' em quase tudo, isso é normal?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Dashboard",
+                    "gráfico de origem"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:onde-vejo-de-onde-vem-meus-pacientes"
+        }
+    },
+    {
+        "id": "duvida-odontobox-co-nao-aparece-na-agenda-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "serviço sumiu da agenda",
+        "mensagem": "Cadastrei um serviço novo mas ele não aparece pra marcar na agenda do dentista, o que pode ser?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "cadastrado como serviço",
+                    "liberado na janela de atendimento",
+                    "profissional"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:por-que-meu-servico-nao-aparece-na-agenda"
+        }
+    },
+    {
+        "id": "duvida-odontobox--a-fila-de-outra-unidade-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "nao acho fila de outra unidade",
+        "mensagem": "To tentando ver a fila da outra unidade aqui mas só aparece a daqui. isso é normal? trabalho em duas unidades e preciso acompanhar as duas.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "departamento"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:por-que-nao-vejo-a-fila-de-outra-unidade"
+        }
+    },
+    {
+        "id": "duvida-odontobox-dito-durante-a-avaliacao-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "comprar credito extra no teste gratis",
+        "mensagem": "To no periodo de avaliação e queria comprar uns créditos extras pra testar mais, da pra fazer isso ou só depois?",
+        "gabarito": {
+            "desfecho": "escalou-humano",
+            "artigoEsperado": "derivado:faq:posso-comprar-credito-durante-a-avaliacao"
+        }
+    },
+    {
+        "id": "duvida-odontobox-m-numero-no-mesmo-agente-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "dois numeros mesmo agente",
+        "mensagem": "Tenho duas unidades e queria usar o mesmo agente pros dois whatsapp, dá pra conectar os dois numeros nele ou tenho que criar outro agente?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "linha"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:posso-ter-mais-de-um-numero-no-mesmo-agente"
+        }
+    },
+    {
+        "id": "duvida-odontobox-nca-entre-canal-e-origem-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "canal e origem é a mesma coisa?",
+        "mensagem": "Fiquei confusa, o sistema tem um campo de canal e outro de origem do paciente, isso não é redundante não? Me explica a diferença porque não entendi.",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "WhatsApp, Instagram, site"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:qual-a-diferenca-entre-canal-e-origem"
+        }
+    },
+    {
+        "id": "duvida-odontobox-ervico-servico-e-produto-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "produto na agenda nao aparece",
+        "mensagem": "To tentando marcar um produto aqui mas ele nao aparece pra agendar na agenda, sumiu ou é normal?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "mercadoria"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:qual-a-diferenca-entre-servico-servico-e-produto"
+        }
+    },
+    {
+        "id": "duvida-odontobox-pp-qr-code-e-api-oficial-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "qual a diferença do qr code pra api",
+        "mensagem": "to em dúvida se conecto pelo qr code ou faço a tal api oficial, meu celular as vezes fica sem bateria durante o dia. qual a diferença real entre as duas?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "depende do celular ligado"
+                ],
+                [
+                    "selo de verificação"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:qual-a-diferenca-entre-whatsapp-qr-code-e-api-oficial"
+        }
+    },
+    {
+        "id": "duvida-odontobox-quando-a-franquia-renova-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "renovação da franquia",
+        "mensagem": "Contratei o plano dia 10, a franquia de créditos renova no começo do mês que vem ou só depois de 30 dias da contratação? E o que sobra esse mês acumula pro próximo?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "não acumula",
+                    "descartado"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:quando-a-franquia-renova"
+        }
+    },
+    {
+        "id": "duvida-odontobox-o-precisa-de-responsavel-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "negócio sem responsável",
+        "mensagem": "criei um negócio aqui pelo menu e não defini ninguém pra cuidar dele, isso pode? tenho que colocar um responsável sempre?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "dono"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:todo-negocio-precisa-de-responsavel"
+        }
+    },
+    {
+        "id": "duvida-odontobox-acontece-com-os-creditos-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "mudei de plano e os créditos",
+        "mensagem": "Troquei de plano agora de manhã, mas não sei se a franquia de créditos já mudou ou só vai valer mês que vem. Já tinha usado uns créditos antes de trocar, isso conta?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "na hora"
+                ]
+            ],
+            "artigoEsperado": "derivado:faq:troquei-de-plano-o-que-acontece-com-os-creditos"
+        }
+    },
+    {
+        "id": "duvida-odontobox-derivado-planos-1",
+        "app": "odontobox",
+        "categoria": "duvida",
+        "assunto": "dúvida sobre integração CliniCorp",
+        "mensagem": "Oi, tenho o plano mais baratinho de vocês e quero saber se consigo integrar com o CliniCorp, uso bastante o sistema deles. Se não der, preciso trocar de plano?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Prime",
+                    "Multiclínica"
+                ]
+            ],
+            "artigoEsperado": "derivado:planos"
+        }
+    },
+    {
+        "id": "uso-odontobox-erivado-tela-atendimento-1",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "sumiu a tela de atendimento",
+        "mensagem": "Entrei no menu de Atendimento mas caiu direto numa tela de Agentes de IA, isso é normal? Queria ver as conversas mesmo.",
+        "rota": "/atendimento",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "perfil"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento"
+        }
+    },
+    {
+        "id": "uso-odontobox-erivado-tela-atendimento-2",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "atendente não acha o menu",
+        "mensagem": "Uma colega minha que é atendente disse que não tem o item Atendimento no menu dela, só entra direto em Conversas. É assim mesmo ou é bug?",
+        "rota": "/atendimento",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "atendente comum"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento"
+        }
+    },
+    {
+        "id": "uso-odontobox-la-atendimento-etiquetas-1",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "apagar etiqueta some de tudo?",
+        "mensagem": "se eu excluir uma etiqueta ela some dos pacientes que já tinham ela marcada? quero ter certeza antes de apagar aqui, é a etiqueta de retorno que ninguém mais usa.",
+        "rota": "/atendimento/etiquetas",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:tela:atendimento-etiquetas"
+        }
+    },
+    {
+        "id": "uso-odontobox-la-atendimento-etiquetas-2",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "nao acho botao de criar etiqueta",
+        "mensagem": "entrei na tela de etiquetas mas não tem o botão pra criar nova, sumiu. uso o celular da clínica pra acessar.",
+        "rota": "/atendimento/etiquetas",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "permissão de edição",
+                    "não tem permissão"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-etiquetas"
+        }
+    },
+    {
+        "id": "uso-odontobox-imento-respostas-rapidas-1",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "como criar atalho de msg pronta",
+        "mensagem": "Queria configurar algo tipo /orcamento pra não ficar digitando a mesma mensagem toda hora no chat com cliente. Dá pra fazer isso onde?",
+        "rota": "/atendimento/respostas-rapidas",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Atendimento",
+                    "Respostas rápidas"
+                ],
+                [
+                    "comando"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-respostas-rapidas"
+        }
+    },
+    {
+        "id": "uso-odontobox-imento-respostas-rapidas-2",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "erro ao apagar resposta em lote",
+        "mensagem": "Selecionei várias respostas rápidas pra excluir de uma vez e só algumas sumiram, apareceu um aviso estranho. É normal isso acontecer?",
+        "rota": "/atendimento/respostas-rapidas",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "não puderam ser excluídas"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-respostas-rapidas"
+        }
+    },
+    {
+        "id": "uso-odontobox-ivado-tela-convite-token-1",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "convite nao aparece senha",
+        "mensagem": "Cliquei no link do convite que recebi mas não tem campo pra eu colocar senha nenhuma, só meu nome. Isso tá certo? Já uso o sistema em outra empresa.",
+        "rota": "/convite/[token]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "já tem conta"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:convite-token"
+        }
+    },
+    {
+        "id": "uso-odontobox-ivado-tela-convite-token-2",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "link do convite deu erro",
+        "mensagem": "abri o link do email e apareceu que o convite expirou, e agora? to com pressa pra acessar a unidade",
+        "rota": "/convite/[token]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "peça outro",
+                    "quem te convidou"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:convite-token"
+        }
+    },
+    {
+        "id": "uso-odontobox-derivado-tela-dashboard-1",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "gráfico de negócio perdido não aparece",
+        "mensagem": "Entrei na visão de gráfico do painel pra ver os negócios perdidos desse mês mas não apareceu nada, só uma frase estranha. É bug?",
+        "rota": "/dashboard",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:tela:dashboard"
+        }
+    },
+    {
+        "id": "uso-odontobox-derivado-tela-dashboard-2",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "onde vejo quem tá atendendo agora",
+        "mensagem": "Preciso saber rapidinho quem da equipe tá atendendo e por qual canal nesse momento, tem isso em algum lugar da tela inicial?",
+        "rota": "/dashboard",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "painel de operação",
+                    "operação agora"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:dashboard"
+        }
+    },
+    {
+        "id": "uso-odontobox-ivado-tela-gerenciamento-1",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "tela gerenciamento vazia",
+        "mensagem": "entrei no menu de gerenciamento e não apareceu nada, só ficou em branco um segundo. isso é normal?",
+        "rota": "/gerenciamento",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "redireciona",
+                    "gerenciamento de conta"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:gerenciamento"
+        }
+    },
+    {
+        "id": "uso-odontobox-ivado-tela-gerenciamento-2",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "sumiu a pagina",
+        "mensagem": "cliquei em gerenciamento e caiu direto em outra tela, achei que tinha dado erro. era pra ser assim mesmo?",
+        "rota": "/gerenciamento",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "redireciona"
+                ],
+                [
+                    "gerenciamento de conta",
+                    "conta"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:gerenciamento"
+        }
+    },
+    {
+        "id": "uso-odontobox-tela-gerenciamento-conta-1",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "nao acho onde convido alguem",
+        "mensagem": "preciso adicionar um funcionário novo no sistema, mas não acho o botão pra convidar. onde fica isso?",
+        "rota": "/gerenciamento/conta",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Usuários"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:gerenciamento-conta"
+        }
+    },
+    {
+        "id": "uso-odontobox-tela-gerenciamento-conta-2",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "sumiu a aba de usuarios",
+        "mensagem": "a aba de usuários da minha conta sumiu do nada, antes eu via ela. o que aconteceu?",
+        "rota": "/gerenciamento/conta",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "permissão"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:gerenciamento-conta"
+        }
+    },
+    {
+        "id": "uso-odontobox-a-gerenciamento-usuarios-1",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "nao acho a tela de usuarios",
+        "mensagem": "Cliquei em Gerenciamento > Usuários mas não achei a listinha de usuários, sumiu? uso no celular também, pode ser isso?",
+        "rota": "/gerenciamento/usuarios",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Gerenciar conta",
+                    "guia de usuários"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:gerenciamento-usuarios"
+        }
+    },
+    {
+        "id": "uso-odontobox-a-gerenciamento-usuarios-2",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "redirecionamento estranho",
+        "mensagem": "Toda vez que entro no link de usuários ele me joga pra outra tela, isso é bug ou é normal?",
+        "rota": "/gerenciamento/usuarios",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Gerenciar conta"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:gerenciamento-usuarios"
+        }
+    },
+    {
+        "id": "uso-odontobox-derivado-tela-login-1",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "esqueci a senha",
+        "mensagem": "Não lembro minha senha, tem como recuperar? Tentei entrar e deu erro de senha incorreta.",
+        "rota": "/login",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "esqueci minha senha",
+                    "recuperação de senha",
+                    "link de redefinição"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:login"
+        }
+    },
+    {
+        "id": "uso-odontobox-derivado-tela-login-2",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "nao consigo criar conta",
+        "mensagem": "Tentei criar uma conta com meu e-mail do trabalho mas apareceu uma mensagem dizendo que já existe. Isso é possível? Eu nunca usei esse sistema antes.",
+        "rota": "/login",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "já tem conta",
+                    "entre em vez de criar"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:login"
+        }
+    },
+    {
+        "id": "uso-odontobox-tela-marketing-campanhas-1",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "erro ao criar campanha wpp",
+        "mensagem": "To tentando criar uma campanha de whatsapp aqui mas não deixa salvar, fica dando erro. já escolhi a lista e o nome, o que mais falta?",
+        "rota": "/marketing/campanhas",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "linha oficial",
+                    "template aprovado",
+                    "template"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-campanhas"
+        }
+    },
+    {
+        "id": "uso-odontobox-tela-marketing-campanhas-2",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "nao acho onde fica as campanhas de email",
+        "mensagem": "Preciso mandar um email pra lista de pacientes de retorno, onde eu crio isso? e o remetente tem que ser algum email específico?",
+        "rota": "/marketing/campanhas",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Marketing"
+                ],
+                [
+                    "domínio da unidade",
+                    "endereço de e-mail do domínio"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-campanhas"
+        }
+    },
+    {
+        "id": "uso-odontobox-a-marketing-campanhas-id-1",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "cancelar disparo que já tá rolando",
+        "mensagem": "Minha campanha de whatsapp já começou a disparar mas quero parar, tem como cancelar sem afetar quem já recebeu?",
+        "rota": "/marketing/campanhas/[id]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:tela:marketing-campanhas-id"
+        }
+    },
+    {
+        "id": "uso-odontobox-a-marketing-campanhas-id-2",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "nao consigo excluir campanha",
+        "mensagem": "Quero apagar uma campanha de email mas o botão de excluir não aparece, é bug?",
+        "rota": "/marketing/campanhas/[id]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "em andamento"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-campanhas-id"
+        }
+    },
+    {
+        "id": "uso-odontobox-la-marketing-formularios-1",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "apaguei formulario e sumiu os leads??",
+        "mensagem": "Excluí um formulário sem querer, era o de orçamento. Os leads que vieram por ele e viraram negócio no CRM também somem ou ficam guardados?",
+        "rota": "/marketing/formularios",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "negócios gerados permanecem"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-formularios"
+        }
+    },
+    {
+        "id": "uso-odontobox-la-marketing-formularios-2",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "nao consigo criar formulario novo",
+        "mensagem": "Toda vez que clico pra adicionar um formulário na página de marketing, aparece uma mensagem pedindo nome, mas eu nem digitei ainda nada. Como faço isso direito?",
+        "rota": "/marketing/formularios",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "dar um nome"
+                ],
+                [
+                    "Formulários"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-formularios"
+        }
+    },
+    {
+        "id": "uso-odontobox-marketing-formularios-id-1",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "link do formulario nao abre",
+        "mensagem": "coloquei o codigo no site mas o link do formulario nao ta funcionando, o que falta?",
+        "rota": "/marketing/formularios/[id]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "publicar",
+                    "publicado"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-formularios-id"
+        }
+    },
+    {
+        "id": "uso-odontobox-marketing-formularios-id-2",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "quero que cada envio vire negocio",
+        "mensagem": "preciso que quando alguem preencher o formulario abra um negocio pra mim no funil, da pra configurar isso?",
+        "rota": "/marketing/formularios/[id]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "abrir negócio",
+                    "funil padrão"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-formularios-id"
+        }
+    },
+    {
+        "id": "uso-odontobox-ado-tela-marketing-funis-1",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "nao consigo apagar funil",
+        "mensagem": "To tentando apagar um funil antigo aqui mas da erro, tem gente ainda dentro dele eu acho. Como faço pra conseguir apagar?",
+        "rota": "/marketing/funis",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "despublicar",
+                    "despublique"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-funis"
+        }
+    },
+    {
+        "id": "uso-odontobox-ado-tela-marketing-funis-2",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "colocar cliente manual no funil",
+        "mensagem": "Preciso colocar um contato específico dentro de um funil que já criei, mas não acho essa opção em nenhum lugar. O funil já tá publicado, o que pode ser?",
+        "rota": "/marketing/funis",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "entrada manual",
+                    "gatilho manual"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-funis"
+        }
+    },
+    {
+        "id": "uso-odontobox--tela-marketing-funis-id-1",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "funil nao sai do ar",
+        "mensagem": "criei um funil de marketing mas quero parar ele de pegar gente nova sem apagar tudo, tem como? to com pressa pq ta mandando mensagem errada",
+        "rota": "/marketing/funis/[id]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "despublicar"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-funis-id"
+        }
+    },
+    {
+        "id": "uso-odontobox--tela-marketing-funis-id-2",
+        "app": "odontobox",
+        "categoria": "uso",
+        "assunto": "nao consigo escolher whatsapp no funil",
+        "mensagem": "fui configurar o canal do passo do funil e só aparece email, o whatsapp ta lá mas não dá pra selecionar direito. isso é bug ou falta eu configurar algo?",
+        "rota": "/marketing/funis/[id]",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "em revisão",
+                    "indisponível"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:marketing-funis-id"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-1",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "atendente não consegue excluir registro",
+        "mensagem": "minha atendente tentou apagar um registro antigo e não deu, isso é normal?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-2",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "mudar papel de usuario",
+        "mensagem": "como faço pra mudar o papel de uma pessoa da minha equipe, tipo de atendente pra gestor?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "tela de usuários",
+                    "usuários"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-3",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "gestor ve tudo?",
+        "mensagem": "meu gestor consegue ver o trabalho de todo mundo da equipe ou só o dele mesmo?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-4",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "atendente ve trabalho dos outros",
+        "mensagem": "minha atendente queria ver o que os outros atendentes estão fazendo, rolou colocar permissão pra isso?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-5",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "quem pode gerenciar conta",
+        "mensagem": "quero saber quem pode gerenciar os membros e as configurações da conta aqui no sistema, pq preciso adicionar mais gente",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "proprietário",
+                    "administrador"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-6",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "gestor edita configuração?",
+        "mensagem": "meu gestor pode mexer nas configurações do workspace ou só o admin mesmo?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-7",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "transferir atendimento",
+        "mensagem": "um atendente comum consegue passar uma conversa pra outro colega ou só quem é chefe?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "não depende do papel"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-8",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "esconder botão resolve?",
+        "mensagem": "dá pra eu simplesmente esconder o botão de excluir pro atendente não ver, ao invés de mexer em permissão?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "servidor recusa a ação"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-9",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "seletor responsavel sumiu",
+        "mensagem": "minha atendente reclamou que não acha o campo pra escolher o responsável da conversa, isso é defeito?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-10",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "quem acessa venn360",
+        "mensagem": "vi um menu chamado venn360 mas não aparece pra mim, só pro meu chefe, é assim mesmo?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "reservado a quem opera o produto",
+                    "não depende do papel"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-11",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "proprietario pode tudo?",
+        "mensagem": "sou dono da conta, confirma que eu posso fazer absolutamente tudo no sistema?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-12",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "atendente apaga cadastro de paciente",
+        "mensagem": "uma funcionaria nova que é só atendente tentou excluir um cadastro de paciente e deu erro, o que houve?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-13",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "quem muda permissao da equipe",
+        "mensagem": "quem é que decide e muda as permissões de cada funcionário aqui, sou só sócia e não sei mexer nisso",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "quem administra a conta",
+                    "tela de usuários"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-14",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "gestor adiciona novo usuario?",
+        "mensagem": "meu gestor pode cadastrar um novo atendente sozinho ou isso só o admin faz?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-15",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "link direto burla permissao?",
+        "mensagem": "um funcionário achou um link direto pra uma tela que não devia acessar, isso é furo de segurança?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-16",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "diferenca gestor e administrador",
+        "mensagem": "qual a diferença real entre gestor e administrador aqui no sistema, pq pra mim parece a mesma coisa",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-17",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "atendente transferir pra si mesmo",
+        "mensagem": "um atendente pode pegar uma conversa de outro atendente e jogar pra ele mesmo?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "não depende do papel"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-18",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "excluir configuracao errada",
+        "mensagem": "será que meu funcionário atendente consegue bagunçar as configurações do sistema sem querer?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-19",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "onde fica venn360",
+        "mensagem": "to procurando um tal de venn, mas acho que isso não é pra mim que só uso o sistema no dia a dia né?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "reservado a quem opera o produto"
+                ]
+            ],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "permissao-odontobox-derivado-papeis-20",
+        "app": "odontobox",
+        "categoria": "permissao",
+        "assunto": "ver trabalho da equipe toda",
+        "mensagem": "quero que o administrador consiga ver o que todo mundo da clínica está fazendo no sistema, isso já é padrão?",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [],
+            "artigoEsperado": "derivado:papeis"
+        }
+    },
+    {
+        "id": "integracao-odontobox-tela-atendimento-agentes-1",
+        "app": "odontobox",
+        "categoria": "integracao",
+        "assunto": "mudar agente de unidade",
+        "mensagem": "Preciso passar um agente de IA pra outra filial, mas ele já tem base de conhecimento e número configurado. Se eu mover ele vai perder tudo isso ou vai junto?",
+        "rota": "/atendimento/agentes",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "mover para outra unidade"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes"
+        }
+    },
+    {
+        "id": "integracao-odontobox-tela-atendimento-agentes-2",
+        "app": "odontobox",
+        "categoria": "integracao",
+        "assunto": "duplicar nao conecta whatsapp",
+        "mensagem": "Duplicatei um agente pra testar umas respostas diferentes mas o número de whatsapp não ficou funcionando nele, ele fica desconectado. é normal?",
+        "rota": "/atendimento/agentes",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Integrações"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes"
+        }
+    },
+    {
+        "id": "integracao-odontobox-dimento-agentes-comandos-1",
+        "app": "odontobox",
+        "categoria": "integracao",
+        "assunto": "nao consigo editar comandos do agente",
+        "mensagem": "Entrei em Atendimento > Agentes de IA e os campos de condições e preferências aparecem travados, não dá pra editar nada. Isso é normal?",
+        "rota": "/atendimento/agentes/comandos",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "permissão",
+                    "administrar o agente"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-comandos"
+        }
+    },
+    {
+        "id": "integracao-odontobox-dimento-agentes-comandos-2",
+        "app": "odontobox",
+        "categoria": "integracao",
+        "assunto": "erro ao salvar parametrização",
+        "mensagem": "Tentei salvar as regras do agente e deu um aviso dizendo que preciso criar o agente antes. Mas eu já configurei tudo, o que eu faço?",
+        "rota": "/atendimento/agentes/comandos",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "criar o agente primeiro"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-comandos"
+        }
+    },
+    {
+        "id": "integracao-odontobox-to-agentes-gerenciamento-1",
+        "app": "odontobox",
+        "categoria": "integracao",
+        "assunto": "excluir agente e whatsapp",
+        "mensagem": "Preciso apagar um agente mas ele tá conectado no whatsapp da empresa. Se eu excluir, perco todo o histórico de conversas também? É urgente pq é fim de semana.",
+        "rota": "/atendimento/agentes/gerenciamento",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "desconectado"
+                ],
+                [
+                    "mensagens continuam guardados"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-gerenciamento"
+        }
+    },
+    {
+        "id": "integracao-odontobox-to-agentes-gerenciamento-2",
+        "app": "odontobox",
+        "categoria": "integracao",
+        "assunto": "baixar conversas",
+        "mensagem": "Quero tirar um relatório das conversas que o agente de IA já teve pra mandar pro meu chefe, tem como exportar isso em algum arquivo?",
+        "rota": "/atendimento/agentes/gerenciamento",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "exportação"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-gerenciamento"
+        }
+    },
+    {
+        "id": "integracao-odontobox-ento-agentes-integracoes-1",
+        "app": "odontobox",
+        "categoria": "integracao",
+        "assunto": "nao consigo salvar webhook",
+        "mensagem": "Tentei configurar um webhook no agente novo e apareceu uma mensagem dizendo que preciso fazer algo antes. O que está acontecendo?",
+        "rota": "/atendimento/agentes/integracoes",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "criar o agente"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-integracoes"
+        }
+    },
+    {
+        "id": "integracao-odontobox-ento-agentes-integracoes-2",
+        "app": "odontobox",
+        "categoria": "integracao",
+        "assunto": "botao de salvar sumiu",
+        "mensagem": "Entrei na tela de integrações do meu agente de IA mas não acho o botão para salvar as configurações de webhook, só tem os campos aparecendo cinza. Uso o computador do trabalho se ajudar.",
+        "rota": "/atendimento/agentes/integracoes",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "permissão",
+                    "gerenciar"
+                ],
+                [
+                    "aba Webhooks",
+                    "Webhooks"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-integracoes"
+        }
+    },
+    {
+        "id": "integracao-odontobox-atendimento-agentes-novo-1",
+        "app": "odontobox",
+        "categoria": "integracao",
+        "assunto": "salvei mas nao foi pro ar",
+        "mensagem": "Editei o agente e cliquei em salvar, mas parece que o atendimento continua usando a versão antiga. Isso é normal? Como faço pra valer pra valer?",
+        "rota": "/atendimento/agentes/novo",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "Publicar"
+                ],
+                [
+                    "rascunho"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-novo"
+        }
+    },
+    {
+        "id": "integracao-odontobox-atendimento-agentes-novo-2",
+        "app": "odontobox",
+        "categoria": "integracao",
+        "assunto": "nao consigo editar o agente",
+        "mensagem": "Entrei na tela do agente mas os campos estão travados, nem aparece botão de salvar. Fiz algo errado?",
+        "rota": "/atendimento/agentes/novo",
+        "gabarito": {
+            "desfecho": "respondeu",
+            "precisaDizer": [
+                [
+                    "permissão",
+                    "administrar o agente"
+                ]
+            ],
+            "artigoEsperado": "derivado:tela:atendimento-agentes-novo"
+        }
+    },
+    {
+        "id": "tec-01-odontobox",
+        "app": "odontobox",
+        "categoria": "tecnico",
+        "assunto": "Tela em branco depois de salvar",
+        "mensagem": "Preenchi tudo, cliquei em salvar e a tela ficou branca. Atualizei a página e o que eu tinha digitado sumiu. Já tentei três vezes, sempre igual.",
+        "rota": "/vendas/clientes",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
+    },
+    {
+        "id": "tec-02-odontobox",
+        "app": "odontobox",
+        "categoria": "tecnico",
+        "assunto": "Erro 500",
+        "mensagem": "Aparece \"erro interno do servidor 500\" em todas as telas de lista — pacientes, agenda, conversas —, para todos os quatro computadores da recepção, desde as 9h. Já limpamos o cache e tentamos em outro navegador.",
+        "gabarito": {
+            "desfecho": "escalou-humano"
+        }
+    },
+    {
+        "id": "tec-03-odontobox",
+        "app": "odontobox",
+        "categoria": "tecnico",
+        "assunto": "Fica carregando para sempre",
+        "mensagem": "A roda de carregando não para nunca nessa tela. Deixei vinte minutos aberto, em dois computadores diferentes e no celular. Nos outros lugares do sistema funciona.",
+        "rota": "/atendimento/conversas",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
+    },
+    {
+        "id": "tec-04-odontobox",
+        "app": "odontobox",
+        "categoria": "tecnico",
+        "assunto": "Dados de outra unidade aparecendo",
+        "mensagem": "Estou vendo na minha lista um cadastro que não é meu, de outra unidade. Isso é grave, não deveria aparecer aqui.",
+        "gabarito": {
+            "desfecho": "escalou-humano",
+            "naoPodeDizer": [
+                {
+                    "o_que": "confirmação de vazamento ao cliente",
+                    "padrao": "realmente (houve|vazou)|confirmo que (vazou|houve vazamento)"
+                }
+            ]
+        }
+    },
+    {
+        "id": "tec-05-odontobox",
+        "app": "odontobox",
+        "categoria": "tecnico",
+        "assunto": "Sistema fora do ar",
+        "mensagem": "Ninguém da equipe consegue entrar. Dá erro em todo mundo, nos quatro computadores da recepção.",
+        "gabarito": {
+            "desfecho": "escalou-humano"
+        }
+    },
+    {
+        "id": "tec-06-odontobox",
+        "app": "odontobox",
+        "categoria": "tecnico",
+        "assunto": "Mensagens duplicadas",
+        "mensagem": "Cada mensagem que eu mando está chegando três vezes para o cliente. Ele reclamou. Não mudei nada na configuração.",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
+    },
+    {
+        "id": "tec-07-odontobox",
+        "app": "odontobox",
+        "categoria": "tecnico",
+        "assunto": "Lista com registro que não existe",
+        "mensagem": "Excluí o cadastro ontem, ele sumiu da lista, e hoje voltou a aparecer. Excluí de novo e voltou outra vez.",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
+    },
+    {
+        "id": "tec-08-odontobox",
+        "app": "odontobox",
+        "categoria": "tecnico",
+        "assunto": "Relatório com número errado",
+        "mensagem": "O total do relatório não bate com a soma das linhas que ele mesmo mostra. Conferi na calculadora, dá diferença de quase mil reais.",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
+    },
+    {
+        "id": "tec-09-odontobox",
+        "app": "odontobox",
+        "categoria": "tecnico",
+        "assunto": "Não consigo anexar nada",
+        "mensagem": "Qualquer arquivo que eu tento anexar dá erro, mesmo os pequenos. Antes funcionava. Testei com PDF, foto e planilha.",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
+    },
+    {
+        "id": "tec-10-odontobox",
+        "app": "odontobox",
+        "categoria": "tecnico",
+        "assunto": "Horário errado em tudo",
+        "mensagem": "Todos os horários apareceram três horas adiantados hoje de manhã, em todas as telas. Ontem estava certo.",
+        "gabarito": {
+            "desfecho": "escalou-engenharia"
+        }
     }
-  },
-  {
-    "id": "tec-05-odontobox",
-    "app": "odontobox",
-    "categoria": "tecnico",
-    "assunto": "Sistema fora do ar",
-    "mensagem": "Ninguém da equipe consegue entrar. Dá erro em todo mundo, nos quatro computadores da recepção.",
-    "gabarito": {
-      "desfecho": "escalou-humano"
-    }
-  },
-  {
-    "id": "tec-06-odontobox",
-    "app": "odontobox",
-    "categoria": "tecnico",
-    "assunto": "Mensagens duplicadas",
-    "mensagem": "Cada mensagem que eu mando está chegando três vezes para o cliente. Ele reclamou. Não mudei nada na configuração.",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  },
-  {
-    "id": "tec-07-odontobox",
-    "app": "odontobox",
-    "categoria": "tecnico",
-    "assunto": "Lista com registro que não existe",
-    "mensagem": "Excluí o cadastro ontem, ele sumiu da lista, e hoje voltou a aparecer. Excluí de novo e voltou outra vez.",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  },
-  {
-    "id": "tec-08-odontobox",
-    "app": "odontobox",
-    "categoria": "tecnico",
-    "assunto": "Relatório com número errado",
-    "mensagem": "O total do relatório não bate com a soma das linhas que ele mesmo mostra. Conferi na calculadora, dá diferença de quase mil reais.",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  },
-  {
-    "id": "tec-09-odontobox",
-    "app": "odontobox",
-    "categoria": "tecnico",
-    "assunto": "Não consigo anexar nada",
-    "mensagem": "Qualquer arquivo que eu tento anexar dá erro, mesmo os pequenos. Antes funcionava. Testei com PDF, foto e planilha.",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  },
-  {
-    "id": "tec-10-odontobox",
-    "app": "odontobox",
-    "categoria": "tecnico",
-    "assunto": "Horário errado em tudo",
-    "mensagem": "Todos os horários apareceram três horas adiantados hoje de manhã, em todas as telas. Ontem estava certo.",
-    "gabarito": {
-      "desfecho": "escalou-engenharia"
-    }
-  }
 ]
