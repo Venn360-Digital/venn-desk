@@ -51,7 +51,7 @@ export const esquemaDaTela = z
                         nome: curto,
                         obrigatorio: z.boolean().optional(),
                         /** O que o campo aceita ou sugere, quando o arquivo diz. */
-                        oQueAceita: z.string().trim().max(200).optional(),
+                        oQueAceita: z.string().trim().min(1).max(200).optional(),
                     })
                     .strict()
             )

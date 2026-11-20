@@ -47,10 +47,13 @@ export function renderizarTela(
         ),
         ...bloco(
             'Campos',
-            tela.campos.map(
-                (c) =>
-                    `- **${r(c.nome)}**${c.obrigatorio === true ? ' (obrigatório)' : ''}${c.oQueAceita === undefined ? '' : ` — ${r(c.oQueAceita)}`}`
-            )
+            tela.campos.map((c) => {
+                /// Travessão só quando há o que vir depois dele: o modelo
+                /// devolve `oQueAceita` em branco quando o arquivo não diz, e
+                /// "**Nome** — " solto parece texto faltando.
+                const aceita = (c.oQueAceita ?? '').trim()
+                return `- **${r(c.nome)}**${c.obrigatorio === true ? ' (obrigatório)' : ''}${aceita === '' ? '' : ` — ${r(aceita)}`}`
+            })
         ),
         ...bloco(
             'Avisos que o sistema dá',

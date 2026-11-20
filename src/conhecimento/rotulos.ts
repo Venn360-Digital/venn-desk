@@ -16,9 +16,23 @@ export interface Procedencia {
     commit: string
 }
 
+/**
+ * Até quantos caminhos o rodapé nomeia antes de resumir.
+ *
+ * Uma tela com seis arquivos rendia 400 caracteres de rodapé para 1.600 de
+ * conteúdo — e o agente lê o artigo inteiro a cada passo. O que o rodapé
+ * precisa provar é a procedência, e para isso basta o arquivo principal, a
+ * contagem do resto e o commit uma vez.
+ */
+const CAMINHOS_NO_RODAPE = 2
+
 export function rodape(p: Procedencia): string {
-    const caminhos = p.caminhos.map((c) => `${c} @ ${p.commit.slice(0, 7)}`).join(', ')
-    return `---\nFonte: ${p.descricao} (${caminhos})`
+    const curto = p.commit.slice(0, 7)
+    const nomeados = p.caminhos.slice(0, CAMINHOS_NO_RODAPE)
+    const resto = p.caminhos.length - nomeados.length
+    const lista = nomeados.join(', ') + (resto > 0 ? ` e mais ${resto} arquivo${resto > 1 ? 's' : ''}` : '')
+
+    return `---\nFonte: ${p.descricao} (${lista} @ ${curto})`
 }
 
 const FUSO = 'America/Sao_Paulo'

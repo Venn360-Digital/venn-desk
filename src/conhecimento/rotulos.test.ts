@@ -9,6 +9,18 @@ describe('rótulos de procedência', () => {
         )
     })
 
+    it('com muitos arquivos, resume — o agente lê o artigo inteiro a cada passo', () => {
+        /// Medido em 20/11/2026: uma tela com seis arquivos rendia 400
+        /// caracteres de rodapé para 1.600 de conteúdo.
+        const r = rodape({ descricao: 'a tela X do produto', caminhos: ['a/um.tsx', 'a/dois.ts', 'a/tres.ts', 'a/quatro.ts'], commit: 'b'.repeat(40) })
+        expect(r).toBe('---\nFonte: a tela X do produto (a/um.tsx, a/dois.ts e mais 2 arquivos @ bbbbbbb)')
+        expect(r.length).toBeLessThan(90)
+    })
+
+    it('um arquivo a mais fala no singular', () => {
+        expect(rodape({ descricao: 'x', caminhos: ['a', 'b', 'c'], commit: 'c'.repeat(40) })).toContain('e mais 1 arquivo @')
+    })
+
     it('o rótulo do derivado traz data em São Paulo e o commit', () => {
         const r = rotuloDaOrigem({
             origem: 'DERIVADO',

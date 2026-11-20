@@ -1,6 +1,6 @@
 import { rodape, slug } from '../rotulos.ts'
 import type { ArtigoRenderizado, ContextoDeRenderizacao } from '../tipos.ts'
-import type { SecaoDoProduto } from '../extrair/produto.ts'
+import type { Produto } from '../extrair/produto.ts'
 import { substituirVocabulario } from './vocabulario.ts'
 
 /**
@@ -15,15 +15,11 @@ import { substituirVocabulario } from './vocabulario.ts'
 export const PREFIXO_PRODUTO = 'derivado:produto:'
 export const CAMINHO_DO_PRODUTO = 'PRODUCT.md'
 
-export function renderizarProduto(
-    secoes: SecaoDoProduto[],
-    ctx: ContextoDeRenderizacao,
-    vocabularioDaFonte: ContextoDeRenderizacao['vocabulario']
-): ArtigoRenderizado[] {
-    const traduzir = ctx.vocabulario.pessoa !== vocabularioDaFonte.pessoa
+export function renderizarProduto(produto: Produto, ctx: ContextoDeRenderizacao): ArtigoRenderizado[] {
+    const traduzir = ctx.vocabulario.pessoa !== produto.vocabularioDaFonte.pessoa
 
-    return secoes.map((secao) => {
-        const corpo = traduzir ? substituirVocabulario(secao.corpo, vocabularioDaFonte, ctx.vocabulario) : secao.corpo
+    return produto.secoes.map((secao) => {
+        const corpo = traduzir ? substituirVocabulario(secao.corpo, produto.vocabularioDaFonte, ctx.vocabulario) : secao.corpo
 
         return {
             chave: `${PREFIXO_PRODUTO}${secao.numero}-${slug(secao.titulo)}`,

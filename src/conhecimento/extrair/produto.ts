@@ -1,4 +1,4 @@
-import { ErroDeExtracao } from '../tipos.ts'
+import { ErroDeExtracao, type Vocabulario } from '../tipos.ts'
 
 /**
  * As regras de produto, de `PRODUCT.md` — determinístico, por título.
@@ -21,6 +21,21 @@ export interface SecaoDoProduto {
     numero: number
     titulo: string
     corpo: string
+}
+
+/**
+ * As seções e o vocabulário em que elas foram ESCRITAS.
+ *
+ * O `PRODUCT.md` fala em clínica e paciente porque o Odontobox foi o primeiro
+ * produto. Para os outros dois, a renderização troca as palavras — e precisa
+ * saber de quais partir. Guardar isso aqui, junto do que foi extraído, evita
+ * que o renderizador adivinhe ou que alguém o fixe no código.
+ */
+export interface Produto {
+    secoes: SecaoDoProduto[]
+    vocabularioDaFonte: Vocabulario
+    /** O app cujo vocabulário escreveu o arquivo. */
+    appDaFonte: string
 }
 
 const TITULO = /^## (\d+)\.\s+(.+)$/gm
