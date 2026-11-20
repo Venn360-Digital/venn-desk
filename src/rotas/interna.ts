@@ -26,6 +26,7 @@ import { avisosDoTema, esquemaDoTema, lerTema } from '../dominio/tema.ts'
 import { esquemaDoArtigo, STATUS, type StatusDoArtigo } from '../dominio/artigo.ts'
 import { resolverAtores } from '../dominio/ator.ts'
 import { resumirCsat } from '../dominio/csat.ts'
+import { montarRelatorio } from '../dominio/relatorio.ts'
 import { nomesDeAgentes } from '../dados/agentes.ts'
 import { vigiarPrazos } from '../sla/vigiar.ts'
 import type { CaixaDeSaida } from '../correio/enviar.ts'
@@ -1163,6 +1164,44 @@ rotasInternas.get('/api/console/app/:app/csat', async (c) => {
     const escopo = escopoDoApp(c.get('cliente'), c.get('app').id)
 
     return c.json({ resumo: resumirCsat(await escopo.csat.todas()) })
+})
+
+/**
+ * O painel daquele app (seção 12).
+ *
+ * **A janela é explícita e vai na resposta.** Um painel que mostra "42
+ * chamados" sem dizer de quando convida a comparar números de períodos
+ * diferentes — e é assim que se conclui que o volume caiu quando o que mudou
+ * foi o filtro.
+ */
+const DIAS_PADRAO = 30
+const DIAS_MAXIMO = 365
+
+rotasInternas.get('/api/console/app/:app/painel', async (c) => {
+    const pedido = Number(c.req.query('dias'))
+    const dias =
+        Number.isInteger(pedido) && pedido >= 1 && pedido <= DIAS_MAXIMO ? pedido : DIAS_PADRAO
+
+    const desde = new Date(Date.now() - dias * 24 * 60 * 60 * 1000)
+    const escopo = escopoDoApp(c.get('cliente'), c.get('app').id)
+
+    const [chamados, relogios, notas] = await Promise.all([
+        escopo.painel.chamadosMedidos(desde),
+        escopo.painel.relogiosEncerrados(desde),
+        escopo.csat.todas(),
+    ])
+
+    return c.json({
+        janela: { dias, desde: desde.toISOString() },
+        relatorio: montarRelatorio(chamados, relogios),
+        /**
+         * O CSAT vem SEM recorte de período, e a resposta diz isso pelo nome do
+         * campo. São poucas respostas por natureza — filtrar trinta dias as
+         * reduziria a nada e o painel mostraria vazio num indicador que tem
+         * dado.
+         */
+        csatDeSempre: resumirCsat(notas),
+    })
 })
 
 /** Quem está logado. É como a SPA do Console sabe se há sessão. */

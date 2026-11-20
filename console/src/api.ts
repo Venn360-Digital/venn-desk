@@ -84,6 +84,37 @@ export interface AppCadastrado {
  * Os campos opcionais são opcionais de propósito: ausente significa "herde do
  * app", e é diferente de uma cor escolhida que por acaso é a do app.
  */
+/** Uma medida que pode legitimamente não existir. Veja `src/dominio/relatorio.ts`. */
+export interface DistribuicaoDeTempo {
+    casos: number
+    /** Minutos. NULO quando a amostra não sustenta — nunca zero. */
+    mediana: number | null
+    p90: number | null
+}
+
+export interface PainelDoApp {
+    janela: { dias: number; desde: string }
+    relatorio: {
+        chamados: number
+        porTipo: Record<string, number>
+        porPrioridade: Record<string, number>
+        porStatus: Record<string, number>
+        primeiraResposta: DistribuicaoDeTempo
+        resolucao: DistribuicaoDeTempo
+        resolucaoPelaIa: { casos: number; deQuantos: number; percentual: number | null }
+        reabertura: { casos: number; deQuantos: number; percentual: number | null }
+        sla: { cumpridos: number; violados: number; percentual: number | null }
+        custo: { total: number; porChamado: number | null }
+    }
+    csatDeSempre: {
+        respostas: number
+        media: number | null
+        baixas: number
+        daIa: { respostas: number; media: number | null }
+        deHumano: { respostas: number; media: number | null }
+    }
+}
+
 export type StatusDoArtigo = 'RASCUNHO' | 'PUBLICADO' | 'ARQUIVADO'
 
 /** Um artigo da base. `global` é `appId` nulo: vale para os três produtos. */

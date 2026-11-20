@@ -5,6 +5,7 @@ import {
     Inbox,
     KeyRound,
     Layers,
+    BarChart3,
     BookOpen,
     MessageCircle,
     Monitor,
@@ -41,6 +42,7 @@ interface Secao {
 
 const SECOES: Secao[] = [
     { para: '/', rotulo: 'Fila', Icone: Inbox, fim: true },
+    { para: '/painel', rotulo: 'Painel', Icone: BarChart3 },
     { para: '/metas', rotulo: 'Metas', Icone: Gauge },
     { para: '/credenciais', rotulo: 'Credenciais', Icone: KeyRound },
     { para: '/base', rotulo: 'Base', Icone: BookOpen },

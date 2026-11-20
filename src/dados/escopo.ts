@@ -12,6 +12,7 @@ import {
     type StatusDoArtigo,
 } from '../dominio/artigo.ts'
 import { parecidos } from '../dominio/busca.ts'
+import type { ChamadoMedido } from '../dominio/relatorio.ts'
 import {
     aoMudarStatus,
     metaEmMinutos,
@@ -245,6 +246,19 @@ export interface EscopoDoApp {
         }): Promise<CsatResponse>
         /** Todas as notas do app, para o resumo. */
         todas(): Promise<{ nota: number; atendidoPelaIa: boolean }[]>
+    }
+
+    /**
+     * O cru do painel (seção 12).
+     *
+     * Devolve FATOS por chamado — tempos, quem respondeu, custo — e nenhuma
+     * conta. A agregação mora em `src/dominio/relatorio.ts`, onde roda sem
+     * banco e tem teste; aqui ficaria sem prova e com `appId` misturado à
+     * estatística.
+     */
+    painel: {
+        chamadosMedidos(desde: Date): Promise<ChamadoMedido[]>
+        relogiosEncerrados(desde: Date): Promise<{ violadoEm: Date | null; cumpridoEm: Date | null }[]>
     }
 
     /**
@@ -1073,6 +1087,98 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                     data: { resolvidoEm: new Date() },
                 })
                 return count === 1 ? conexao.problem.findFirst({ where: { id, appId } }) : null
+            },
+        },
+
+        painel: {
+            async chamadosMedidos(desde) {
+                /**
+                 * UMA consulta, com mensagens e eventos juntos.
+                 *
+                 * A alternativa — um `findMany` de chamados e depois um de
+                 * mensagens por chamado — é o laço N+1 clássico, e aqui ele
+                 * seria sobre a tabela que mais cresce. Com `include`, o
+                 * Postgres faz o trabalho uma vez.
+                 */
+                const chamados = await conexao.ticket.findMany({
+                    where: { appId, excluidoEm: null, criadoEm: { gte: desde } },
+                    select: {
+                        tipo: true,
+                        prioridade: true,
+                        status: true,
+                        criadoEm: true,
+                        primeiraRespostaEm: true,
+                        messages: {
+                            where: { visibilidade: 'PUBLICA', rascunho: false },
+                            select: { autor: true },
+                        },
+                        events: {
+                            select: { evento: true, depois: true, criadoEm: true },
+                            orderBy: { criadoEm: 'asc' },
+                        },
+                    },
+                })
+
+                const minutos = (de: Date, ate: Date) =>
+                    Math.max(0, Math.round((ate.getTime() - de.getTime()) / 60_000))
+
+                return chamados.map((c) => {
+                    /// A resolução é o PRIMEIRO `status:resolver` da trilha: um
+                    /// chamado reaberto e resolvido de novo levou, para quem
+                    /// esperava, o tempo até a primeira vez.
+                    const resolveu = c.events.find(
+                        (e) => e.evento === 'status:resolver' || e.evento === 'status:resolver_por_inatividade'
+                    )
+
+                    const voltou =
+                        resolveu !== undefined &&
+                        c.events.some(
+                            (e) =>
+                                e.evento === 'status:mensagem_do_usuario' &&
+                                e.criadoEm > resolveu.criadoEm
+                        )
+
+                    const custo = c.events
+                        .filter((e) => e.evento === 'agente:atendeu' || e.evento === 'agente:teto')
+                        .reduce((soma, e) => {
+                            const d = e.depois as { custoEstimadoUsd?: number } | null
+                            return soma + (d?.custoEstimadoUsd ?? 0)
+                        }, 0)
+
+                    return {
+                        tipo: c.tipo,
+                        prioridade: c.prioridade,
+                        status: c.status,
+                        minutosAteResposta:
+                            c.primeiraRespostaEm === null
+                                ? null
+                                : minutos(c.criadoEm, c.primeiraRespostaEm),
+                        minutosAteResolver:
+                            resolveu === undefined ? null : minutos(c.criadoEm, resolveu.criadoEm),
+                        respondidoPelaIa: c.messages.some((m) => m.autor === 'IA'),
+                        respondidoPorHumano: c.messages.some((m) => m.autor === 'HUMANO'),
+                        reaberto: voltou,
+                        custoDaIa: custo,
+                    }
+                })
+            },
+
+            async relogiosEncerrados(desde) {
+                /// Só os que terminaram. Relógio ainda correndo não é cumprido
+                /// nem violado, e contá-lo como qualquer um dos dois mentiria.
+                return conexao.slaTimer.findMany({
+                    where: {
+                        appId,
+                        /// Pela data do CHAMADO, não do relógio: `SlaTimer` não
+                        /// tem `criadoEm`, e a janela que interessa é a dos
+                        /// chamados do período — um relógio de resolução nasce
+                        /// junto do chamado, mas o da PRÓXIMA resposta nasce
+                        /// quando o cliente volta a falar, dias depois.
+                        ticket: { criadoEm: { gte: desde } },
+                        OR: [{ cumpridoEm: { not: null } }, { violadoEm: { not: null } }],
+                    },
+                    select: { violadoEm: true, cumpridoEm: true },
+                })
             },
         },
 
