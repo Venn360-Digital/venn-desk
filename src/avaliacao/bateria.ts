@@ -137,6 +137,14 @@ export interface ResultadoDoCaso {
     custoEstimado: number
 }
 
+/** Um artigo que chegou ao agente, e por qual caminho. */
+export interface ArtigoVisto {
+    chave: string
+    /** O texto que o agente de fato viu: inteiro, se abriu; o resumo, se não. */
+    texto: string
+    aberto: boolean
+}
+
 export interface Observado {
     aoCliente: string
     escalouPara: string[]
@@ -144,6 +152,8 @@ export interface Observado {
     artigosLidos: string[]
     /** Devolvidos pela busca, com o resumo. */
     artigosDevolvidos?: { chave: string; tamanho: number }[]
+    /** Tudo que chegou ao agente, com o texto que ele viu. */
+    vistos?: ArtigoVisto[]
 }
 
 /**
@@ -175,23 +185,32 @@ export function conferirCaso(
      * abrir o artigo certo ou adivinhou, ou respondeu pelo resumo da busca — e
      * o resumo tem 600 caracteres, cortados no começo.
      */
-    const esperado = caso.gabarito.artigoEsperado
-    if (caso.gabarito.desfecho === 'respondeu' && esperado !== undefined) {
-        /**
-         * Artigo CURTO não precisa ser aberto, e exigir isso reprovava o
-         * comportamento eficiente.
-         *
-         * A busca devolve um resumo de 600 caracteres; os artigos da FAQ têm
-         * 388. Para eles, o resumo É o artigo inteiro, e abrir de novo seria
-         * gastar um passo para reler o que já está no contexto. Medido em
-         * 20/11/2026: nove das dez falhas de "dúvida" eram isto.
-         */
-        const devolvido = (obs.artigosDevolvidos ?? []).find((a) => a.chave === esperado)
-        const bastaODevolvido = devolvido !== undefined && devolvido.tamanho <= RESUMO_MAXIMO
-        const chegou = obs.artigosLidos.includes(esperado) || bastaODevolvido
+    /**
+     * A FONTE: o agente chegou a um artigo que CONTÉM a resposta?
+     *
+     * Não exige o artigo de onde a pergunta saiu, e isso é correção de um
+     * defeito meu. A base tem redundância legítima: a FAQ resume o que a regra
+     * de produto detalha, e em nove das dez falhas de "dúvida" de 20/11/2026 o
+     * agente leu a REGRA em vez da FAQ — fonte igualmente boa, ou melhor.
+     * Exigir a fonte exata media de onde eu tirei a pergunta.
+     *
+     * O que se exige: um artigo que ele viu contendo os termos do gabarito.
+     * Artigo curto conta pelo resumo (600 caracteres cobrem os 388 da FAQ);
+     * artigo longo precisa ter sido aberto, porque o resumo corta no começo.
+     */
+    const termos = (caso.gabarito.precisaDizer ?? []).flat()
+    if (caso.gabarito.desfecho === 'respondeu' && termos.length > 0) {
+        const vistos = obs.vistos ?? []
+        const comResposta = vistos.filter((a) => {
+            if (!a.aberto && a.texto.length >= RESUMO_MAXIMO) return false
+            const conteudo = dobrar(a.texto)
+            return termos.some((t) => conteudo.includes(dobrar(t)))
+        })
 
-        if (!chegou) {
-            falhas.push(`não leu o artigo que responde (${esperado}); leu: ${obs.artigosLidos.join(', ') || 'nenhum'}`)
+        if (vistos.length > 0 && comResposta.length === 0) {
+            falhas.push(
+                `não chegou a nenhum artigo com a resposta; viu: ${vistos.map((a) => a.chave).join(', ') || 'nenhum'}`
+            )
         }
     }
 

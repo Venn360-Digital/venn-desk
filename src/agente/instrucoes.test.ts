@@ -122,3 +122,30 @@ describe('o bloco da base viva', () => {
         expect(texto).not.toContain('## A base é viva')
     })
 })
+
+describe('quando escalar para engenharia', () => {
+    it('o bloco existe e nomeia os três sintomas de defeito', () => {
+        /**
+         * A lacuna que a bateria encontrou em 20/11/2026: diante de "excluí e
+         * voltou" e "o total não bate com a soma", o agente pedia detalhes e
+         * seguia investigando — que é o certo para uma dúvida, e nenhuma dessas
+         * é dúvida.
+         */
+        const texto = montarInstrucoes({ ...BASE, ferramentas: ferramentasDoEscopo('SUPORTE') })
+
+        expect(texto).toContain('## Quando escalar para engenharia')
+        expect(texto).toContain('erro do sistema ao executar uma ação')
+        expect(texto).toContain('registro excluído que volta')
+        expect(texto).toContain('contradiz o produto documentado')
+    })
+
+    it('manda escalar com o que tem quando o cliente já deu o detalhe', () => {
+        const texto = montarInstrucoes({ ...BASE, ferramentas: ferramentasDoEscopo('SUPORTE') })
+        expect(texto).toContain('escale com o que tem em vez de pedir mais')
+    })
+
+    it('chamar uma PESSOA vem antes: indisponibilidade geral tem precedência', () => {
+        const texto = montarInstrucoes({ ...BASE, ferramentas: ferramentasDoEscopo('SUPORTE') })
+        expect(texto.indexOf('## Quando chamar uma pessoa')).toBeLessThan(texto.indexOf('## Quando escalar para engenharia'))
+    })
+})

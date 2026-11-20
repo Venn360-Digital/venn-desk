@@ -35,6 +35,8 @@ export interface Observacao {
     artigosLidos: string[]
     /** O que a busca devolveu, com o tamanho: artigo curto cabe no resumo. */
     artigosDevolvidos: { chave: string; tamanho: number }[]
+    /** Tudo que chegou ao agente, com o texto que ele viu. */
+    vistos: { chave: string; texto: string; aberto: boolean }[]
 }
 
 function escopoComBase(caso: CasoDaBateria, artigos: KbArticle[], obs: Observacao): EscopoDoApp {
@@ -120,14 +122,23 @@ function escopoComBase(caso: CasoDaBateria, artigos: KbArticle[], obs: Observaca
                 /// Registra o que foi DEVOLVIDO, com o tamanho: para artigo
                 /// curto, o resumo da busca já é o artigo inteiro.
                 for (const { artigo } of achados) {
-                    if (artigo.chave != null) obs.artigosDevolvidos.push({ chave: artigo.chave, tamanho: artigo.corpo.length })
+                    if (artigo.chave == null) continue
+                    obs.artigosDevolvidos.push({ chave: artigo.chave, tamanho: artigo.corpo.length })
+                    if (!obs.vistos.some((v) => v.chave === artigo.chave)) {
+                        obs.vistos.push({ chave: artigo.chave, texto: artigo.corpo, aberto: false })
+                    }
                 }
                 return achados
             },
 
             porId: async (id: string) => {
                 const artigo = publicados.find((a) => a.id === id) ?? null
-                if (artigo?.chave != null) obs.artigosLidos.push(artigo.chave)
+                if (artigo?.chave != null) {
+                    obs.artigosLidos.push(artigo.chave)
+                    const visto = obs.vistos.find((v) => v.chave === artigo.chave)
+                    if (visto === undefined) obs.vistos.push({ chave: artigo.chave, texto: artigo.corpo, aberto: true })
+                    else visto.aberto = true
+                }
                 return artigo
             },
 
@@ -156,7 +167,7 @@ export interface PedidoDeCaso {
 }
 
 export async function rodarCasoDaBateria(p: PedidoDeCaso): Promise<ResultadoDoCaso> {
-    const obs: Observacao = { aoCliente: [], notas: [], escalou: [], artigosLidos: [], artigosDevolvidos: [] }
+    const obs: Observacao = { aoCliente: [], notas: [], escalou: [], artigosLidos: [], artigosDevolvidos: [], vistos: [] }
 
     const contexto: Contexto = {
         cliente: null as unknown as PrismaClient,
@@ -185,6 +196,7 @@ export async function rodarCasoDaBateria(p: PedidoDeCaso): Promise<ResultadoDoCa
         escalouPara: obs.escalou,
         artigosLidos: obs.artigosLidos,
         artigosDevolvidos: obs.artigosDevolvidos,
+        vistos: obs.vistos,
     })
 
     return {

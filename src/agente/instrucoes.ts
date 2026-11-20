@@ -124,6 +124,23 @@ export function montarInstrucoes(alvo: Alvo): string {
         `## Quando chamar uma pessoa, sempre\n${CASOS_DE_HUMANO.map((c) => `- ${c}`).join('\n')}\n\nNestes casos não tente resolver primeiro. Escale e pare.`,
 
         /**
+         * Quando escalar para ENGENHARIA, e por que isto faltava.
+         *
+         * A bateria de 20/11/2026 encontrou a lacuna: diante de "excluí e o
+         * cadastro voltou", "o total não bate com a soma das linhas" e "os
+         * horários vieram três horas adiantados", o agente pedia mais detalhes
+         * e seguia investigando. Era o comportamento esperado para uma dúvida —
+         * e nenhuma dessas é dúvida. A base diz como o produto FUNCIONA; um
+         * defeito é a notícia de que ele parou, e nenhum artigo vai responder.
+         *
+         * Vem depois do bloco de chamar uma pessoa de propósito: indisponibilidade
+         * geral e suspeita de vazamento são daquele bloco, e têm precedência.
+         */
+        tem('escalar')
+            ? `## Quando escalar para engenharia\nSintoma de DEFEITO do produto não tem resposta na base, e investigar não é o seu papel. Escale para engenharia quando o cliente descrever:\n- erro do sistema ao executar uma ação (tela em branco, mensagem de erro interno, falha ao salvar ou ao anexar)\n- dado que não se comporta (registro excluído que volta, número que não fecha com a soma exibida, duplicação)\n- comportamento que contradiz o produto documentado (horário, cálculo ou permissão diferente do que a base diz)\n\nUm detalhe que ajude a reproduzir é bem-vindo, e você pode pedi-lo — mas só quando ele faltar. Se o cliente já disse em que tela, desde quando e o que já tentou, escale com o que tem em vez de pedir mais.\n\nNão prometa correção nem prazo, e não diga que é "um bug": diga que vai registrar para o time técnico olhar.`
+            : null,
+
+        /**
          * A seção da qualidade.
          *
          * Ela vem ANTES dos limites de propósito: um agente que só leu o que

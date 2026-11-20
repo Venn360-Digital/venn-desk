@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { RESUMO_MAXIMO } from '../dominio/artigo.ts'
 import { conferirCaso, montarRelatorio, passouNoAceite, PISO_DE_ACEITE, TOTAL_POR_APP, type CasoDaBateria, type ResultadoDoCaso } from './bateria.ts'
 
 const caso = (dados: Partial<CasoDaBateria> = {}): CasoDaBateria => ({
@@ -20,6 +21,7 @@ const obs = (dados: Partial<Parameters<typeof conferirCaso>[1]> = {}) => ({
     aoCliente: 'Abra Marketing → Domínios e confira os registros publicados.',
     escalouPara: [],
     artigosLidos: ['derivado:tela:marketing-remetentes'],
+    vistos: [{ chave: 'derivado:tela:marketing-remetentes', texto: 'Onde fica: Marketing → Domínios. Confira os registros no DNS.', aberto: true }],
     ...dados,
 })
 
@@ -170,66 +172,59 @@ describe('a natureza da falha', () => {
     })
 })
 
-describe('a FONTE: quem responde tem de ter lido o artigo', () => {
-    it('responder sem abrir o artigo certo reprova', () => {
-        /// Ou adivinhou, ou respondeu pelo resumo da busca — que tem 600
-        /// caracteres, cortados no começo.
-        const r = conferirCaso(caso(), obs({ artigosLidos: [] }))
+describe('a FONTE: o agente chegou a um artigo com a resposta?', () => {
+    it('responder sem chegar a nenhum artigo com a resposta reprova', () => {
+        const r = conferirCaso(
+            caso(),
+            obs({ vistos: [{ chave: 'derivado:menu', texto: 'Dashboard, Favoritos, Atendimento.', aberto: true }] })
+        )
         expect(r.passou).toBe(false)
-        expect(r.falhas[0]).toContain('não leu o artigo que responde')
+        expect(r.falhas[0]).toContain('não chegou a nenhum artigo com a resposta')
         expect(r.natureza).toBe('dura')
     })
 
-    it('ler o artigo certo entre outros basta', () => {
-        const r = conferirCaso(caso(), obs({ artigosLidos: ['derivado:menu', 'derivado:tela:marketing-remetentes'] }))
-        expect(r.passou).toBe(true)
-    })
-
-    it('de quem escala não se exige leitura: o caso não está na base', () => {
-        const r = conferirCaso(
-            caso({ gabarito: { desfecho: 'escalou-humano', artigoEsperado: 'derivado:emails' } }),
-            obs({ aoCliente: '', escalouPara: ['humano'], artigosLidos: [] })
-        )
-        expect(r.passou).toBe(true)
-    })
-
-    it('caso sem artigo esperado não exige leitura nenhuma', () => {
-        const r = conferirCaso(caso({ gabarito: { desfecho: 'respondeu' } }), obs({ artigosLidos: [] }))
-        expect(r.passou).toBe(true)
-    })
-})
-
-describe('artigo curto não precisa ser aberto', () => {
-    const curto = { chave: 'derivado:faq:o-que-e-um-credito', tamanho: 388 }
-    const longo = { chave: 'derivado:tela:marketing-remetentes', tamanho: 2027 }
-
-    it('o resumo da busca JÁ é o artigo inteiro quando ele cabe nele', () => {
+    it('OUTRO artigo com a mesma resposta basta: a base tem redundância legítima', () => {
         /**
-         * A busca devolve 600 caracteres; os artigos da FAQ têm 388. Exigir
-         * que o agente abra o que já leu gastava um passo para reler — e nove
-         * das dez falhas de "dúvida" em 20/11/2026 eram isto.
+         * Em nove das dez falhas de "dúvida" de 20/11/2026 o agente leu a
+         * REGRA de produto em vez da FAQ de onde a pergunta saiu — fonte
+         * igualmente boa, ou melhor. Exigir a fonte exata media de onde eu
+         * tirei a pergunta.
          */
         const r = conferirCaso(
-            caso({ gabarito: { desfecho: 'respondeu', artigoEsperado: curto.chave } }),
-            obs({ artigosLidos: [], artigosDevolvidos: [curto] })
+            caso(),
+            obs({
+                vistos: [{ chave: 'derivado:produto:7-envio', texto: 'Os registros de DNS do domínio precisam estar publicados.', aberto: true }],
+            })
         )
         expect(r.passou).toBe(true)
     })
 
-    it('artigo LONGO devolvido na busca não basta: o resumo corta no começo', () => {
-        const r = conferirCaso(
-            caso({ gabarito: { desfecho: 'respondeu', artigoEsperado: longo.chave } }),
-            obs({ artigosLidos: [], artigosDevolvidos: [longo] })
-        )
+    it('artigo LONGO só visto no resumo não conta: o resumo corta no começo', () => {
+        const longo = 'x'.repeat(RESUMO_MAXIMO) + ' registros'
+        const r = conferirCaso(caso(), obs({ vistos: [{ chave: 'derivado:tela:x', texto: longo, aberto: false }] }))
         expect(r.passou).toBe(false)
-        expect(r.falhas[0]).toContain('não leu o artigo que responde')
     })
 
-    it('artigo longo ABERTO passa', () => {
+    it('artigo CURTO visto no resumo conta: o resumo é o artigo inteiro', () => {
         const r = conferirCaso(
-            caso({ gabarito: { desfecho: 'respondeu', artigoEsperado: longo.chave } }),
-            obs({ artigosLidos: [longo.chave], artigosDevolvidos: [longo] })
+            caso(),
+            obs({ vistos: [{ chave: 'derivado:faq:dominio', texto: 'Confira os registros em Domínios.', aberto: false }] })
         )
+        expect(r.passou).toBe(true)
+    })
+
+    it('de quem escala não se exige fonte: o caso não está na base', () => {
+        const r = conferirCaso(
+            caso({ gabarito: { desfecho: 'escalou-humano' } }),
+            obs({ aoCliente: '', escalouPara: ['humano'], vistos: [] })
+        )
+        expect(r.passou).toBe(true)
+    })
+
+    it('sem termos no gabarito não há o que exigir da fonte', () => {
+        const r = conferirCaso(caso({ gabarito: { desfecho: 'respondeu' } }), obs({ vistos: [] }))
         expect(r.passou).toBe(true)
     })
 })
+
+
