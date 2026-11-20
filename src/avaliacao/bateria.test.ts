@@ -11,6 +11,7 @@ const caso = (dados: Partial<CasoDaBateria> = {}): CasoDaBateria => ({
     gabarito: {
         desfecho: 'respondeu',
         precisaDizer: [['Marketing → Domínios', 'Domínios'], ['registros', 'DNS']],
+        artigoEsperado: 'derivado:tela:marketing-remetentes',
     },
     ...dados,
 })
@@ -18,7 +19,7 @@ const caso = (dados: Partial<CasoDaBateria> = {}): CasoDaBateria => ({
 const obs = (dados: Partial<Parameters<typeof conferirCaso>[1]> = {}) => ({
     aoCliente: 'Abra Marketing → Domínios e confira os registros publicados.',
     escalouPara: [],
-    artigosLidos: [],
+    artigosLidos: ['derivado:tela:marketing-remetentes'],
     ...dados,
 })
 
@@ -97,6 +98,7 @@ describe('montarRelatorio', () => {
         caso: caso({ categoria }),
         passou,
         falhas: passou ? [] : ['x'],
+        sinais: [],
         aoCliente: '',
         desfecho: 'respondeu',
         artigosLidos: [],
@@ -140,35 +142,59 @@ describe('a natureza da falha', () => {
         expect(proibido.natureza).toBe('dura')
     })
 
-    it('não ter usado o termo é falha de REDAÇÃO: pede leitura humana', () => {
+    it('não ter usado o termo NÃO reprova: virou sinal para leitura humana', () => {
         /**
-         * Em 20/11/2026, três das cinco primeiras reprovações eram desta
-         * classe com a resposta CORRETA — o gabarito tinha escolhido um jargão
-         * do artigo. Separar as duas naturezas é o que impede o conserto do
-         * gabarito até o agente passar.
+         * Medido nos cem casos do Odontobox em 20/11/2026: 4 falhas de
+         * comportamento e 27 de redação. O agente agiu certo em 96 casos e o
+         * instrumento o reprovou em 31 — um gabarito que erra 27% mede a si
+         * mesmo, não o agente.
          */
         const r = conferirCaso(caso(), obs({ aoCliente: 'Abra Domínios e veja o que você publicou no provedor.' }))
-        expect(r.passou).toBe(false)
-        expect(r.natureza).toBe('redacao')
-    })
-
-    it('errar o desfecho E o termo conta como dura: a pior domina', () => {
-        const r = conferirCaso(caso({ gabarito: { desfecho: 'escalou-humano', precisaDizer: [['Domínios']] } }), obs({ aoCliente: 'Olá, veja nas configurações.' }))
-        expect(r.natureza).toBe('dura')
+        expect(r.passou).toBe(true)
+        expect(r.sinais).toEqual(['não disse nada de: registros / DNS'])
     })
 
     it('quem passa não tem natureza de falha', () => {
         expect(conferirCaso(caso(), obs()).natureza).toBeUndefined()
     })
 
-    it('o relatório separa as duas, para o número ser legível', () => {
+    it('o relatório conta as falhas e, à parte, quem passou com sinal', () => {
         const base = { caso: caso(), aoCliente: '', desfecho: 'respondeu' as const, artigosLidos: [], custoEstimado: 0 }
         const r = montarRelatorio('odontobox', [
-            { ...base, passou: true, falhas: [] },
-            { ...base, passou: false, falhas: ['desfecho x'], natureza: 'dura' },
-            { ...base, passou: false, falhas: ['não disse nada de: y'], natureza: 'redacao' },
+            { ...base, passou: true, falhas: [], sinais: [] },
+            { ...base, passou: false, falhas: ['desfecho x'], sinais: [], natureza: 'dura' },
+            { ...base, passou: true, falhas: [], sinais: ['não disse nada de: y'] },
         ])
 
-        expect(r).toMatchObject({ passaram: 1, falhasDuras: 1, falhasDeRedacao: 1 })
+        expect(r).toMatchObject({ passaram: 2, falhasDuras: 1, comSinal: 1 })
+    })
+})
+
+describe('a FONTE: quem responde tem de ter lido o artigo', () => {
+    it('responder sem abrir o artigo certo reprova', () => {
+        /// Ou adivinhou, ou respondeu pelo resumo da busca — que tem 600
+        /// caracteres, cortados no começo.
+        const r = conferirCaso(caso(), obs({ artigosLidos: [] }))
+        expect(r.passou).toBe(false)
+        expect(r.falhas[0]).toContain('não leu o artigo que responde')
+        expect(r.natureza).toBe('dura')
+    })
+
+    it('ler o artigo certo entre outros basta', () => {
+        const r = conferirCaso(caso(), obs({ artigosLidos: ['derivado:menu', 'derivado:tela:marketing-remetentes'] }))
+        expect(r.passou).toBe(true)
+    })
+
+    it('de quem escala não se exige leitura: o caso não está na base', () => {
+        const r = conferirCaso(
+            caso({ gabarito: { desfecho: 'escalou-humano', artigoEsperado: 'derivado:emails' } }),
+            obs({ aoCliente: '', escalouPara: ['humano'], artigosLidos: [] })
+        )
+        expect(r.passou).toBe(true)
+    })
+
+    it('caso sem artigo esperado não exige leitura nenhuma', () => {
+        const r = conferirCaso(caso({ gabarito: { desfecho: 'respondeu' } }), obs({ artigosLidos: [] }))
+        expect(r.passou).toBe(true)
     })
 })

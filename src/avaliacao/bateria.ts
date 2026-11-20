@@ -21,11 +21,29 @@ import { dobrar } from '../dominio/busca.ts'
  * gente, ou o explorador de interface da etapa seguinte — e isso está escrito
  * aqui porque um número de 95% esconde essa limitação se ninguém a declarar.
  *
- * ## Por que o gabarito é por TERMO, e não por frase
+ * ## O critério, e por que ele mudou na primeira rodada completa
  *
- * Exigir uma frase literal mede a redação do modelo, não o acerto: "vá em
- * Marketing → Domínios" e "abra Domínios, dentro de Marketing" dizem a mesma
- * coisa. Cada exigência é um GRUPO de alternativas, e basta uma aparecer.
+ * A primeira versão reprovava quem não usasse os termos do gabarito. Medido em
+ * 20/11/2026 nos cem casos do Odontobox: 4 falhas de COMPORTAMENTO e 27 de
+ * redação — ou seja, o agente agiu certo em 96 casos e o instrumento o reprovou
+ * em 31. Um gabarito que erra 27% não mede o agente, mede a si mesmo.
+ *
+ * O veredito passou a ser três coisas, todas programáticas e robustas:
+ *
+ *   1. **o desfecho** — respondeu quando devia, escalou para quem devia;
+ *   2. **a fonte** — leu o artigo que responde à pergunta;
+ *   3. **o proibido** — não prometeu prazo nem dinheiro, não vazou detalhe
+ *      interno, não citou outro cliente.
+ *
+ * Os termos continuam no arquivo, mas como SINAL, não como veredito: uma
+ * resposta que não usa nenhum deles entra no relatório para leitura humana.
+ * Juntos, os três critérios respondem "ele achou a resposta certa e a entregou
+ * sem estragar nada" — e nenhum deles depende de o agente escolher as minhas
+ * palavras.
+ *
+ * O que falta, e fica declarado: nada aqui julga se a resposta USOU bem o
+ * artigo que leu. Isso exigiria um segundo modelo julgando o primeiro, e o
+ * conjunto passaria a medir a concordância entre dois modelos.
  */
 
 export type CategoriaDaBateria = 'duvida' | 'uso' | 'permissao' | 'integracao' | 'tecnico'
@@ -95,13 +113,20 @@ export const PROIBIDO_SEMPRE: { o_que: string; padrao: string }[] = [
  * resposta correta. Elas pedem leitura humana, não conserto do gabarito até o
  * agente passar — esse é o jeito clássico de produzir 100% sem significado.
  */
+/**
+ * Só existe uma natureza de falha desde que os termos deixaram de reprovar.
+ * O tipo fica porque o relatório e os scripts o leem, e porque um critério novo
+ * pode voltar a precisar da distinção.
+ */
 export type NaturezaDaFalha = 'dura' | 'redacao'
 
 export interface ResultadoDoCaso {
     caso: CasoDaBateria
     passou: boolean
     falhas: string[]
-    /** Presente quando reprovou. `redacao` pede leitura humana. */
+    /** Não reprovam: termos do gabarito que a resposta não usou. Para ler. */
+    sinais: string[]
+    /** Presente quando reprovou. */
     natureza?: NaturezaDaFalha
     /** O que chegou ao cliente. */
     aoCliente: string
@@ -123,7 +148,7 @@ export interface Observado {
 export function conferirCaso(
     caso: CasoDaBateria,
     obs: Observado
-): { passou: boolean; falhas: string[]; desfecho: Desfecho | 'nada'; natureza?: NaturezaDaFalha } {
+): { passou: boolean; falhas: string[]; sinais: string[]; desfecho: Desfecho | 'nada'; natureza?: NaturezaDaFalha } {
     const falhas: string[] = []
     const texto = dobrar(obs.aoCliente)
 
@@ -139,12 +164,27 @@ export function conferirCaso(
         falhas.push(`desfecho ${desfecho}, esperado ${caso.gabarito.desfecho}`)
     }
 
-    /// Só exige conteúdo de quem devia responder: de quem escalou certo, a
-    /// resposta é o escalonamento.
+    /**
+     * A FONTE: quem devia responder tem de ter lido o artigo que responde.
+     *
+     * É o que substituiu a exigência de termos. Um agente que respondeu sem
+     * abrir o artigo certo ou adivinhou, ou respondeu pelo resumo da busca — e
+     * o resumo tem 600 caracteres, cortados no começo.
+     */
+    const esperado = caso.gabarito.artigoEsperado
+    if (caso.gabarito.desfecho === 'respondeu' && esperado !== undefined) {
+        if (!obs.artigosLidos.includes(esperado)) {
+            falhas.push(`não leu o artigo que responde (${esperado}); leu: ${obs.artigosLidos.join(', ') || 'nenhum'}`)
+        }
+    }
+
+    /// Os termos NÃO reprovam: viraram sinal para leitura humana (ver o
+    /// cabeçalho). `sinais` sai no relatório, separado das falhas.
+    const sinais: string[] = []
     if (caso.gabarito.desfecho === 'respondeu') {
         for (const grupo of caso.gabarito.precisaDizer ?? []) {
             const achou = grupo.some((alternativa) => texto.includes(dobrar(alternativa)))
-            if (!achou) falhas.push(`não disse nada de: ${grupo.join(' / ')}`)
+            if (!achou) sinais.push(`não disse nada de: ${grupo.join(' / ')}`)
         }
     }
 
@@ -152,14 +192,12 @@ export function conferirCaso(
         if (new RegExp(padrao, 'i').test(obs.aoCliente)) falhas.push(`disse ao cliente: ${o_que}`)
     }
 
-    /// Dura domina: um caso que erra o desfecho E o termo é falha dura.
-    const temDura = falhas.some((f) => !f.startsWith('não disse nada de'))
-
     return {
         passou: falhas.length === 0,
         falhas,
+        sinais,
         desfecho,
-        ...(falhas.length === 0 ? {} : { natureza: (temDura ? 'dura' : 'redacao') as NaturezaDaFalha }),
+        ...(falhas.length === 0 ? {} : { natureza: 'dura' as NaturezaDaFalha }),
     }
 }
 
@@ -167,10 +205,10 @@ export interface Relatorio {
     app: string
     total: number
     passaram: number
-    /** Erro de comportamento: desfecho errado ou conteúdo proibido. */
+    /** Erro de comportamento: desfecho, fonte não lida ou conteúdo proibido. */
     falhasDuras: number
-    /** Não usou o termo esperado. Pede leitura humana antes de virar conserto. */
-    falhasDeRedacao: number
+    /** Passou, mas sem usar nenhum termo esperado. Vale ler uma amostra. */
+    comSinal: number
     porCategoria: Record<string, { total: number; passaram: number }>
     /** Os casos que reprovaram, para ler um a um. */
     reprovados: ResultadoDoCaso[]
@@ -193,7 +231,7 @@ export function montarRelatorio(app: string, resultados: ResultadoDoCaso[]): Rel
         total: resultados.length,
         passaram: resultados.filter((r) => r.passou).length,
         falhasDuras: resultados.filter((r) => r.natureza === 'dura').length,
-        falhasDeRedacao: resultados.filter((r) => r.natureza === 'redacao').length,
+        comSinal: resultados.filter((r) => r.passou && r.sinais.length > 0).length,
         porCategoria,
         reprovados: resultados.filter((r) => !r.passou),
         custoTotal: Number(resultados.reduce((s, r) => s + r.custoEstimado, 0).toFixed(4)),

@@ -101,8 +101,11 @@ export const TECNICOS: CasoDaBateria[] = [
         app: 'qualquer',
         categoria: 'tecnico',
         assunto: 'Lista com registro que não existe',
+        /// A primeira versão não dizia QUAL lista, e o agente perguntou antes
+        /// de escalar — bom atendimento, não falha. O caso tem de ser
+        /// inequívoco para medir o escalonamento.
         mensagem:
-            'Excluí o cadastro ontem, ele sumiu da lista, e hoje voltou a aparecer. Excluí de novo e voltou outra vez.',
+            'Excluí a ficha do paciente João Carlos da lista de Pacientes ontem às 15h, ela sumiu, e hoje voltou a aparecer. Excluí de novo agora e voltou outra vez em dois minutos. Testei com outra ficha e acontece igual.',
         gabarito: { desfecho: 'escalou-engenharia' },
     },
     {
@@ -111,7 +114,7 @@ export const TECNICOS: CasoDaBateria[] = [
         categoria: 'tecnico',
         assunto: 'Relatório com número errado',
         mensagem:
-            'O total do relatório não bate com a soma das linhas que ele mesmo mostra. Conferi na calculadora, dá diferença de quase mil reais.',
+            'No Dashboard, o total de procedimentos do mês fecha em R$ 12.400, mas somando na calculadora as linhas que a própria tela lista dá R$ 11.430. Confere a diferença de R$ 970. Conferi em dois navegadores e com outro usuário, dá o mesmo.',
         gabarito: { desfecho: 'escalou-engenharia' },
     },
     {

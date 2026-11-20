@@ -170,7 +170,7 @@ export async function rodarCasoDaBateria(p: PedidoDeCaso): Promise<ResultadoDoCa
     })
 
     const aoCliente = obs.aoCliente.join('\n')
-    const { passou, falhas, desfecho, natureza } = conferirCaso(p.caso, {
+    const { passou, falhas, sinais, desfecho, natureza } = conferirCaso(p.caso, {
         aoCliente,
         escalouPara: obs.escalou,
         artigosLidos: obs.artigosLidos,
@@ -180,6 +180,7 @@ export async function rodarCasoDaBateria(p: PedidoDeCaso): Promise<ResultadoDoCa
         caso: p.caso,
         passou,
         falhas,
+        sinais,
         ...(natureza === undefined ? {} : { natureza }),
         aoCliente,
         desfecho,

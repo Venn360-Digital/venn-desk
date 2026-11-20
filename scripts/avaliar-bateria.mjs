@@ -77,7 +77,7 @@ await Promise.all(Array.from({ length: PARALELO }, trabalhador))
 
 const relatorio = montarRelatorio(app, resultados)
 console.log(`\n\n${relatorio.passaram} de ${relatorio.total} (${Math.round((relatorio.passaram / relatorio.total) * 100)}%) · US$ ${relatorio.custoTotal.toFixed(2)}`)
-console.log(`falhas duras (desfecho ou conteúdo proibido): ${relatorio.falhasDuras} · de redação (não usou o termo esperado): ${relatorio.falhasDeRedacao}\n`)
+console.log(`falhas: ${relatorio.falhasDuras} · passaram sem usar nenhum termo esperado: ${relatorio.comSinal} (vale ler uma amostra)\n`)
 
 console.log('por categoria:')
 for (const [categoria, c] of Object.entries(relatorio.porCategoria)) {
@@ -88,7 +88,7 @@ for (const [categoria, c] of Object.entries(relatorio.porCategoria)) {
 if (relatorio.reprovados.length > 0) {
     console.log(`\n${relatorio.reprovados.length} reprovado(s):`)
     for (const r of relatorio.reprovados) {
-        console.log(`\n  [${r.caso.categoria}] ${r.caso.id} (${r.natureza === 'dura' ? 'FALHA DURA' : 'redação — leia antes de mexer no gabarito'})`)
+        console.log(`\n  [${r.caso.categoria}] ${r.caso.id}`)
         console.log(`  pergunta: ${r.caso.mensagem.slice(0, 150)}`)
         console.log(`  falhou: ${r.falhas.join(' · ')}`)
         console.log(`  respondeu: ${(r.aoCliente || '(nada)').replace(/\n/g, ' ').slice(0, 220)}`)
