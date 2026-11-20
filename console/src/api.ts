@@ -70,6 +70,8 @@ export interface AppCadastrado {
     nome: string
     prefixo: string
     repositorio: string | null
+    /** Onde o app mora no monorepo (`apps/odontobox360`). Com o repositório, liga a base viva. */
+    pastaNoRepositorio: string | null
     canalSuporte: string | null
     canalEngenharia: string | null
     modoSombra: boolean
@@ -118,6 +120,8 @@ export interface PainelDoApp {
 export type StatusDoArtigo = 'RASCUNHO' | 'PUBLICADO' | 'ARQUIVADO'
 
 /** Um artigo da base. `global` é `appId` nulo: vale para os três produtos. */
+export type OrigemDoArtigo = 'MANUAL' | 'DERIVADO' | 'SUGERIDO'
+
 export interface Artigo {
     id: string
     titulo: string
@@ -128,6 +132,50 @@ export interface Artigo {
     atualizadoEm: string
     /** Leituras inteiras pelo agente nos últimos 30 dias. */
     leituras: number
+    /** De onde veio: escrito à mão, derivado do repositório, ou sugerido pelo Desk. */
+    origem: OrigemDoArtigo
+    sincronizadoEm: string | null
+    /** `agent:<id>` quando uma pessoa fixou o status de um derivado. */
+    statusFixadoPor: string | null
+    fonte: {
+        descricao: string | null
+        caminho: string | null
+        extraidoPor: string | null
+        /** O arquivo no GitHub, no commit da sincronização. */
+        url: string | null
+    } | null
+}
+
+/** Uma rodada de sincronização da base com o repositório. */
+export interface Sincronizacao {
+    id: string
+    estado: 'pedida' | 'em_andamento' | 'aguardando_lote' | 'concluida' | 'falhou'
+    commit: string
+    pedidaPor: string
+    forcada: boolean
+    criadaEm: string
+    terminadaEm: string | null
+    erro: string | null
+    resultado: {
+        fontes?: Record<string, { estado: string; criados: number; atualizados: number; reabertos: number; inalterados: number; arquivados: number; extraidoPor?: string; erro?: string }>
+        mapa?: { telas: number; apis: number; arquivosLidos: number; artigos: number } | { erro: string }
+        custoEstimadoUsd?: number
+        duracaoMs?: number
+        avisos?: string[]
+    } | null
+}
+
+export interface EstadoDaSincronizacao {
+    pronta: boolean
+    /** O que falta cadastrar para a base viva rodar neste app. */
+    faltam: string[]
+    repositorio: string | null
+    pastaNoRepositorio: string | null
+    semModelo: boolean
+    semEmbedding: boolean
+    ultima: Sincronizacao | null
+    concluida: Sincronizacao | null
+    historico: Sincronizacao[]
 }
 
 /**

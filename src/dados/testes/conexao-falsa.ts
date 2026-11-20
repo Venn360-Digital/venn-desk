@@ -71,6 +71,7 @@ export function conexaoFalsa(respostas: Record<string, unknown> = {}) {
         }
 
     const conexao = {
+        app: delegado('app'),
         ticket: delegado('ticket'),
         ticketMessage: delegado('ticketMessage'),
         ticketEvent: delegado('ticketEvent'),

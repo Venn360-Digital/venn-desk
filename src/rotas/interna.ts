@@ -42,6 +42,9 @@ import { chavesDoApp, criarChave, revogarChave, TAMANHO_DO_PREFIXO } from '../da
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { atender } from '../agente/atender.ts'
 import { embutidorDoWorkersAi } from '../conhecimento/embeddings.ts'
+import { leitorGitHub } from '../conhecimento/github.ts'
+import { urlDaFonte } from '../conhecimento/rotulos.ts'
+import { EXPIRA_MS, pedirSincronizacao } from '../conhecimento/sincronizar.ts'
 
 /**
  * A API interna — o que o Console consome, e o que a ponte do Slack vai chamar
@@ -791,6 +794,14 @@ const esquemaDoApp = z.object({
         .regex(/^[A-Za-z]+$/, 'só letras'),
     chavePublicaJwk: z.record(z.string(), z.unknown()),
     repositorio: z.string().trim().max(200).nullish(),
+    /// Onde o app mora no monorepo (`apps/odontobox360`). Com o repositório, é
+    /// o que liga a base viva: sem os dois, o app não sincroniza.
+    pastaNoRepositorio: z
+        .string()
+        .trim()
+        .max(120)
+        .regex(/^[a-zA-Z0-9][a-zA-Z0-9/_.-]*$/, 'caminho relativo, sem barra inicial')
+        .nullish(),
     /// Endereço público do app e o que a verificação de saúde consulta. O
     /// `url()` recusa caminho relativo de propósito: a sondagem sai do Worker
     /// do Venn Desk, então endereço sem origem não alcança nada.
@@ -1075,7 +1086,8 @@ rotasInternas.put('/api/console/app/:app/tema', async (c) => {
  * não é decisão de quem está no meio de um atendimento.
  */
 rotasInternas.get('/api/console/app/:app/base', async (c) => {
-    const escopo = escopoDoApp(c.get('cliente'), c.get('app').id)
+    const app = c.get('app')
+    const escopo = escopoDoApp(c.get('cliente'), app.id)
     const status = c.req.query('status')
 
     /**
@@ -1097,20 +1109,135 @@ rotasInternas.get('/api/console/app/:app/base', async (c) => {
 
     return c.json({
         consultas: { ...resumo, dias: 30 },
-        artigos: artigos.map((a) => ({
-            id: a.id,
-            titulo: a.titulo,
-            corpo: a.corpo,
-            tags: a.tags,
-            status: a.status,
-            /// `appId` nulo é o artigo global. A tela precisa distinguir para
-            /// avisar que editar ali muda os três produtos.
-            global: a.appId === null,
-            atualizadoEm: a.atualizadoEm.toISOString(),
-            /// Leituras inteiras em 30 dias. Só quem foi lido tem número.
-            leituras: resumo.leiturasPorArtigo[a.id] ?? 0,
-        })),
+        artigos: artigos.map((a) => {
+            const fonte = (a.fonte ?? null) as { descricao?: string; caminhos?: string[]; commit?: string; extraidoPor?: string } | null
+            const caminho = fonte?.caminhos?.[0]
+            return {
+                id: a.id,
+                titulo: a.titulo,
+                corpo: a.corpo,
+                tags: a.tags,
+                status: a.status,
+                /// `appId` nulo é o artigo global. A tela precisa distinguir para
+                /// avisar que editar ali muda os três produtos.
+                global: a.appId === null,
+                atualizadoEm: a.atualizadoEm.toISOString(),
+                /// Leituras inteiras em 30 dias. Só quem foi lido tem número.
+                leituras: resumo.leiturasPorArtigo[a.id] ?? 0,
+                /// A base viva: de onde veio e quão fresco está.
+                origem: a.origem,
+                sincronizadoEm: a.sincronizadoEm?.toISOString() ?? null,
+                statusFixadoPor: a.statusFixadoPor,
+                fonte:
+                    fonte === null
+                        ? null
+                        : {
+                              descricao: fonte.descricao ?? null,
+                              caminho: caminho ?? null,
+                              extraidoPor: fonte.extraidoPor ?? null,
+                              url:
+                                  caminho !== undefined && fonte.commit !== undefined && app.repositorio !== null
+                                      ? urlDaFonte(app.repositorio, caminho, fonte.commit)
+                                      : null,
+                          },
+            }
+        }),
     })
+})
+
+/**
+ * A sincronização da base com o repositório (a base viva).
+ *
+ * O GET diz onde a base está: a última rodada, o estado dela por fonte, o
+ * custo, e o que falta cadastrar para ela rodar. O POST é o botão
+ * "Sincronizar agora": registra o pedido com o sha atual de `main` e enfileira,
+ * forçado — refaz mesmo que o commit seja o mesmo.
+ *
+ * Prefixo IRMÃO de `/base` (e não `/base/sincronizar`) por causa do
+ * `lint-rotas`: um literal ao lado de `/base/:id` disputaria com o parâmetro.
+ */
+rotasInternas.get('/api/console/app/:app/base-sincronizacao', async (c) => {
+    const app = c.get('app')
+    const escopo = escopoDoApp(c.get('cliente'), app.id)
+    const [ultima, concluida, historico] = await Promise.all([
+        escopo.sincronizacoes.ultima(),
+        escopo.sincronizacoes.ultimaConcluida(),
+        escopo.sincronizacoes.listar(10),
+    ])
+
+    const faltam: string[] = []
+    if (app.repositorio === null || app.repositorio === '') faltam.push('repositório do app')
+    if (app.pastaNoRepositorio === null || app.pastaNoRepositorio === '') faltam.push('pasta do app no repositório')
+    if (c.env.GITHUB_TOKEN_LEITURA === undefined || c.env.GITHUB_TOKEN_LEITURA === '') faltam.push('GITHUB_TOKEN_LEITURA no Worker')
+    if (c.env.CONHECIMENTO === undefined) faltam.push('fila CONHECIMENTO no Worker')
+
+    const resumir = (s: typeof ultima) =>
+        s === null
+            ? null
+            : {
+                  id: s.id,
+                  estado: s.estado,
+                  commit: s.commitSha,
+                  pedidaPor: s.pedidaPor,
+                  forcada: s.forcada,
+                  criadaEm: s.criadaEm.toISOString(),
+                  terminadaEm: s.terminadaEm?.toISOString() ?? null,
+                  erro: s.erro,
+                  /// O resultado sem o índice técnico, que é grande e é do job,
+                  /// não da tela.
+                  resultado: resumirResultado(s.resultado),
+              }
+
+    return c.json({
+        pronta: faltam.length === 0,
+        faltam,
+        repositorio: app.repositorio,
+        pastaNoRepositorio: app.pastaNoRepositorio,
+        semModelo: c.env.ANTHROPIC_API_KEY === undefined || c.env.ANTHROPIC_API_KEY === '',
+        semEmbedding: c.env.AI === undefined,
+        ultima: resumir(ultima),
+        concluida: resumir(concluida),
+        historico: historico.map(resumir),
+    })
+})
+
+function resumirResultado(resultado: unknown): unknown {
+    if (resultado === null || typeof resultado !== 'object') return null
+    const { indiceTecnico: _indice, ...resto } = resultado as Record<string, unknown>
+    return resto
+}
+
+rotasInternas.post('/api/console/app/:app/base-sincronizacao', async (c) => {
+    if (c.get('agente').papel === 'AGENTE') {
+        throw new ErroDeDominio('sem_permissao', 'Agente não sincroniza a base.', 403)
+    }
+    const app = c.get('app')
+    if (app.repositorio === null || app.repositorio === '' || app.pastaNoRepositorio === null) {
+        throw new ErroDeDominio('app_sem_repositorio', 'Cadastre o repositório e a pasta do app antes de sincronizar.', 422)
+    }
+    const token = c.env.GITHUB_TOKEN_LEITURA
+    if (token === undefined || token === '') {
+        throw new ErroDeDominio('sem_token_github', 'O Worker não tem GITHUB_TOKEN_LEITURA.', 503)
+    }
+    if (c.env.CONHECIMENTO === undefined) {
+        throw new ErroDeDominio('sem_fila', 'O Worker não tem a fila CONHECIMENTO.', 503)
+    }
+
+    const escopo = escopoDoApp(c.get('cliente'), app.id)
+    const emAndamento = await escopo.sincronizacoes.emAndamento()
+    if (emAndamento !== null && Date.now() - emAndamento.criadaEm.getTime() < EXPIRA_MS) {
+        throw new ErroDeDominio('sincronizacao_em_andamento', 'Já há uma sincronização em andamento. Espere ela terminar.', 409)
+    }
+
+    const pedido = await pedirSincronizacao({
+        escopo,
+        app: { id: app.id, repositorio: app.repositorio },
+        leitor: leitorGitHub(token),
+        fila: c.env.CONHECIMENTO,
+        pedidaPor: `agent:${c.get('agente').id}`,
+    })
+
+    return c.json({ sincronizacao: { id: pedido.id, commit: pedido.commitSha, estado: 'pedida' } }, 202)
 })
 
 rotasInternas.post('/api/console/app/:app/base', async (c) => {
@@ -1250,6 +1377,7 @@ rotasInternas.get('/api/console/apps', comCliente, comSessaoDeAgente, async (c) 
             nome: app.nome,
             prefixo: app.prefixo,
             repositorio: app.repositorio,
+            pastaNoRepositorio: app.pastaNoRepositorio,
             urlApp: app.urlApp,
             urlSaude: app.urlSaude,
             canalSuporte: app.canalSuporte,

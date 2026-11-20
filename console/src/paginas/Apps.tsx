@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api, type AppCadastrado } from '../api.ts'
-import { Botao, Vazio } from '../componentes/ui.tsx'
+import { Aviso, Botao, Campo, Vazio } from '../componentes/ui.tsx'
 
 /**
  * O cadastro de apps. Na Fase 1 ele lê e alterna o modo sombra; incluir app
@@ -91,7 +92,10 @@ export function Apps({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
                         </div>
                         <div className="flex gap-2">
                             <dt className="text-tinta-fraca">repositório</dt>
-                            <dd className="truncate font-mono">{app.repositorio ?? '—'}</dd>
+                            <dd className="truncate font-mono">
+                                {app.repositorio ?? '—'}
+                                {app.pastaNoRepositorio !== null ? ` · ${app.pastaNoRepositorio}` : ''}
+                            </dd>
                         </div>
                         <div className="flex gap-2">
                             <dt className="text-tinta-fraca">canais</dt>
@@ -100,6 +104,8 @@ export function Apps({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
                             </dd>
                         </div>
                     </dl>
+
+                    {papel !== 'AGENTE' ? <Repositorio app={app} /> : null}
 
                     {papel !== 'AGENTE' && (
                         <div className="mt-3 flex flex-wrap gap-2">
@@ -146,5 +152,53 @@ export function Apps({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
                 </article>
             ))}
         </div>
+    )
+}
+
+/**
+ * O cadastro do repositório e da pasta do app — o que liga a base viva.
+ *
+ * Dois campos e um botão, dentro do cartão do app. Os três apps moram no mesmo
+ * monorepo (`Venn360-Digital/venn-saas`); o que muda é a pasta
+ * (`apps/odontobox360`). Sem os dois preenchidos a sincronização não roda, e a
+ * tela da Base diz isso e manda para cá.
+ */
+function Repositorio({ app }: { app: AppCadastrado }) {
+    const fila = useQueryClient()
+    const [repositorio, setRepositorio] = useState(app.repositorio ?? '')
+    const [pasta, setPasta] = useState(app.pastaNoRepositorio ?? '')
+    const mudou = repositorio !== (app.repositorio ?? '') || pasta !== (app.pastaNoRepositorio ?? '')
+
+    const salvar = useMutation({
+        mutationFn: () =>
+            api(`/apps/${app.slug}`, {
+                metodo: 'PATCH',
+                corpo: {
+                    repositorio: repositorio.trim() === '' ? null : repositorio.trim(),
+                    pastaNoRepositorio: pasta.trim() === '' ? null : pasta.trim().replace(/^\/+|\/+$/g, ''),
+                },
+            }),
+        onSuccess: () => void fila.invalidateQueries({ queryKey: ['apps'] }),
+    })
+
+    return (
+        <form
+            className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+            onSubmit={(e) => {
+                e.preventDefault()
+                salvar.mutate()
+            }}
+        >
+            <Campo rotulo="Repositório (dono/nome)" valor={repositorio} onChange={setRepositorio} />
+            <Campo rotulo="Pasta do app no repositório" valor={pasta} onChange={setPasta} />
+            <Botao tipo="submit" variante="leve" desabilitado={!mudou || salvar.isPending}>
+                Salvar
+            </Botao>
+            {salvar.isError ? (
+                <div className="sm:col-span-3">
+                    <Aviso>{(salvar.error as Error).message}</Aviso>
+                </div>
+            ) : null}
+        </form>
     )
 }

@@ -1,0 +1,40 @@
+44d78dbb9a1e8f36d78131b0fcdd2d56fcb14ab7	2026-11-19T23:10:59-03:00	fix(conversas): o diálogo de apagar mensagem era do navegador, não do app
+575924f2cf309b84d73093d568e433a8a714d98f	2026-11-19T22:43:27-03:00	fix(apagar/editar): o provedor esquece CanonicalJID, e o destino penduava 20s
+f09a03548730400bf9048e3c26c00c515871a16a	2026-11-19T21:48:40-03:00	fix(envio): o id da mensagem enviada nunca foi guardado — 1.636 envios sem ele
+c71e86446c2828654b7d21761c36bd769b129ac7	2026-11-19T20:56:05-03:00	feat(conversas): apagar para todos e editar mensagem enviada
+fdc7110617961019a654b3a5cdd2181579234de0	2026-11-19T14:33:59-03:00	fix(portao): test:recortes fixava as quatro opções do Ver, e agora são cinco
+c3fe7f3f910200031c658a98d36303d5a871be7d	2026-11-19T14:29:36-03:00	fix(portao): a contagem de tarefas do cron vivia em dois scripts, e eu atualizei um
+e56e79ae33e6d61f1ac142f7baab31a8eb563eba	2026-11-19T13:57:42-03:00	fix(suporte): a pílula "SUPORTE" ficava em cima do botão Enviar
+ba6ff3f001dba067e1d05bf5e12adfc37bbcc5ed	2026-11-19T13:49:51-03:00	fix(portao): o hex citado no comentário reprovava o lint-colors
+8c45308efc85797fb5e94d088164f55ed0caf0be	2026-11-19T11:16:09-03:00	fix(widget): o anexo recusado dizia "tente de novo" em vez do motivo
+7c70f7489ee089bf9b197461ef2fb7dcf5791f97	2026-11-19T11:16:09-03:00	chore: retrigga o build do conecta-stg, que falhou sem log acessível
+1afb90e24771438c7e5bf548adbc41e2bd6f5851	2026-11-19T11:16:09-03:00	feat(widget): a nota de satisfação, que a tela pedia e não tinha como receber
+05aa0c517af8d726c732e8ec2fe4b4d00778d34b	2026-11-19T10:37:08-03:00	feat(agente): a régua de inatividade — cutuca, e depois se despede
+b4797b0a6ba4f5db07471dfe9e6056d5d1eeafac	2026-11-19T10:37:08-03:00	fix(caixa): apagada virava balão de erro, selo de leitura era invisível, responder só no clique direito
+aa9116890b564bdf167031d97576d712f4dc051b	2026-11-19T10:37:08-03:00	fix(inbound): o LID do WhatsApp era gravado como telefone, e nenhuma resposta saía
+8f6cc59487ffaee64e87bbf9df383326856b95ad	2026-11-19T01:55:47-03:00	fix(csp): o painel bloqueava o widget antes de a requisição sair
+9fc76fd494a8e232a39d464df354f590c13654ce	2026-11-18T22:02:30-03:00	fix(portao): o portão passa a rodar nos três previews, não só no do odontobox
+c529c32597badef3c77d7212de64f24f7695c3de	2026-11-18T21:47:38-03:00	fix(portao): o teste de SSR do widget reprovava o ESLint — e o typecheck não o olhava
+49f719176ba6343337ca6c76c2711f49d730c982	2026-11-18T19:54:40-03:00	fix(desk-widget): o painel voltava Error 1101 porque o widget lia `document` no render
+cd825c9fafde14455111cc123b50423711ec7f37	2026-11-18T17:42:42-03:00	feat(core): o agente novo nasce com o ramo da marca, não com o odontológico
+dc36959dab0380b7a45bf0fb767df54cd6cc8093	2026-11-18T16:59:48-03:00	feat(agente): prompt de sistema e follow-up falam o vocabulário da unidade
+cce6fc0dbd743fb36294889f2998c909c1f16e63	2026-11-18T16:31:09-03:00	feat(agente): o agente fala o vocabulário da UNIDADE, não só o da marca
+f37b8aa90504234c4c070aef334dd32602ae84f3	2026-11-18T16:05:34-03:00	feat(suporte): o widget do Venn Desk nos três painéis
+bf3913f229db22fe5aa1cec12f82d8f91083fb29	2026-11-18T15:23:48-03:00	chore(ci): primeiro build do stagent em producao a partir do monorepo
+9ad75df19896558774ad19417cb530f421fdb86c	2026-11-18T10:38:14-03:00	chore(ci): primeiro build do conecta em producao a partir do monorepo
+f319eb0db11bfec304f33724cf5f28496b394d1d	2026-11-18T05:59:40-03:00	fix(config): a remoção automática de segredo não acontece — medido, e eu havia repetido a afirmação
+18c28c43fee9145356bf91d541ed2a4044659dee	2026-11-18T05:30:32-03:00	fix(stagent): Asaas sai do config — este app cobra por Stripe
+f6739c4b81e304b5a561aede657ca6ca94520dbf	2026-11-18T05:16:47-03:00	docs(asaas): os nomes têm forma de OAuth e conteúdo de outra coisa
+4633a7f8b9274ea34ee361d26625b11ed1810147	2026-11-18T04:46:11-03:00	fix(ci): o smoke espera no 503 e reprova no 401 — e a diferença é medida
+e79e9ab51c30ab041237c6f6d1f9be4e6b69fd19	2026-11-18T04:38:47-03:00	chore(ci): fecha o cutover do conecta-stg com o smoke verde
+2ace11e966b529d8d5bb3000c3cba904ef19bd18	2026-11-18T03:52:15-03:00	chore(ci): primeiro build do conecta-stg a partir do monorepo
+c1237dd5a15bdf84862e2186e1a2fd7b5571e4a3	2026-11-18T03:31:18-03:00	chore(ci): dispara build para provar a reconexão do conecta-stg
+19c40dff995a758fdf682b37bbd17ed2e3ded933	2026-11-17T06:47:13-03:00	docs(runbook): os previews órfãos, e os dois da branch `main`
+e1baf1b7470bce44ca1c0d8a873f19be4c5b19e2	2026-11-17T06:37:52-03:00	fix(ci): credencial ausente PULA, como a chave — e o cabeçalho que mentia
+48af5a785bb40e5b31d9a7f6b6e609f9944c44ec	2026-11-17T06:21:58-03:00	docs(runbook): 20 — cutover dos clones, e o retrato que torna o passo 1 reversível
+bf07dceac17d3b974410447022ac23686fdb4c1a	2026-11-17T04:34:24-03:00	feat(ci): alinhar checksums dos clones — o portão das Fases 5–7, sem o squash
+a48c8499e4bee9707574ccedc69c78edc7aa7745	2026-11-17T04:12:37-03:00	fix(ci): exceção REGISTRADA para a extensão resquício, em vez de afrouxar a regra
+4ddc46a7b44d1d1c6784073e54dfa29c4aa4de78	2026-11-16T22:31:14-03:00	fix(ci): a asserção de RLS passa a ser a relação, não uma contagem
+53040a00f91dbb464f3da6cce9e693b4c37888a4	2026-11-16T22:20:37-03:00	fix(ci): o pai da branch descartável vem da credencial, não do padrão do Neon
+352857bddf921651b38d7d65dad8fc7bf6f9d21f	2026-11-16T22:08:18-03:00	fix(db): reescreve os comentários que o DROP das views torna falsos
+dfab748e6798f3977300d9ca34e5fae10a3df6e0	2026-11-16T22:04:57-03:00	fix(ci): o lint de migrações não enxergava DROP VIEW

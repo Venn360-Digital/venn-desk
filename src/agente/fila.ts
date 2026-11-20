@@ -55,6 +55,8 @@ export async function enfileirarAtendimento(
 
 /** O que o Workers entrega ao consumidor. Só o que usamos. */
 export interface LoteDaFila {
+    /** O nome da fila: é por ele que `src/index.ts` despacha ao consumidor certo. */
+    queue: string
     messages: { body: unknown; ack(): void; retry(): void }[]
 }
 

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
-import { Globe, Plus } from 'lucide-react'
+import { ExternalLink, Globe, Plus } from 'lucide-react'
 
-import { api, type AppCadastrado, type Artigo, type ResumoDeConsultas, type StatusDoArtigo } from '../api.ts'
+import { api, type AppCadastrado, type Artigo, type OrigemDoArtigo, type ResumoDeConsultas, type StatusDoArtigo } from '../api.ts'
+import { Sincronizacao } from '../componentes/Sincronizacao.tsx'
 import { Aviso, Botao, Campo, Quando, Vazio } from '../componentes/ui.tsx'
 
 /**
@@ -34,6 +35,19 @@ const ROTULOS: Record<StatusDoArtigo, string> = {
     ARQUIVADO: 'arquivado',
 }
 
+/**
+ * A origem, legível. "derivado" é o artigo que o repositório escreve e a
+ * sincronização mantém; "sugerido" é o que o Desk propôs e espera aprovação.
+ * Manual não tem selo: é o caso comum, e selo em tudo é selo em nada.
+ */
+const ORIGEM: Record<OrigemDoArtigo, { rotulo: string; cor: string } | null> = {
+    MANUAL: null,
+    DERIVADO: { rotulo: 'derivado', cor: 'bg-informe-fundo text-informe' },
+    SUGERIDO: { rotulo: 'sugerido', cor: 'bg-atencao-fundo text-atencao' },
+}
+
+type FiltroDeOrigem = 'todos' | OrigemDoArtigo
+
 export function Base({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
     const { app: daRota } = useParams<{ app: string }>()
     const fila = useQueryClient()
@@ -49,6 +63,7 @@ export function Base({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
      * lista com três artigos.
      */
     const [abertoParaEscrever, setAberto] = useState(false)
+    const [filtro, setFiltro] = useState<FiltroDeOrigem>('todos')
 
     const { data: cadastro } = useQuery({
         queryKey: ['apps'],
@@ -113,7 +128,9 @@ export function Base({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
 
     if (isPending) return <Vazio>carregando…</Vazio>
 
-    const artigos = data?.artigos ?? []
+    const todos = data?.artigos ?? []
+    const artigos = filtro === 'todos' ? todos : todos.filter((a) => a.origem === filtro)
+    const contagem = (o: OrigemDoArtigo) => todos.filter((a) => a.origem === o).length
     const consultas = data?.consultas
     const podeEditar = papel !== 'AGENTE'
     const abrir = (artigo: Artigo) => {
@@ -149,6 +166,8 @@ export function Base({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
                 O agente consulta a base <strong className="text-tinta">antes</strong> dos
                 chamados antigos. Só o que está no ar chega a cliente.
             </p>
+
+            {app !== undefined ? <Sincronizacao app={app} podeEditar={podeEditar} /> : null}
 
             {erro !== null ? <Aviso>{erro}</Aviso> : null}
 
@@ -193,11 +212,39 @@ export function Base({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
                 </p>
             )}
 
-            {artigos.length === 0 ? (
+            {todos.length > 0 ? (
+                <div className="flex flex-wrap gap-1 text-xs">
+                    {(
+                        [
+                            ['todos', `todos (${todos.length})`],
+                            ['DERIVADO', `derivados (${contagem('DERIVADO')})`],
+                            ['MANUAL', `manuais (${contagem('MANUAL')})`],
+                            ['SUGERIDO', `sugeridos (${contagem('SUGERIDO')})`],
+                        ] as [FiltroDeOrigem, string][]
+                    ).map(([valor, rotulo]) => (
+                        <button
+                            key={valor}
+                            type="button"
+                            onClick={() => setFiltro(valor)}
+                            className={
+                                filtro === valor
+                                    ? 'rounded-sm border border-destaque px-2.5 py-1 text-destaque'
+                                    : 'rounded-sm border border-borda px-2.5 py-1 text-tinta-fraca transition hover:text-tinta'
+                            }
+                        >
+                            {rotulo}
+                        </button>
+                    ))}
+                </div>
+            ) : null}
+
+            {todos.length === 0 ? (
                 <Vazio>
-                    Nenhum artigo ainda. Sem base, o agente responde pelo que alguém já
-                    perguntou.
+                    Nenhum artigo ainda. Cadastre o repositório e a pasta do app e sincronize —
+                    ou escreva um à mão.
                 </Vazio>
+            ) : artigos.length === 0 ? (
+                <Vazio>Nenhum artigo com essa origem.</Vazio>
             ) : (
                 <div className="overflow-x-auto rounded-sm border border-borda bg-superficie">
                     <table className="w-full text-sm">
@@ -224,6 +271,34 @@ export function Base({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
                                                 />
                                             ) : null}
                                             <span className="text-tinta">{artigo.titulo}</span>
+                                            {ORIGEM[artigo.origem] !== null ? (
+                                                <span
+                                                    className={`inline-block shrink-0 rounded-xs px-1.5 py-0.5 text-[10px] font-medium ${ORIGEM[artigo.origem]?.cor ?? ''}`}
+                                                    title={
+                                                        artigo.fonte?.descricao !== null && artigo.fonte?.descricao !== undefined
+                                                            ? `${artigo.fonte.descricao}${artigo.sincronizadoEm !== null ? ` · sincronizado ${new Date(artigo.sincronizadoEm).toLocaleString('pt-BR')}` : ''}${artigo.fonte.extraidoPor === 'modelo' ? ' · extraído por IA' : ''}`
+                                                            : undefined
+                                                    }
+                                                >
+                                                    {ORIGEM[artigo.origem]?.rotulo}
+                                                </span>
+                                            ) : null}
+                                            {artigo.fonte?.url !== null && artigo.fonte?.url !== undefined ? (
+                                                <a
+                                                    href={artigo.fonte.url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    title={artigo.fonte.caminho ?? 'fonte no GitHub'}
+                                                    className="shrink-0 text-tinta-sutil hover:text-destaque"
+                                                >
+                                                    <ExternalLink size={12} aria-label="abrir a fonte no GitHub" />
+                                                </a>
+                                            ) : null}
+                                            {artigo.statusFixadoPor !== null ? (
+                                                <span className="text-[10px] text-tinta-sutil" title="uma pessoa fixou o status; a sincronização não mexe">
+                                                    fixado
+                                                </span>
+                                            ) : null}
                                         </div>
                                     </td>
                                     <td className="px-3 py-2 text-xs text-tinta-fraca">
@@ -252,7 +327,14 @@ export function Base({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
                                     <td className="px-3 py-2">
                                         {podeEditar ? (
                                             <div className="flex justify-end gap-1.5">
-                                                <Acao onClick={() => abrir(artigo)}>editar</Acao>
+                                                {/* Derivado não se edita aqui: a próxima
+                                                    sincronização reescreveria. O lugar é a fonte. */}
+                                                <Acao
+                                                    onClick={() => abrir(artigo)}
+                                                    desabilitado={artigo.origem === 'DERIVADO'}
+                                                >
+                                                    editar
+                                                </Acao>
                                                 {artigo.status !== 'PUBLICADO' ? (
                                                     <Acao
                                                         onClick={() =>

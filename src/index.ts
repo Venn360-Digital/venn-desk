@@ -15,6 +15,9 @@ import { rotasDoMcp } from './rotas/mcp.ts'
 import { verificarSaude } from './saude/verificar.ts'
 import { vigiarPrazos } from './sla/vigiar.ts'
 import { consumirAtendimentos, type LoteDaFila } from './agente/fila.ts'
+import { consumirConhecimento } from './conhecimento/fila.ts'
+import { leitorGitHub } from './conhecimento/github.ts'
+import { vigiarConhecimento } from './conhecimento/sincronizar.ts'
 import type { CaixaDeSaida } from './correio/enviar.ts'
 
 /**
@@ -117,11 +120,18 @@ export default {
      * herdar o tempo gasto pelo primeiro.
      */
     async queue(lote: LoteDaFila, env: Ambiente['Bindings']) {
+        /// Um consumidor por Worker; o nome da fila diz de quem é o lote. A da
+        /// base viva começa por `venn-desk-conhecimento` nos dois ambientes.
+        if (lote.queue.startsWith('venn-desk-conhecimento')) {
+            await consumirConhecimento(lote, env)
+            return
+        }
         await consumirAtendimentos(lote, env)
     },
 
-    async scheduled(_controlador: unknown, env: Ambiente['Bindings'], _ctx: unknown) {
+    async scheduled(controlador: { scheduledTime?: number }, env: Ambiente['Bindings'], _ctx: unknown) {
         const cliente = criarCliente(env.DATABASE_URL)
+        const agora = new Date(controlador.scheduledTime ?? Date.now())
 
         try {
             /**
@@ -150,6 +160,22 @@ export default {
             }
             if (estouros.length > 0) {
                 console.log('[sla]', JSON.stringify(estouros))
+            }
+
+            /**
+             * A base viva, a cada cinco minutos: um pedido ao GitHub por
+             * repositório (com ETag, que não conta no limite) e, se `main`
+             * andou, uma sincronização por app na fila. Não há segundo cron —
+             * o de minuto já existe, e o resto é olhar o relógio.
+             */
+            if (agora.getUTCMinutes() % 5 === 0 && env.GITHUB_TOKEN_LEITURA !== undefined && env.GITHUB_TOKEN_LEITURA !== '') {
+                const acoes = await vigiarConhecimento(cliente, {
+                    leitor: leitorGitHub(env.GITHUB_TOKEN_LEITURA),
+                    fila: env.CONHECIMENTO,
+                    agora,
+                })
+                const relevantes = acoes.filter((a) => a.acao !== 'em_dia' && a.acao !== 'aguardando_intervalo')
+                if (relevantes.length > 0) console.log('[conhecimento]', JSON.stringify(relevantes))
             }
         } finally {
             await descartarCliente(cliente)

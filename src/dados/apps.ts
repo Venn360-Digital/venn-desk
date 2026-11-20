@@ -27,6 +27,7 @@ export interface DadosDoApp {
     prefixo: string
     chavePublicaJwk: Prisma.InputJsonValue
     repositorio?: string | null
+    pastaNoRepositorio?: string | null
     urlApp?: string | null
     urlSaude?: string | null
     canalSuporte?: string | null
@@ -50,6 +51,9 @@ export async function cadastrarApp(cliente: PrismaClient, dados: DadosDoApp): Pr
             chavePublicaJwk: dados.chavePublicaJwk,
             modoSombra: dados.modoSombra ?? true,
             ...(dados.repositorio === undefined ? {} : { repositorio: dados.repositorio }),
+            ...(dados.pastaNoRepositorio === undefined
+                ? {}
+                : { pastaNoRepositorio: dados.pastaNoRepositorio }),
             ...(dados.urlApp === undefined ? {} : { urlApp: dados.urlApp }),
             ...(dados.urlSaude === undefined ? {} : { urlSaude: dados.urlSaude }),
             ...(dados.canalSuporte === undefined ? {} : { canalSuporte: dados.canalSuporte }),
@@ -72,6 +76,8 @@ export async function alterarApp(
     campos: {
         nome?: string | undefined
         repositorio?: string | null | undefined
+        pastaNoRepositorio?: string | null | undefined
+        chavePublicaDoDesk?: Prisma.InputJsonValue | undefined
         urlApp?: string | null | undefined
         urlSaude?: string | null | undefined
         canalSuporte?: string | null | undefined
@@ -85,6 +91,12 @@ export async function alterarApp(
     const data = {
         ...(campos.nome === undefined ? {} : { nome: campos.nome }),
         ...(campos.repositorio === undefined ? {} : { repositorio: campos.repositorio }),
+        ...(campos.pastaNoRepositorio === undefined
+            ? {}
+            : { pastaNoRepositorio: campos.pastaNoRepositorio }),
+        ...(campos.chavePublicaDoDesk === undefined
+            ? {}
+            : { chavePublicaDoDesk: campos.chavePublicaDoDesk }),
         ...(campos.urlApp === undefined ? {} : { urlApp: campos.urlApp }),
         ...(campos.urlSaude === undefined ? {} : { urlSaude: campos.urlSaude }),
         ...(campos.canalSuporte === undefined ? {} : { canalSuporte: campos.canalSuporte }),
@@ -105,4 +117,16 @@ export async function alterarApp(
 
     const { count } = await cliente.app.updateMany({ where: { slug, excluidoEm: null }, data })
     return count === 1 ? appPorSlug(cliente, slug) : null
+}
+
+/**
+ * Os apps que a base viva consegue sincronizar: ativos, com repositório E
+ * pasta preenchidos. Um app sem os dois não é erro — é um app que ainda não
+ * entrou na base viva, e o Console diz isso.
+ */
+export async function appsSincronizaveis(cliente: PrismaClient): Promise<App[]> {
+    const apps = await appsAtivos(cliente)
+    return apps.filter(
+        (a) => a.repositorio !== null && a.repositorio !== '' && a.pastaNoRepositorio !== null && a.pastaNoRepositorio !== ''
+    )
 }

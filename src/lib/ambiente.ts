@@ -45,6 +45,8 @@ export interface Ambiente {
         ANTHROPIC_API_KEY?: string
         /** O modelo do agente. Em `vars`, para trocar sem publicar código. */
         MODELO_DO_AGENTE?: string
+        /** O modelo da extração da base viva. Sonnet 5 por padrão; Haiku 4.5 é o botão de custo. */
+        MODELO_DO_EXTRATOR?: string
         /** Quanto o agente pensa: `low`, `medium`, `high`, `xhigh` ou `max`. */
         ESFORCO_DO_AGENTE?: string
         /**
