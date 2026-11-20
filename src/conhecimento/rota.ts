@@ -11,7 +11,15 @@ import type { Vocabulario } from './tipos.ts'
  * slugs antigos que a trilha ainda resolve — é exatamente a tabela que
  * `crumbsFor` usa no produto, então o nome aqui é o mesmo que o cliente vê.
  */
-const PARECE_ID = /^(?:[0-9]+|[a-z0-9]{20,}|[0-9a-f]{8}-[0-9a-f-]{27,})$/i
+/**
+ * O que num endereço é "um item" e não o nome de um lugar.
+ *
+ * Três formas: o número, o identificador longo que o produto gera, e o
+ * segmento dinâmico do próprio código (`[id]`, `[token]`) — este último
+ * aparecia cru no título do artigo ("Formulários → [id]"), o que não é nome de
+ * tela nenhum.
+ */
+const PARECE_ID = /^(?:\[[^\]]+\]|[0-9]+|[a-z0-9]{20,}|[0-9a-f]{8}-[0-9a-f-]{27,})$/i
 
 export function nomeDaTela(rota: string, menu: Menu, v: Vocabulario): string | null {
     /// Menu malformado (artigo de outra versão, `dados` corrompido) não derruba

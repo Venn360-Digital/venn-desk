@@ -17,6 +17,12 @@ describe('nomeDaTela', () => {
         expect(nomeDaTela('/vendas/servicos', MENU, CONECTA)).toBe('Vendas → Serviços')
     })
 
+    it('o segmento dinâmico do código também é "um item", não nome de tela', () => {
+        /// "Formulários → [id]" aparecia cru no título do artigo.
+        expect(nomeDaTela('/marketing/campanhas/[id]', MENU, ODONTO)).toBe('Marketing → Campanhas → (um item)')
+        expect(nomeDaTela('/convite/[token]', MENU, ODONTO)).toBeNull()
+    })
+
     it('um id no caminho vira "(um item)", e a querystring é ignorada', () => {
         expect(nomeDaTela('/marketing/campanhas/cm3x9k2p1q8r7s6t5u4v3w2y?aba=1', MENU, ODONTO)).toBe('Marketing → Campanhas → (um item)')
     })
