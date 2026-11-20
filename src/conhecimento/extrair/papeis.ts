@@ -18,15 +18,20 @@ import { ErroDeExtracao, type Extracao } from '../tipos.ts'
  * equipe.
  */
 
-const PAPEL = ['OWNER', 'ADMIN', 'GESTOR', 'ATENDENTE'] as const
-
 export const esquemaDosPapeis = z
     .object({
         papeis: z
             .array(
                 z
                     .object({
-                        chave: z.enum(PAPEL),
+                        /**
+                         * A chave como está no código. String livre, não enum:
+                         * o arquivo tem `daPlataforma` ao lado dos quatro
+                         * papéis, e um valor fora da lista derrubava a fonte
+                         * inteira em vez de uma linha. Quem confere que a chave
+                         * existe é a ancoragem.
+                         */
+                        chave: curto,
                         /** Como se chama em português, para quem atende dizer. */
                         nome: curto,
                     })
@@ -39,7 +44,7 @@ export const esquemaDosPapeis = z
                     .object({
                         nome: curto,
                         oQuePermite: frase,
-                        papeis: z.array(z.enum(PAPEL)).min(1),
+                        papeis: z.array(curto).min(1),
                         /** A flag do código que sustenta a linha. */
                         evidencia: campoDeEvidencia,
                     })

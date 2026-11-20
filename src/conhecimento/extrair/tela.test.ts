@@ -40,11 +40,40 @@ describe('extrairTela', () => {
         expect(r.consumo?.passos).toBe(1)
     })
 
-    it('reprova rótulo que o modelo inventou', async () => {
-        /// "Exportar para Excel" não existe nesta tela. Publicá-lo mandaria o
-        /// cliente procurar um botão que não há.
-        const inventado = { ...TELA_VALIDA, acoes: [{ nome: 'Exportar Excel', oQueFaz: 'Baixa a planilha.', evidencia: 'Exportar para Excel' }] }
-        await expect(extrairTela('/vendas/servicos', ARQUIVOS, extratorFalso(inventado))).rejects.toThrow(/não vêm dos arquivos/)
+    it('DESCARTA o rótulo inventado e mantém o resto da tela', async () => {
+        /**
+         * "Exportar para Excel" não existe nesta tela, e publicá-lo mandaria o
+         * cliente procurar um botão que não há. Mas derrubar a tela inteira por
+         * causa de uma ação entre dezoito era trocar o certo pelo nada — foi o
+         * que perdeu as oito telas maiores em 20/11/2026.
+         */
+        const comUmaInventada = {
+            ...TELA_VALIDA,
+            acoes: [
+                { nome: 'Novo', oQueFaz: 'Abre o painel.', evidencia: 'Item criado' },
+                { nome: 'Exportar Excel', oQueFaz: 'Baixa a planilha.', evidencia: 'Exportar para Excel' },
+            ],
+        }
+        const r = await extrairTela('/vendas/servicos', ARQUIVOS, extratorFalso(comUmaInventada))
+
+        expect(r.dados.acoes.map((a) => a.nome)).toEqual(['Novo'])
+        expect(r.dados.avisos).toHaveLength(1)
+    })
+
+    it('se NADA do que a tela afirma vem dos arquivos, ela falha', async () => {
+        const tudoInventado = {
+            ...TELA_VALIDA,
+            acoes: [{ nome: 'Exportar Excel', oQueFaz: 'Baixa a planilha.', evidencia: 'Exportar para Excel' }],
+            campos: [{ nome: 'Chave da conta bancária' }],
+            avisos: [{ quando: 'sempre', texto: 'Assinatura vencida ontem' }],
+            porQuePodeNaoAparecer: [],
+        }
+        await expect(extrairTela('/vendas/servicos', ARQUIVOS, extratorFalso(tudoInventado))).rejects.toThrow(/nada do que a documentação afirma/)
+    })
+
+    it('nome de tela inventado reprova: é o que titula o artigo', async () => {
+        const semNome = { ...TELA_VALIDA, nome: 'Faturamento recorrente' }
+        await expect(extrairTela('/vendas/servicos', ARQUIVOS, extratorFalso(semNome))).rejects.toThrow(/não aparece nos arquivos/)
     })
 
     it('reprova detalhe interno no texto, mesmo ancorado', async () => {
@@ -141,13 +170,15 @@ describe('extrairTela', () => {
         const rotuloComposto = { ...TELA_VALIDA, acoes: [{ nome: 'Novo / Item criado', oQueFaz: 'Abre o painel.', evidencia: 'Item criado' }] }
         await expect(extrairTela('/vendas/servicos', ARQUIVOS, extratorFalso(rotuloComposto))).resolves.toBeDefined()
 
-        const rotuloParafraseado = {
+        const rotuloDeOutraTela = {
             ...TELA_VALIDA,
-            acoes: [{ nome: 'Exportar planilha do Excel', oQueFaz: 'Baixa tudo.', evidencia: 'Item criado' }],
+            acoes: [
+                { nome: 'Novo', oQueFaz: 'Abre o painel.', evidencia: 'Item criado' },
+                { nome: 'Exportar planilha do Excel', oQueFaz: 'Baixa tudo.', evidencia: 'Item criado' },
+            ],
         }
-        await expect(extrairTela('/vendas/servicos', ARQUIVOS, extratorFalso(rotuloParafraseado))).rejects.toThrow(
-            /não vêm dos arquivos/
-        )
+        const r = await extrairTela('/vendas/servicos', ARQUIVOS, extratorFalso(rotuloDeOutraTela))
+        expect(r.dados.acoes.map((a) => a.nome)).toEqual(['Novo'])
     })
 
     it('"o que o campo aceita" é a REGRA descrita, e não precisa estar escrita no arquivo', async () => {
@@ -166,14 +197,19 @@ describe('extrairTela', () => {
         })
     })
 
-    it('evidência inventada reprova a tela, mesmo com os rótulos certos', async () => {
+    it('ação com evidência inventada é descartada, mesmo com o rótulo certo', async () => {
+        /// O rótulo existe, a justificativa não. Sem evidência não há
+        /// afirmação: o item sai.
         const comEvidenciaFalsa = {
             ...TELA_VALIDA,
-            acoes: [{ nome: 'Novo', oQueFaz: 'Abre o painel.', evidencia: 'if (assinaturaVencida) bloquearTudoAgora()' }],
+            acoes: [
+                { nome: 'Novo', oQueFaz: 'Abre o painel.', evidencia: 'if (assinaturaVencida) bloquearTudoAgora()' },
+                { nome: 'Novo', oQueFaz: 'Abre o painel.', evidencia: 'Item criado' },
+            ],
         }
-        await expect(extrairTela('/vendas/servicos', ARQUIVOS, extratorFalso(comEvidenciaFalsa))).rejects.toThrow(
-            /não vêm dos arquivos/
-        )
+        const r = await extrairTela('/vendas/servicos', ARQUIVOS, extratorFalso(comEvidenciaFalsa))
+        expect(r.dados.acoes).toHaveLength(1)
+        expect(r.dados.acoes[0]?.evidencia).toBe('Item criado')
     })
 
     it('sem arquivo não há tela', async () => {

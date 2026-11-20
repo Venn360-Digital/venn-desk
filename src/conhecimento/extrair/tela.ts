@@ -118,7 +118,7 @@ export async function extrairTela(
         }
     })
 
-    const { dados, consumo } = await extrator.extrair({
+    const extracao = await extrator.extrair({
         esquema: esquemaDaTela,
         instrucao: `${INSTRUCAO}\n\nA tela fica no endereço ${rota}.`,
         arquivos: paraOModelo,
@@ -126,26 +126,44 @@ export async function extrairTela(
         /// token de saída não gasto não é cobrado.
         maxTokensSaida: 8_000,
     })
+    const consumo = extracao.consumo
+    let dados = extracao.dados
 
     /**
-     * A ancoragem roda contra os arquivos CRUS — o digesto é o que o modelo
-     * leu, o arquivo é a verdade —, e só sobre o que é AFIRMAÇÃO VERIFICÁVEL.
+     * A verificação roda contra os arquivos CRUS (o digesto é o que o modelo
+     * leu; o arquivo é a verdade) e só sobre o que é AFIRMAÇÃO: rótulo de
+     * botão, nome de campo, texto de aviso, evidência. A prosa que descreve é
+     * pedida, e quem a sustenta é a evidência ao lado.
      *
-     * Rótulo de botão, nome de campo, texto de aviso e evidência precisam
-     * existir no arquivo: é o que mandaria alguém procurar um botão que não
-     * existe. A prosa que descreve ("abre o painel para cadastrar um item") é
-     * do modelo por encomenda, e quem a sustenta é a evidência ao lado — exigir
-     * que ela apareça literalmente no código reprovaria toda documentação boa.
+     * O que não ancora é DESCARTADO, não derruba a tela.
+     *
+     * Medido em 20/11/2026: as oito telas que sobravam eram as maiores — mais
+     * afirmações, mais chance de uma delas não ancorar, e a tela inteira caía.
+     * Perder a documentação de "Clientes" porque uma das dezoito ações veio
+     * parafraseada é trocar o certo pelo nada.
+     *
+     * A tela só falha quando o NÚCLEO não se sustenta: o nome não ancora, ou
+     * sobrou tão pouco que o artigo não diria nada. O que foi descartado fica
+     * contado em `dados`, para dar para ver se uma tela está sendo documentada
+     * pela metade.
      */
     const crus = arquivos.map((a) => a.conteudo)
-    const ancoragem = ancorar(afirmacoesAncoraveis(dados), crus)
-    if (!ancoragem.ok) {
+    const { tela: filtrada, descartados } = descartarNaoAncorado(dados, crus)
+
+    if (!ancorar([filtrada.nome], crus).ok) {
+        throw new ErroDeExtracao(`tela ${rota}`, `o nome da tela ("${filtrada.nome}") não aparece nos arquivos`, consumo)
+    }
+    if (filtrada.acoes.length === 0 && filtrada.campos.length === 0 && filtrada.avisos.length === 0 && dados.acoes.length > 0) {
         throw new ErroDeExtracao(
             `tela ${rota}`,
-            `afirmações que não vêm dos arquivos: ${ancoragem.soltas.slice(0, 6).join(' | ')}`,
+            `nada do que a documentação afirma vem dos arquivos (${descartados} item(ns) descartado(s))`,
             consumo
         )
     }
+    if (descartados > 0) {
+        console.log(`[conhecimento] tela ${rota}: ${descartados} item(ns) sem âncora, descartado(s)`)
+    }
+    dados = filtrada
 
     /// Nome de arquivo, tabela ou rota de API na saída é vazamento de detalhe
     /// interno para a boca de quem atende o cliente (ADR 0012).
@@ -159,6 +177,34 @@ export async function extrairTela(
     }
 
     return { dados, extraidoPor: 'modelo', consumo }
+}
+
+/**
+ * Tira da tela os itens cuja afirmação não vem dos arquivos.
+ *
+ * Item por item: a ação cujo rótulo não existe sai, e as outras dezessete
+ * ficam. `oQueSeVe` e `paraQueServe` não passam por aqui — são descrição
+ * pedida, e quem as sustenta é o resto do artigo.
+ */
+export function descartarNaoAncorado(tela: Tela, arquivos: string[]): { tela: Tela; descartados: number } {
+    const ancorado = (texto: string) => ancorar([texto], arquivos).ok
+    let descartados = 0
+    const peneirar = <T>(lista: T[], ok: (item: T) => boolean): T[] => {
+        const ficam = lista.filter(ok)
+        descartados += lista.length - ficam.length
+        return ficam
+    }
+
+    return {
+        tela: {
+            ...tela,
+            acoes: peneirar(tela.acoes, (a) => ancorado(a.nome) && ancorado(a.evidencia)),
+            campos: peneirar(tela.campos, (c) => ancorado(c.nome)),
+            avisos: peneirar(tela.avisos, (a) => ancorado(a.texto)),
+            porQuePodeNaoAparecer: peneirar(tela.porQuePodeNaoAparecer, (p) => ancorado(p.evidencia)),
+        },
+        descartados,
+    }
 }
 
 /**
