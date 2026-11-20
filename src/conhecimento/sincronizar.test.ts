@@ -4,7 +4,7 @@ import { conexaoFalsa } from '../dados/testes/conexao-falsa.ts'
 import { escopoDoApp } from '../dados/escopo.ts'
 import type { Extrator } from './extrair/com-modelo.ts'
 import { ErroDeLeitura, type LeitorDoRepositorio } from './github.ts'
-import { sincronizarApp, vigiarConhecimento, type ResultadoDaSincronizacao } from './sincronizar.ts'
+import { enfileirarTelas, sincronizarApp, vigiarConhecimento, type ResultadoDaSincronizacao } from './sincronizar.ts'
 import { fixture } from './testes/fixtures.ts'
 
 const APP = { id: 'app-a', slug: 'odontobox', nome: 'Odontobox360', repositorio: 'o/r', pastaNoRepositorio: 'apps/odontobox360' }
@@ -277,3 +277,144 @@ describe('vigiarConhecimento', () => {
 /// Garante que o tipo exportado é o que a fila grava e relê.
 const _tipo: ResultadoDaSincronizacao | null = null
 void _tipo
+
+describe('enfileirarTelas', () => {
+    const R = 'packages/core/src/'
+    const INDICE = {
+        commit: SHA,
+        telas: [
+            {
+                rota: '/vendas/servicos',
+                modulo: 'vendas',
+                arquivos: [`${R}rotas/(dashboard)/vendas/servicos/page.tsx`],
+                componentes: [],
+                apis: [],
+                modelos: [],
+            },
+            {
+                rota: '/vendas/clientes',
+                modulo: 'vendas',
+                arquivos: [`${R}rotas/(dashboard)/vendas/clientes/page.tsx`],
+                componentes: [],
+                apis: [],
+                modelos: [],
+            },
+        ],
+        apis: [],
+        arquivosPorModulo: {},
+        analises: {},
+    }
+    const arvore = () =>
+        new Map([
+            [`${R}rotas/(dashboard)/vendas/servicos/page.tsx`, { sha: 'sha-serv', tamanho: 100 }],
+            [`${R}rotas/(dashboard)/vendas/clientes/page.tsx`, { sha: 'sha-cli', tamanho: 100 }],
+        ])
+
+    const emDia = (chave: string, sha: string, caminho: string) => ({
+        id: `art-${chave}`,
+        appId: 'app-a',
+        origem: 'DERIVADO',
+        chave,
+        status: 'PUBLICADO',
+        fonte: { shas: { [caminho]: sha }, versaoDoExtrator: 1 },
+    })
+
+    it('enfileira só as telas desatualizadas, e conta as que já estão em dia', async () => {
+        const { conexao } = conexaoFalsa({
+            'kbArticle.findMany': [emDia('derivado:tela:vendas-servicos', 'sha-serv', `${R}rotas/(dashboard)/vendas/servicos/page.tsx`)],
+        })
+        const enviados: unknown[] = []
+
+        const r = await enfileirarTelas({
+            escopo: escopoDoApp(conexao, 'app-a'),
+            indice: INDICE,
+            arvore: arvore(),
+            commitSha: SHA,
+            fila: { send: async (m) => void enviados.push(m) },
+            apps: [APP],
+            agora: new Date(),
+            teto: 40,
+        })
+
+        expect(r).toMatchObject({ total: 2, emDia: 1, enfileiradas: 1, adiadas: 0 })
+        expect(enviados).toHaveLength(1)
+        expect(enviados[0]).toMatchObject({ tipo: 'documentar-tela', rota: '/vendas/clientes', appIds: ['app-a'] })
+    })
+
+    it('a mensagem leva TODOS os apps irmãos: a tela é a mesma nos três', async () => {
+        const { conexao } = conexaoFalsa({ 'kbArticle.findMany': [] })
+        const enviados: { appIds?: string[] }[] = []
+        const irmaos = [APP, { ...APP, id: 'app-b', slug: 'conecta' }, { ...APP, id: 'app-c', slug: 'stagent' }]
+
+        await enfileirarTelas({
+            escopo: escopoDoApp(conexao, 'app-a'),
+            indice: INDICE,
+            arvore: arvore(),
+            commitSha: SHA,
+            fila: { send: async (m) => void enviados.push(m as { appIds?: string[] }) },
+            apps: irmaos,
+            agora: new Date(),
+            teto: 40,
+        })
+
+        expect(enviados[0]?.appIds).toEqual(['app-a', 'app-b', 'app-c'])
+    })
+
+    it('rota que saiu do produto tem o artigo ARQUIVADO, com evento', async () => {
+        const morta = { id: 'art-morta', appId: 'app-a', origem: 'DERIVADO', chave: 'derivado:tela:vendas-sumiu', status: 'PUBLICADO' }
+        let vez = 0
+        const { conexao, chamadas } = conexaoFalsa({
+            /// Primeiro `findMany` é a listagem dos derivados; o segundo é o de
+            /// arquivar fora das chaves vivas.
+            'kbArticle.findMany': () => (vez++ === 0 ? [] : [morta]),
+        })
+
+        const r = await enfileirarTelas({
+            escopo: escopoDoApp(conexao, 'app-a'),
+            indice: INDICE,
+            arvore: arvore(),
+            commitSha: SHA,
+            fila: undefined,
+            apps: [APP],
+            agora: new Date(),
+            teto: 40,
+        })
+
+        expect(r.arquivados).toBe(1)
+        const evento = chamadas.find((c) => c.delegado === 'kbEvento')
+        expect((evento?.args['data'] as Record<string, unknown>)?.['evento']).toBe('artigo:derivado-arquivado')
+    })
+
+    it('o teto adia o resto para a próxima rodada', async () => {
+        const { conexao } = conexaoFalsa({ 'kbArticle.findMany': [] })
+        const enviados: unknown[] = []
+        const r = await enfileirarTelas({
+            escopo: escopoDoApp(conexao, 'app-a'),
+            indice: INDICE,
+            arvore: arvore(),
+            commitSha: SHA,
+            fila: { send: async (m) => void enviados.push(m) },
+            apps: [APP],
+            agora: new Date(),
+            teto: 1,
+        })
+
+        expect(r).toMatchObject({ enfileiradas: 1, adiadas: 1 })
+        expect(enviados).toHaveLength(1)
+    })
+
+    it('sem fila, nada é enfileirado — e isso é registrado, não escondido', async () => {
+        const { conexao } = conexaoFalsa({ 'kbArticle.findMany': [] })
+        const r = await enfileirarTelas({
+            escopo: escopoDoApp(conexao, 'app-a'),
+            indice: INDICE,
+            arvore: arvore(),
+            commitSha: SHA,
+            fila: undefined,
+            apps: [APP],
+            agora: new Date(),
+            teto: 40,
+        })
+        expect(r).toMatchObject({ total: 2, enfileiradas: 0 })
+    })
+})

@@ -159,6 +159,8 @@ export interface Sincronizacao {
     resultado: {
         fontes?: Record<string, { estado: string; criados: number; atualizados: number; reabertos: number; inalterados: number; arquivados: number; extraidoPor?: string; erro?: string }>
         mapa?: { telas: number; apis: number; arquivosLidos: number; artigos: number } | { erro: string }
+        /** A passada 2: a documentação funcional, uma tela por mensagem de fila. */
+        telas?: { total: number; enfileiradas: number; emDia: number; arquivados: number; adiadas: number } | { erro: string }
         custoEstimadoUsd?: number
         duracaoMs?: number
         avisos?: string[]

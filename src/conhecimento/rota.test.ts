@@ -26,3 +26,12 @@ describe('nomeDaTela', () => {
         expect(nomeDaTela('/', MENU, ODONTO)).toBeNull()
     })
 })
+
+describe('nomeDaTela diante de menu malformado', () => {
+    it('menu sem tabela de segmentos devolve null, e não quebra', () => {
+        /// Um artigo de menu de outra versão derrubaria a documentação de toda
+        /// tela, que depende dele só para um rótulo.
+        const vazio = { secoes: [], segmentos: undefined } as unknown as Parameters<typeof nomeDaTela>[1]
+        expect(nomeDaTela('/vendas/servicos', vazio, ODONTO)).toBeNull()
+    })
+})

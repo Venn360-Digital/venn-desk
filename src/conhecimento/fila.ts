@@ -1,7 +1,7 @@
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { z } from 'zod'
 
-import { appPorId } from '../dados/apps.ts'
+import { appPorId, appsSincronizaveis } from '../dados/apps.ts'
 import { criarCliente, descartarCliente } from '../dados/cliente.ts'
 import { escopoDoApp } from '../dados/escopo.ts'
 import type { Ambiente } from '../lib/ambiente.ts'
@@ -10,6 +10,7 @@ import { embutirVarios } from './embeddings.ts'
 import { extratorDaAnthropic } from './extrair/com-modelo.ts'
 import { ErroDeLeitura, leitorGitHub } from './github.ts'
 import { credencialDoAmbiente } from './github-app.ts'
+import { documentarTela } from './documentar.ts'
 import { sincronizarApp, type ResultadoDaSincronizacao } from './sincronizar.ts'
 
 /**
@@ -38,6 +39,22 @@ export const esquemaDoPedidoDeConhecimento = z.discriminatedUnion('tipo', [
         commitSha: z.string().length(40),
         forcar: z.boolean().optional(),
     }),
+    z.object({
+        tipo: z.literal('documentar-tela'),
+        rota: z.string().min(1).max(200),
+        commitSha: z.string().length(40),
+        arquivos: z
+            .array(
+                z.object({
+                    caminho: z.string().min(1).max(300),
+                    sha: z.string().min(4).max(64),
+                    papel: z.enum(['tela', 'apoio']),
+                })
+            )
+            .min(1)
+            .max(20),
+        appIds: z.array(z.string().min(1)).min(1).max(10),
+    }),
     z.object({ tipo: z.literal('sugerir-de-chamado'), appId: z.string().min(1), ticketId: z.string().min(1) }),
     z.object({ tipo: z.literal('sugerir-de-lacuna'), appId: z.string().min(1), exemplo: z.string().min(1), vezes: z.number().int() }),
 ])
@@ -46,6 +63,12 @@ export type PedidoDeConhecimento = z.infer<typeof esquemaDoPedidoDeConhecimento>
 
 /** O modelo da extração por modelo. `var`, para trocar sem publicar código. */
 export const MODELO_PADRAO_DO_EXTRATOR = 'claude-sonnet-5'
+/**
+ * O modelo de quando a tela já tinha artigo e só mudou — um dos botões de custo
+ * do plano. Reler um arquivo parecido com o que já rendeu JSON válido é trabalho
+ * de Haiku, e a ancoragem reprova se ele errar.
+ */
+export const MODELO_INCREMENTAL = 'claude-haiku-4-5-20251001'
 
 export async function consumirConhecimento(lote: LoteDaFila, env: Ambiente['Bindings']): Promise<void> {
     const cliente = criarCliente(env.DATABASE_URL)
@@ -59,7 +82,7 @@ export async function consumirConhecimento(lote: LoteDaFila, env: Ambiente['Bind
                 continue
             }
 
-            if (pedido.data.tipo !== 'sincronizar') {
+            if (pedido.data.tipo === 'sugerir-de-chamado' || pedido.data.tipo === 'sugerir-de-lacuna') {
                 /// Chega com a biblioteca de casos. Até lá, reconhecido e fora.
                 console.log('[conhecimento] tipo ainda não atendido:', pedido.data.tipo)
                 mensagem.ack()
@@ -68,9 +91,75 @@ export async function consumirConhecimento(lote: LoteDaFila, env: Ambiente['Bind
 
             const credencial = credencialDoAmbiente(env)
             if (credencial === undefined) {
-                console.error('[conhecimento] sem credencial do GitHub (App ou token): a sincronização não roda')
-                await marcarFalha(cliente, pedido.data, 'sem credencial do GitHub no Worker (App ou GITHUB_TOKEN_LEITURA)')
+                console.error('[conhecimento] sem credencial do GitHub (App ou token): a base viva não roda')
+                /// Só a sincronização tem onde registrar a falha; a tela deixa
+                /// o artigo desatualizado, e a rodada seguinte a repede.
+                if (pedido.data.tipo === 'sincronizar') {
+                    await marcarFalha(cliente, pedido.data, 'sem credencial do GitHub no Worker (App ou GITHUB_TOKEN_LEITURA)')
+                }
                 mensagem.ack()
+                continue
+            }
+
+            const chaveDoModelo = env.ANTHROPIC_API_KEY
+            const anthropic = chaveDoModelo === undefined || chaveDoModelo === '' ? null : createAnthropic({ apiKey: chaveDoModelo })
+
+            if (pedido.data.tipo === 'documentar-tela') {
+                if (anthropic === null) {
+                    console.error('[conhecimento] sem ANTHROPIC_API_KEY: a tela fica sem documentação')
+                    mensagem.ack()
+                    continue
+                }
+                try {
+                    const apps = (await Promise.all(pedido.data.appIds.map((id) => appPorId(cliente, id))))
+                        .filter((a): a is NonNullable<typeof a> => a !== null && a.repositorio !== null && a.pastaNoRepositorio !== null)
+                        .map((a) => ({
+                            id: a.id,
+                            slug: a.slug,
+                            nome: a.nome,
+                            repositorio: a.repositorio as string,
+                            pastaNoRepositorio: a.pastaNoRepositorio as string,
+                        }))
+                    if (apps.length === 0) {
+                        mensagem.ack()
+                        continue
+                    }
+
+                    const ai = env.AI
+                    const resultado = await documentarTela({
+                        rota: pedido.data.rota,
+                        arquivos: pedido.data.arquivos,
+                        commitSha: pedido.data.commitSha,
+                        apps,
+                        escopoDe: (appId) => escopoDoApp(cliente, appId),
+                        leitor: leitorGitHub(credencial),
+                        extrator: extratorDaAnthropic(anthropic(env.MODELO_DO_EXTRATOR ?? MODELO_PADRAO_DO_EXTRATOR)),
+                        extratorIncremental: extratorDaAnthropic(anthropic(env.MODELO_DO_EXTRATOR_INCREMENTAL ?? MODELO_INCREMENTAL)),
+                        embutir: ai === undefined ? null : (textos) => embutirVarios(ai, textos),
+                        agora: new Date(),
+                        tarifa: {
+                            entradaPorMilhao: Number(env.TARIFA_ENTRADA_POR_MILHAO ?? '3'),
+                            saidaPorMilhao: Number(env.TARIFA_SAIDA_POR_MILHAO ?? '15'),
+                        },
+                    })
+                    if (resultado.artigos > 0 || resultado.custoEstimadoUsd > 0) {
+                        console.log('[conhecimento] tela documentada', JSON.stringify(resultado))
+                    }
+                    mensagem.ack()
+                } catch (erro) {
+                    if (erro instanceof ErroDeLeitura && erro.codigoDeLeitura === 'limite_de_taxa') {
+                        mensagem.retry()
+                        continue
+                    }
+                    /**
+                     * `ack`, não `retry`: falha de forma ou de ancoragem não
+                     * melhora repetindo. O artigo da tela fica desatualizado, e
+                     * a rodada seguinte o vê assim e tenta de novo — com um
+                     * commit novo, que é quando pode ter melhorado.
+                     */
+                    console.error(`[conhecimento] tela ${pedido.data.rota} falhou:`, erro instanceof Error ? erro.message : erro)
+                    mensagem.ack()
+                }
                 continue
             }
 
@@ -93,12 +182,24 @@ export async function consumirConhecimento(lote: LoteDaFila, env: Ambiente['Bind
                 await escopo.sincronizacoes.iniciar(sincronizacao.id, agora)
 
                 const anterior = await escopo.sincronizacoes.ultimaConcluida()
-                const chave = env.ANTHROPIC_API_KEY
                 const extrator =
-                    chave === undefined || chave === ''
+                    anthropic === null
                         ? null
-                        : extratorDaAnthropic(createAnthropic({ apiKey: chave })(env.MODELO_DO_EXTRATOR ?? MODELO_PADRAO_DO_EXTRATOR))
+                        : extratorDaAnthropic(anthropic(env.MODELO_DO_EXTRATOR ?? MODELO_PADRAO_DO_EXTRATOR))
                 const ai = env.AI
+
+                /// Os apps que compartilham este repositório: a tela é a mesma
+                /// nos três, e a mensagem documenta todos de uma vez.
+                const todos = await appsSincronizaveis(cliente)
+                const irmaos = todos
+                    .filter((a) => a.repositorio === app.repositorio)
+                    .map((a) => ({
+                        id: a.id,
+                        slug: a.slug,
+                        nome: a.nome,
+                        repositorio: a.repositorio as string,
+                        pastaNoRepositorio: a.pastaNoRepositorio as string,
+                    }))
 
                 const resultado = await sincronizarApp({
                     escopo,
@@ -109,6 +210,8 @@ export async function consumirConhecimento(lote: LoteDaFila, env: Ambiente['Bind
                     commitSha: pedido.data.commitSha,
                     anterior: pedido.data.forcar === true ? null : ((anterior?.resultado as ResultadoDaSincronizacao | null) ?? null),
                     agora,
+                    fila: env.CONHECIMENTO,
+                    irmaos,
                     tarifa: {
                         entradaPorMilhao: Number(env.TARIFA_ENTRADA_POR_MILHAO ?? '3'),
                         saidaPorMilhao: Number(env.TARIFA_SAIDA_POR_MILHAO ?? '15'),

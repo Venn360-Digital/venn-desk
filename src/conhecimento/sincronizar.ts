@@ -9,7 +9,10 @@ import { extrairVocabulario } from './extrair/vocabulario.ts'
 import type { Extrator } from './extrair/com-modelo.ts'
 import { caminhoDoVocabulario, FONTES, type Fonte } from './fontes.ts'
 import { ErroDeLeitura, type LeitorDoRepositorio } from './github.ts'
+import { contextoDaTela, type ArquivoEscolhido } from './mapa/contexto-da-tela.ts'
 import { montarIndice, type IndiceTecnico } from './mapa/indice.ts'
+import { chaveDaTela, PREFIXO_TELA } from './renderizar/tela.ts'
+import { VERSAO_DO_EXTRATOR_DE_TELA } from './documentar.ts'
 import { PREFIXO_MAPA, renderizarMapa } from './renderizar/mapa.ts'
 import { ErroDeExtracao, type AppSincronizavel, type ArtigoRenderizado, type ContextoDeRenderizacao, type Vocabulario } from './tipos.ts'
 
@@ -40,9 +43,16 @@ export const RAMO = 'main'
 export interface TetoDaRodada {
     chamadasAoModelo: number
     tokens: number
+    /**
+     * Quantas telas uma rodada enfileira. A carga inicial tem 33; o incremental
+     * tem uma ou duas. O teto existe para o dia em que um renomeio em massa
+     * tocar tudo: a base atualiza em duas rodadas em vez de gastar o mês num
+     * commit.
+     */
+    telasPorRodada: number
 }
 
-export const TETO_DA_RODADA: TetoDaRodada = { chamadasAoModelo: 12, tokens: 300_000 }
+export const TETO_DA_RODADA: TetoDaRodada = { chamadasAoModelo: 12, tokens: 300_000, telasPorRodada: 40 }
 
 export interface EstadoDaFonte {
     estado: 'ok' | 'inalterada' | 'falhou' | 'pulada'
@@ -60,10 +70,24 @@ export interface EstadoDaFonte {
     erro?: string
 }
 
+export interface EstadoDasTelas {
+    /** Telas no índice deste commit. */
+    total: number
+    /** Enfileiradas para documentar (as que mudaram, ou que ainda não existem). */
+    enfileiradas: number
+    /** Já documentadas neste commit, sem trabalho nenhum. */
+    emDia: number
+    /** Artigos arquivados porque a rota saiu do produto. */
+    arquivados: number
+    /** Deixadas para a próxima rodada pelo teto. */
+    adiadas: number
+}
+
 export interface ResultadoDaSincronizacao {
     commit: string
     fontes: Record<string, EstadoDaFonte>
     mapa: { telas: number; apis: number; arquivosLidos: number; artigos: number } | { erro: string }
+    telas?: EstadoDasTelas | { erro: string }
     indiceTecnico?: IndiceTecnico
     consumo: Consumo
     custoEstimadoUsd: number
@@ -85,6 +109,16 @@ export interface PedidoDeSincronizacao {
     agora: Date
     tarifa: Tarifa
     teto?: TetoDaRodada
+    /**
+     * Para enfileirar a documentação das telas. Ausente (teste, ambiente sem
+     * Queues), a passada 2 é apenas registrada como não enfileirada.
+     */
+    fila?: Fila | undefined
+    /**
+     * Os apps que compartilham este repositório — a tela é a mesma nos três, e
+     * a mensagem documenta todos de uma vez. Vazio: só este app.
+     */
+    irmaos?: AppSincronizavel[]
 }
 
 export async function sincronizarApp(pedido: PedidoDeSincronizacao): Promise<ResultadoDaSincronizacao> {
@@ -211,6 +245,36 @@ export async function sincronizarApp(pedido: PedidoDeSincronizacao): Promise<Res
         mapa = { erro: mensagem }
     }
 
+    /**
+     * Passada 2: a documentação funcional, uma tela por mensagem de fila.
+     *
+     * Não roda aqui dentro de propósito. Trinta e três telas a vinte segundos
+     * cada passariam de dez minutos numa invocação só, e uma falha no fim
+     * perderia tudo. Fatiada, cada tela tem a própria tentativa, o próprio teto
+     * e o próprio registro — e a mensagem é idempotente por commit, então
+     * repeti-la não gasta modelo.
+     */
+    let telas: ResultadoDaSincronizacao['telas']
+    if (indiceTecnico !== undefined) {
+        try {
+            telas = await enfileirarTelas({
+                escopo,
+                indice: indiceTecnico,
+                arvore,
+                commitSha,
+                fila: pedido.fila,
+                apps: pedido.irmaos !== undefined && pedido.irmaos.length > 0 ? pedido.irmaos : [app],
+                agora,
+                teto: teto.telasPorRodada,
+            })
+            if (telas.adiadas > 0) avisos.push(`${telas.adiadas} tela(s) ficaram para a próxima rodada (teto de ${teto.telasPorRodada})`)
+        } catch (erro) {
+            const mensagem = erro instanceof Error ? erro.message : String(erro)
+            console.error('[conhecimento] não consegui enfileirar as telas:', mensagem)
+            telas = { erro: mensagem }
+        }
+    }
+
     /// Embeddings por último e em lotes: o que foi criado ou mudou ganha vetor.
     /// Falha aqui não falha a rodada — a busca por palavra continua valendo.
     /// Reparo: o que está no ar sem vetor entra na fila de embedding desta
@@ -262,6 +326,7 @@ export async function sincronizarApp(pedido: PedidoDeSincronizacao): Promise<Res
         commit: commitSha,
         fontes,
         mapa,
+        ...(telas === undefined ? {} : { telas }),
         ...(indiceTecnico === undefined ? {} : { indiceTecnico }),
         consumo,
         custoEstimadoUsd: Number(custoEstimado(consumo, pedido.tarifa).toFixed(4)),
@@ -352,6 +417,79 @@ async function evento(escopo: EscopoDoApp, artigoId: string, nome: string, depoi
     await escopo.eventosDaBase
         .registrar({ artigoId, ator: ATOR, evento: nome, depois: depois as Prisma.InputJsonValue })
         .catch((e: unknown) => console.error('[conhecimento] evento não gravado:', e))
+}
+
+/**
+ * Decide quais telas precisam de documentação e as põe na fila.
+ *
+ * Compara os shas dos arquivos de cada tela com o que o artigo dela já guarda
+ * em `fonte.shas` — o próprio artigo é a fonte de verdade, não o resultado da
+ * rodada anterior. Assim uma mensagem que falhou não deixa a tela esquecida
+ * para sempre: na rodada seguinte ela aparece desatualizada outra vez.
+ */
+export async function enfileirarTelas(p: {
+    escopo: EscopoDoApp
+    indice: IndiceTecnico
+    arvore: Map<string, { sha: string; tamanho: number }>
+    commitSha: string
+    fila: Fila | undefined
+    apps: AppSincronizavel[]
+    agora: Date
+    teto: number
+}): Promise<EstadoDasTelas> {
+    const derivados = await p.escopo.artigos.listar({ origem: 'DERIVADO' })
+    const porChave = new Map(derivados.filter((a) => a.chave !== null).map((a) => [a.chave as string, a]))
+
+    const vivas: string[] = []
+    const pendentes: { rota: string; arquivos: ArquivoEscolhido[] }[] = []
+    let emDia = 0
+
+    for (const tela of p.indice.telas) {
+        const arquivos = contextoDaTela(tela, p.indice, p.arvore)
+        if (arquivos.length === 0) continue
+
+        const chave = chaveDaTela(tela.rota)
+        vivas.push(chave)
+
+        const fonte = (porChave.get(chave)?.fonte ?? null) as
+            | { shas?: Record<string, string>; versaoDoExtrator?: number }
+            | null
+        const shas = Object.fromEntries(arquivos.map((a) => [a.caminho, a.sha]))
+        const igual =
+            fonte !== null &&
+            fonte.versaoDoExtrator === VERSAO_DO_EXTRATOR_DE_TELA &&
+            JSON.stringify(Object.entries(fonte.shas ?? {}).sort()) === JSON.stringify(Object.entries(shas).sort())
+
+        if (igual) emDia++
+        else pendentes.push({ rota: tela.rota, arquivos })
+    }
+
+    /// Rota que saiu do produto: o artigo dela sai do ar.
+    const arquivados = await p.escopo.artigos.arquivarDerivadosFora(PREFIXO_TELA, vivas)
+    for (const a of arquivados) {
+        await evento(p.escopo, a.id, 'artigo:derivado-arquivado', { motivo: 'a rota não existe mais', commit: p.commitSha.slice(0, 7) })
+    }
+
+    const aEnfileirar = pendentes.slice(0, p.teto)
+    if (p.fila !== undefined) {
+        for (const { rota, arquivos } of aEnfileirar) {
+            await p.fila.send({
+                tipo: 'documentar-tela',
+                rota,
+                commitSha: p.commitSha,
+                arquivos,
+                appIds: p.apps.map((a) => a.id),
+            })
+        }
+    }
+
+    return {
+        total: p.indice.telas.length,
+        enfileiradas: p.fila === undefined ? 0 : aEnfileirar.length,
+        emDia,
+        arquivados: arquivados.length,
+        adiadas: pendentes.length - aEnfileirar.length,
+    }
 }
 
 // ─── O cron ──────────────────────────────────────────────────────────────

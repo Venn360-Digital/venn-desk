@@ -14,6 +14,12 @@ import type { Vocabulario } from './tipos.ts'
 const PARECE_ID = /^(?:[0-9]+|[a-z0-9]{20,}|[0-9a-f]{8}-[0-9a-f-]{27,})$/i
 
 export function nomeDaTela(rota: string, menu: Menu, v: Vocabulario): string | null {
+    /// Menu malformado (artigo de outra versão, `dados` corrompido) não derruba
+    /// quem chamou: sem tabela de segmentos não há nome, e dizer o endereço é
+    /// melhor que falhar a documentação de uma tela inteira.
+    const tabela = menu?.segmentos
+    if (tabela === undefined || tabela === null || typeof tabela !== 'object') return null
+
     const segmentos = rota.split('?')[0]?.split('/').filter((s) => s !== '') ?? []
     if (segmentos.length === 0) return null
 
@@ -24,7 +30,7 @@ export function nomeDaTela(rota: string, menu: Menu, v: Vocabulario): string | n
             partes.push('(um item)')
             continue
         }
-        const rotulo = menu.segmentos[seg]
+        const rotulo = tabela[seg]
         if (rotulo === undefined) {
             partes.push(seg)
             continue

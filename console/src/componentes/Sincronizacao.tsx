@@ -153,6 +153,21 @@ export function Sincronizacao({ app, podeEditar }: { app: string; podeEditar: bo
                             {f.extraidoPor === 'modelo' ? ' · por IA' : ''}
                         </li>
                     ))}
+                    {concluida.resultado.telas !== undefined && !('erro' in concluida.resultado.telas) ? (
+                        <li
+                            className={`rounded-xs px-1.5 py-0.5 ${
+                                concluida.resultado.telas.enfileiradas > 0 ? 'bg-informe-fundo text-informe' : 'bg-calmo-fundo text-calmo'
+                            }`}
+                            title={`${concluida.resultado.telas.emDia} em dia · ${concluida.resultado.telas.enfileiradas} na fila · ${concluida.resultado.telas.arquivados} arquivadas${concluida.resultado.telas.adiadas > 0 ? ` · ${concluida.resultado.telas.adiadas} adiadas` : ''}`}
+                        >
+                            telas: {concluida.resultado.telas.emDia}/{concluida.resultado.telas.total}
+                            {concluida.resultado.telas.enfileiradas > 0 ? ` · ${concluida.resultado.telas.enfileiradas} documentando…` : ''}
+                        </li>
+                    ) : concluida.resultado.telas !== undefined ? (
+                        <li className="rounded-xs bg-urgente-fundo px-1.5 py-0.5 text-urgente" title={concluida.resultado.telas.erro}>
+                            telas: falhou
+                        </li>
+                    ) : null}
                     {concluida.resultado.mapa !== undefined && !('erro' in concluida.resultado.mapa) ? (
                         <li className="rounded-xs bg-calmo-fundo px-1.5 py-0.5 text-calmo" title={`${concluida.resultado.mapa.telas} telas · ${concluida.resultado.mapa.apis} APIs`}>
                             mapa técnico: {concluida.resultado.mapa.artigos}
