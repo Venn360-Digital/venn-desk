@@ -57,11 +57,13 @@ export const esquemaDosPapeis = z
 
 export type Papeis = z.infer<typeof esquemaDosPapeis>
 
-const INSTRUCAO = `Você transcreve as permissões de um produto a partir do código que as define.
-Leia os conjuntos de papéis (ex.: EDITOR_ROLES, MANAGER_ROLES, OVERSIGHT_ROLES) e as flags que o hook devolve (ex.: canEdit, canManage, canTransfer, canSeeEveryone).
+const INSTRUCAO = `Você transcreve as permissões de um produto a partir do código que as define, para a equipe de suporte explicar a um cliente por que alguém da equipe dele não consegue fazer algo.
+Leia os conjuntos de papéis (ex.: EDITOR_ROLES, MANAGER_ROLES, OVERSIGHT_ROLES) e as flags que o hook devolve (ex.: canEdit, canManage, canTransfer).
+
 Devolva:
-- papeis: cada papel do tipo de papel do workspace, com o nome em português que a equipe de suporte usaria (OWNER → "proprietário", ADMIN → "administrador", GESTOR → "gestor", ATENDENTE → "atendente").
-- capacidades: uma linha por flag, dizendo o que ela permite em palavras de quem usa o produto, e quais papéis a têm. Em "evidencia", escreva o nome exato da flag ou do conjunto no código.
+- papeis: um por papel de workspace que o código declara. Em "chave", o valor EXATO como está no código (OWNER, ADMIN, GESTOR, ATENDENTE). Em "nome", como a equipe de suporte o chamaria em português (proprietário, administrador, gestor, atendente).
+- capacidades: uma por flag. Em "nome", um rótulo curto EM PORTUGUÊS do que a permissão faz, escrito para quem usa o produto — "Editar configurações da unidade", "Transferir conversa", "Ver o trabalho de toda a equipe". NUNCA use o nome da flag como rótulo. Em "oQuePermite", explique EM PORTUGUÊS, em uma frase, o que a pessoa com essa permissão consegue fazer no produto; o código tem comentários em inglês, e você deve traduzir a ideia, não copiar a frase. Em "papeis", liste as chaves dos papéis que têm essa permissão, usando EXATAMENTE os mesmos valores que você devolveu em papeis[].chave. Em "evidencia", o nome exato da flag ou do conjunto no código.
+
 Transcreva o que está escrito. Não invente capacidade que o código não declara, e não suponha o que uma flag faria.`
 
 export async function extrairPapeis(hookTs: string, extrator: Extrator): Promise<Extracao<Papeis>> {
@@ -72,12 +74,35 @@ export async function extrairPapeis(hookTs: string, extrator: Extrator): Promise
         maxTokensSaida: 6_000,
     })
 
-    /// Ancora só o que o arquivo tem literalmente: a flag e o papel. O nome em
-    /// português e a explicação são tradução pedida.
+    /// Ancora só o que o arquivo tem literalmente: a flag e a chave do papel. O
+    /// rótulo em português e a explicação são tradução pedida.
     const afirmacoes = [...dados.papeis.map((p) => p.chave), ...dados.capacidades.map((c) => c.evidencia)]
     const ancoragem = ancorar(afirmacoes, [hookTs])
     if (!ancoragem.ok) {
         throw new ErroDeExtracao('papeis', `flags ou papéis que não existem no arquivo: ${ancoragem.soltas.join(' | ')}`, consumo)
+    }
+
+    /**
+     * A tabela do artigo cruza capacidade com papel. Se as chaves não casarem,
+     * ela sai inteira com um traço em cada célula — e o artigo passa a dizer
+     * que ninguém pode nada, o que é pior que não existir. Aconteceu em
+     * produção em 20/11/2026.
+     */
+    const chaves = new Set(dados.papeis.map((p) => p.chave.toUpperCase()))
+    const semCruzamento = dados.capacidades.filter((c) => !c.papeis.some((p) => chaves.has(p.toUpperCase())))
+    if (semCruzamento.length === dados.capacidades.length) {
+        throw new ErroDeExtracao(
+            'papeis',
+            `nenhuma capacidade casa com os papéis declarados (papéis: ${[...chaves].join(', ')}; capacidades citam: ${dados.capacidades.flatMap((c) => c.papeis).slice(0, 6).join(', ')})`,
+            consumo
+        )
+    }
+
+    /// Rótulo que é nome de flag escapa da ancoragem (a flag existe no
+    /// arquivo), e deixaria "canEdit" como título de linha na tabela.
+    const tecnicos = dados.capacidades.filter((c) => /^(?:can|is|has|da|should)[A-Z]/.test(c.nome) || !/\s/.test(c.nome)).map((c) => c.nome)
+    if (tecnicos.length > 0) {
+        throw new ErroDeExtracao('papeis', `rótulos que são nome de variável, não de permissão: ${tecnicos.join(', ')}`, consumo)
     }
 
     return { dados, extraidoPor: 'modelo', consumo }

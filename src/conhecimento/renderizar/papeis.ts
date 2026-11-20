@@ -13,14 +13,17 @@ export const CAMINHO_DOS_PAPEIS = 'packages/core/src/hooks/usePermissions.ts'
  * variável, e a ADR 0012 mantém isso longe do texto que chega ao cliente.
  */
 export function renderizarPapeis(papeis: Papeis, ctx: ContextoDeRenderizacao): ArtigoRenderizado[] {
-    const nomes = new Map(papeis.papeis.map((p) => [p.chave, p.nome]))
+    const nomes = new Map(papeis.papeis.map((p) => [p.chave.toUpperCase(), p.nome]))
     const colunas = papeis.papeis.map((p) => p.nome)
+    /// Sem depender de caixa: o modelo devolve `OWNER` numa lista e `owner` na
+    /// outra, e a tabela saía inteira com traço.
+    const tem = (c: { papeis: string[] }, chave: string) => c.papeis.some((p) => p.toUpperCase() === chave.toUpperCase())
 
     const tabela = [
         `| O que faz | ${colunas.join(' | ')} |`,
         `|---|${colunas.map(() => '---').join('|')}|`,
         ...papeis.capacidades.map(
-            (c) => `| ${c.nome} | ${papeis.papeis.map((p) => (c.papeis.includes(p.chave) ? 'sim' : '—')).join(' | ')} |`
+            (c) => `| ${c.nome} | ${papeis.papeis.map((p) => (tem(c, p.chave) ? 'sim' : '—')).join(' | ')} |`
         ),
     ].join('\n')
 
@@ -36,7 +39,7 @@ export function renderizarPapeis(papeis: Papeis, ctx: ContextoDeRenderizacao): A
                 '## O que cada permissão significa',
                 ...papeis.capacidades.map(
                     (c) =>
-                        `- **${c.nome}** — ${c.oQuePermite} (${c.papeis.map((p) => nomes.get(p) ?? p.toLowerCase()).join(', ')})`
+                        `- **${c.nome}** — ${c.oQuePermite} (${c.papeis.map((p) => nomes.get(p.toUpperCase()) ?? p.toLowerCase()).join(', ')})`
                 ),
                 '',
                 'Esconder um item do menu não é permissão: o servidor recusa a ação de quem não pode, mesmo que a pessoa chegue à tela por um link.',
