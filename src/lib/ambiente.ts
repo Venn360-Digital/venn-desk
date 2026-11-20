@@ -66,8 +66,16 @@ export interface Ambiente {
          */
         CONHECIMENTO?: Fila
         /**
-         * Token do GitHub só de leitura (`Contents: read` no venn-saas). Segredo.
-         * Ausente, a sincronização não roda e o Console avisa.
+         * O GitHub App do Venn Desk (`Contents: read`, instalado só no
+         * venn-saas). Três segredos: o ID do App, o ID da instalação e a chave
+         * privada em PKCS#8. É o caminho definitivo (ADR 0011).
+         */
+        GITHUB_APP_ID?: string
+        GITHUB_APP_INSTALACAO_ID?: string
+        GITHUB_APP_CHAVE_PRIVADA?: string
+        /**
+         * Alternativa ao App: um token pessoal só de leitura. Serve para testar
+         * antes de o App estar instalado. Com o App presente, é ignorado.
          */
         GITHUB_TOKEN_LEITURA?: string
         /** Workers AI, para o embedding da busca semântica (`bge-m3`). */

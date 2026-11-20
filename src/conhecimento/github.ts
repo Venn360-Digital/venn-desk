@@ -67,7 +67,12 @@ const API = 'https://api.github.com'
 /** Só o que usamos de `fetch`, para o teste injetar um falso. */
 export type Buscador = (url: string, init: RequestInit) => Promise<Response>
 
-export function leitorGitHub(token: string, buscar: Buscador = fetch): LeitorDoRepositorio {
+/** Um token fixo, ou uma função que devolve o token vigente (o App renova o dele). */
+export type Credencial = string | (() => Promise<string>)
+
+export function leitorGitHub(credencial: Credencial, buscar: Buscador = fetch): LeitorDoRepositorio {
+    const tokenAtual = typeof credencial === 'string' ? async () => credencial : credencial
+
     /// ETag por URL, em memória do isolate. Vale enquanto o isolate viver —
     /// o cron roda no mesmo isolate por minutos a horas, e é ele quem bate no
     /// ramo a cada cinco minutos. 304 não desconta do limite de 5.000/h.
@@ -77,6 +82,7 @@ export function leitorGitHub(token: string, buscar: Buscador = fetch): LeitorDoR
         const url = `${API}${caminho}`
         const guardado = opcoes.comEtag === true ? etags.get(url) : undefined
 
+        const token = await tokenAtual()
         const resposta = await buscar(url, {
             method: 'GET',
             headers: {

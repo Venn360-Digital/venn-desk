@@ -43,6 +43,7 @@ import { createAnthropic } from '@ai-sdk/anthropic'
 import { atender } from '../agente/atender.ts'
 import { embutidorDoWorkersAi } from '../conhecimento/embeddings.ts'
 import { leitorGitHub } from '../conhecimento/github.ts'
+import { credencialDoAmbiente } from '../conhecimento/github-app.ts'
 import { urlDaFonte } from '../conhecimento/rotulos.ts'
 import { EXPIRA_MS, pedirSincronizacao } from '../conhecimento/sincronizar.ts'
 
@@ -1168,7 +1169,7 @@ rotasInternas.get('/api/console/app/:app/base-sincronizacao', async (c) => {
     const faltam: string[] = []
     if (app.repositorio === null || app.repositorio === '') faltam.push('repositório do app')
     if (app.pastaNoRepositorio === null || app.pastaNoRepositorio === '') faltam.push('pasta do app no repositório')
-    if (c.env.GITHUB_TOKEN_LEITURA === undefined || c.env.GITHUB_TOKEN_LEITURA === '') faltam.push('GITHUB_TOKEN_LEITURA no Worker')
+    if (credencialDoAmbiente(c.env) === undefined) faltam.push('credencial do GitHub no Worker (App: GITHUB_APP_ID, GITHUB_APP_INSTALACAO_ID, GITHUB_APP_CHAVE_PRIVADA)')
     if (c.env.CONHECIMENTO === undefined) faltam.push('fila CONHECIMENTO no Worker')
 
     const resumir = (s: typeof ultima) =>
@@ -1215,9 +1216,9 @@ rotasInternas.post('/api/console/app/:app/base-sincronizacao', async (c) => {
     if (app.repositorio === null || app.repositorio === '' || app.pastaNoRepositorio === null) {
         throw new ErroDeDominio('app_sem_repositorio', 'Cadastre o repositório e a pasta do app antes de sincronizar.', 422)
     }
-    const token = c.env.GITHUB_TOKEN_LEITURA
-    if (token === undefined || token === '') {
-        throw new ErroDeDominio('sem_token_github', 'O Worker não tem GITHUB_TOKEN_LEITURA.', 503)
+    const credencial = credencialDoAmbiente(c.env)
+    if (credencial === undefined) {
+        throw new ErroDeDominio('sem_credencial_github', 'O Worker não tem a credencial do GitHub (App ou token).', 503)
     }
     if (c.env.CONHECIMENTO === undefined) {
         throw new ErroDeDominio('sem_fila', 'O Worker não tem a fila CONHECIMENTO.', 503)
@@ -1232,7 +1233,7 @@ rotasInternas.post('/api/console/app/:app/base-sincronizacao', async (c) => {
     const pedido = await pedirSincronizacao({
         escopo,
         app: { id: app.id, repositorio: app.repositorio },
-        leitor: leitorGitHub(token),
+        leitor: leitorGitHub(credencial),
         fila: c.env.CONHECIMENTO,
         pedidaPor: `agent:${c.get('agente').id}`,
     })

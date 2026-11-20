@@ -9,6 +9,7 @@ import type { LoteDaFila } from '../agente/fila.ts'
 import { embutirVarios } from './embeddings.ts'
 import { extratorDaAnthropic } from './extrair/com-modelo.ts'
 import { ErroDeLeitura, leitorGitHub } from './github.ts'
+import { credencialDoAmbiente } from './github-app.ts'
 import { sincronizarApp, type ResultadoDaSincronizacao } from './sincronizar.ts'
 
 /**
@@ -65,10 +66,10 @@ export async function consumirConhecimento(lote: LoteDaFila, env: Ambiente['Bind
                 continue
             }
 
-            const token = env.GITHUB_TOKEN_LEITURA
-            if (token === undefined || token === '') {
-                console.error('[conhecimento] sem GITHUB_TOKEN_LEITURA: a sincronização não roda')
-                await marcarFalha(cliente, pedido.data, 'sem GITHUB_TOKEN_LEITURA no Worker')
+            const credencial = credencialDoAmbiente(env)
+            if (credencial === undefined) {
+                console.error('[conhecimento] sem credencial do GitHub (App ou token): a sincronização não roda')
+                await marcarFalha(cliente, pedido.data, 'sem credencial do GitHub no Worker (App ou GITHUB_TOKEN_LEITURA)')
                 mensagem.ack()
                 continue
             }
@@ -102,7 +103,7 @@ export async function consumirConhecimento(lote: LoteDaFila, env: Ambiente['Bind
                 const resultado = await sincronizarApp({
                     escopo,
                     app: { id: app.id, slug: app.slug, nome: app.nome, repositorio: app.repositorio, pastaNoRepositorio: app.pastaNoRepositorio },
-                    leitor: leitorGitHub(token),
+                    leitor: leitorGitHub(credencial),
                     extrator,
                     embutir: ai === undefined ? null : (textos) => embutirVarios(ai, textos),
                     commitSha: pedido.data.commitSha,

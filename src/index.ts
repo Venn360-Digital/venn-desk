@@ -17,6 +17,7 @@ import { vigiarPrazos } from './sla/vigiar.ts'
 import { consumirAtendimentos, type LoteDaFila } from './agente/fila.ts'
 import { consumirConhecimento } from './conhecimento/fila.ts'
 import { leitorGitHub } from './conhecimento/github.ts'
+import { credencialDoAmbiente } from './conhecimento/github-app.ts'
 import { vigiarConhecimento } from './conhecimento/sincronizar.ts'
 import type { CaixaDeSaida } from './correio/enviar.ts'
 
@@ -168,9 +169,10 @@ export default {
              * andou, uma sincronização por app na fila. Não há segundo cron —
              * o de minuto já existe, e o resto é olhar o relógio.
              */
-            if (agora.getUTCMinutes() % 5 === 0 && env.GITHUB_TOKEN_LEITURA !== undefined && env.GITHUB_TOKEN_LEITURA !== '') {
+            const credencial = credencialDoAmbiente(env)
+            if (agora.getUTCMinutes() % 5 === 0 && credencial !== undefined) {
                 const acoes = await vigiarConhecimento(cliente, {
-                    leitor: leitorGitHub(env.GITHUB_TOKEN_LEITURA),
+                    leitor: leitorGitHub(credencial),
                     fila: env.CONHECIMENTO,
                     agora,
                 })
