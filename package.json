@@ -42,6 +42,7 @@
         "aceite:sla": "node scripts/aceite-sla.mjs",
         "aceite:mcp": "node scripts/aceite-mcp.mjs",
         "avaliar": "node scripts/avaliar.mjs",
+        "validar:github-app": "node scripts/validar-github-app.mjs",
         "//avaliar": "O aceite da Fase 4. Custa centavos e chama o modelo de verdade, entao fica FORA de `verificar` — o portao roda a cada commit e nao deve gastar nem depender de rede."
     },
     "dependencies": {
