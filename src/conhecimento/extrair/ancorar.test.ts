@@ -70,3 +70,13 @@ describe('ancoradoPorPalavras', () => {
         expect(ancoradoPorPalavras('xyzw abcd efgh', ARQUIVO)).toBe(false)
     })
 })
+
+describe('interpolação do produto', () => {
+    it('`{quantidade}` é buraco do produto: o literal em volta é que precisa existir', () => {
+        /// A tela de respostas rápidas reprovava por `{quantidade} respostas`,
+        /// que está escrito assim no arquivo.
+        const arquivo = 'const rodape = `${quantidade} respostas rápidas cadastradas`'
+        expect(ancorar({ t: '{quantidade} respostas rápidas cadastradas' }, [arquivo]).ok).toBe(true)
+        expect(ancorar({ t: '{quantidade} campanhas disparadas hoje' }, [arquivo]).ok).toBe(false)
+    })
+})

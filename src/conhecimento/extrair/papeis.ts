@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { ancorar } from './ancorar.ts'
+import { curto, evidencia as campoDeEvidencia, frase, MUITOS } from './limites.ts'
 import type { Extrator } from './com-modelo.ts'
 import { ErroDeExtracao, type Extracao } from '../tipos.ts'
 
@@ -27,24 +28,25 @@ export const esquemaDosPapeis = z
                     .object({
                         chave: z.enum(PAPEL),
                         /** Como se chama em português, para quem atende dizer. */
-                        nome: z.string().trim().min(3).max(40),
+                        nome: curto,
                     })
                     .strict()
             )
-            .min(2),
+            .min(1),
         capacidades: z
             .array(
                 z
                     .object({
-                        nome: z.string().trim().min(3).max(80),
-                        oQuePermite: z.string().trim().min(10).max(300),
+                        nome: curto,
+                        oQuePermite: frase,
                         papeis: z.array(z.enum(PAPEL)).min(1),
                         /** A flag do código que sustenta a linha. */
-                        evidencia: z.string().trim().min(3).max(80),
+                        evidencia: campoDeEvidencia,
                     })
                     .strict()
             )
-            .min(3),
+            .min(1)
+            .max(MUITOS),
     })
     .strict()
 
@@ -62,7 +64,7 @@ export async function extrairPapeis(hookTs: string, extrator: Extrator): Promise
         esquema: esquemaDosPapeis,
         instrucao: INSTRUCAO,
         arquivos: [{ caminho: 'packages/core/src/hooks/usePermissions.ts', conteudo: hookTs }],
-        maxTokensSaida: 2_500,
+        maxTokensSaida: 6_000,
     })
 
     /// Ancora só o que o arquivo tem literalmente: a flag e o papel. O nome em

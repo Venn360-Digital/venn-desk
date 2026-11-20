@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { ancorar } from './ancorar.ts'
+import { curto, frase, MUITOS } from './limites.ts'
 import type { Extrator } from './com-modelo.ts'
 import { ErroDeExtracao, type Extracao } from '../tipos.ts'
 
@@ -21,15 +22,16 @@ export const esquemaDosEmails = z
                 z
                     .object({
                         /** A chave do evento no código (`trial_ending`, `payment_received`). */
-                        chave: z.string().trim().min(3).max(60),
-                        assunto: z.string().trim().min(5).max(160),
-                        titulo: z.string().trim().min(3).max(160),
+                        chave: curto,
+                        assunto: curto,
+                        titulo: curto,
                         /** Quando o sistema o manda, em palavras de quem recebe. */
-                        quando: z.string().trim().min(10).max(300),
+                        quando: frase,
                     })
                     .strict()
             )
-            .min(3),
+            .min(1)
+            .max(MUITOS),
     })
     .strict()
 
@@ -45,7 +47,7 @@ export async function extrairEmails(billingTs: string, extrator: Extrator): Prom
         esquema: esquemaDosEmails,
         instrucao: INSTRUCAO,
         arquivos: [{ caminho: 'packages/core/src/lib/email/billing.ts', conteudo: billingTs }],
-        maxTokensSaida: 3_000,
+        maxTokensSaida: 6_000,
     })
 
     /// Assunto e título existem no arquivo; "quando" é a tradução pedida.

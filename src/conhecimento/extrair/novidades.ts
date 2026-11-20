@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import type { Extrator } from './com-modelo.ts'
+import { curto, frase } from './limites.ts'
 import type { Commit } from '../github.ts'
 import { ErroDeExtracao, type Extracao } from '../tipos.ts'
 
@@ -30,15 +31,15 @@ export const esquemaDasNovidades = z
                         sha: z.string().trim().min(7).max(40),
                         data: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/),
                         tipo: z.enum(['novo', 'correcao']),
-                        titulo: z.string().trim().min(5).max(120),
-                        descricao: z.string().trim().min(10).max(400),
+                        titulo: curto,
+                        descricao: frase,
                         publico: z.boolean(),
                         /** Por que não é público, quando não é. */
-                        motivoDeOmitir: z.string().trim().max(160).optional(),
+                        motivoDeOmitir: curto.optional(),
                     })
                     .strict()
             )
-            .max(60),
+            .max(80),
     })
     .strict()
 
@@ -72,14 +73,18 @@ export async function extrairNovidades(
 ): Promise<Extracao<Novidades>> {
     if (commits.length === 0) return { dados: { itens: [] }, extraidoPor: 'parser' }
 
+    /// Os mais recentes primeiro: é o que interessa a quem pergunta "mudou
+    /// algo?". O resto entra na próxima rodada.
+    const lote = commits.slice(0, COMMITS_POR_CHAMADA)
+
     const { dados, consumo } = await extrator.extrair({
         esquema: esquemaDasNovidades,
         instrucao: INSTRUCAO,
-        arquivos: commits.map((c) => ({
+        arquivos: lote.map((c) => ({
             caminho: `commit ${c.sha.slice(0, 7)} de ${c.data.slice(0, 10)}`,
             conteudo: `${c.assunto}\n\n${c.corpo}`.trim(),
         })),
-        maxTokensSaida: 6_000,
+        maxTokensSaida: 8_000,
     })
 
     /// Um item público não pode carregar URL, arquivo nem sha no texto: é uma
@@ -93,7 +98,7 @@ export async function extrairNovidades(
     }
 
     /// Todo sha devolvido tem de ser um dos que foram mandados.
-    const mandados = new Set(commits.map((c) => c.sha.slice(0, 7)))
+    const mandados = new Set(lote.map((c) => c.sha.slice(0, 7)))
     const estranhos = dados.itens.filter((i) => !mandados.has(i.sha.slice(0, 7))).map((i) => i.sha.slice(0, 7))
     if (estranhos.length > 0) {
         throw new ErroDeExtracao('novidades', `itens de commits que não foram pedidos: ${estranhos.join(', ')}`, consumo)
@@ -104,6 +109,16 @@ export async function extrairNovidades(
 
 /** Quantos dias de novidade o artigo guarda. */
 export const JANELA_EM_DIAS = 90
+
+/**
+ * Quantos commits numa chamada.
+ *
+ * Quarenta estouravam a saída e o JSON vinha cortado ("could not parse the
+ * response", 20/11/2026): cada item tem seis campos, e quarenta deles passam de
+ * seis mil tokens. Vinte caberia com folga; o resto fica para a rodada
+ * seguinte, que os verá como ainda não publicados.
+ */
+export const COMMITS_POR_CHAMADA = 20
 
 /**
  * Junta o que acabou de sair com o que o artigo já tinha, corta a janela e

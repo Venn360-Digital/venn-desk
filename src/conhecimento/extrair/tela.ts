@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { ancorar } from './ancorar.ts'
+import { curto, evidencia as campoDeEvidencia, frase, MUITOS } from './limites.ts'
 import type { Extrator } from './com-modelo.ts'
 import { digerir, digestoEmTexto, LIMITE_PARA_CRU } from './digesto.ts'
 import { ErroDeExtracao, type Extracao } from '../tipos.ts'
@@ -22,16 +23,8 @@ import { ErroDeExtracao, type Extracao } from '../tipos.ts'
  * confere: o modelo só pode dizer o que consegue citar.
  */
 
-/**
- * Os limites são FOLGADOS de propósito.
- *
- * O esquema é a forma, não o juízo: quem barra invenção é a ancoragem, e quem
- * barra vazamento é o detector de detalhe interno. Um `max` apertado só derruba
- * a tela inteira por causa de um rótulo comprido — medido em 20/11/2026, nove
- * das 33 telas voltaram com "response did not match schema" por isso.
- */
-const frase = z.string().trim().min(3).max(600)
-const curto = z.string().trim().min(1).max(140)
+/// Os limites moram em `limites.ts`, num lugar só e folgados de propósito: o
+/// esquema é a forma, não o juízo. Ver o cabeçalho daquele arquivo.
 
 export const esquemaDaTela = z
     .object({
@@ -47,11 +40,11 @@ export const esquemaDaTela = z
                         nome: curto,
                         oQueFaz: frase,
                         /** Trecho literal do arquivo que sustenta a descrição. */
-                        evidencia: z.string().trim().min(3).max(400),
+                        evidencia: campoDeEvidencia,
                     })
                     .strict()
             )
-            .max(40),
+            .max(MUITOS),
         campos: z
             .array(
                 z
@@ -59,15 +52,15 @@ export const esquemaDaTela = z
                         nome: curto,
                         obrigatorio: z.boolean().optional(),
                         /** O que o campo aceita ou sugere, quando o arquivo diz. */
-                        oQueAceita: z.string().trim().min(1).max(300).optional(),
+                        oQueAceita: frase.optional(),
                     })
                     .strict()
             )
-            .max(40),
+            .max(MUITOS),
         /** Mensagens que o sistema devolve, com o que as provoca. */
         avisos: z
-            .array(z.object({ quando: curto, texto: z.string().trim().min(2).max(300) }).strict())
-            .max(30),
+            .array(z.object({ quando: curto, texto: frase }).strict())
+            .max(MUITOS),
         /**
          * Por que a tela, um item ou um botão pode não aparecer. É o que mais
          * serve ao suporte, e cada item exige evidência.
@@ -88,7 +81,7 @@ Devolva:
 - oQueSeVe: os blocos visíveis, na ordem da tela (ex.: "lista com busca e paginação", "painel lateral de edição").
 - acoes: cada ação que a pessoa pode executar. Em "nome", copie o RÓTULO EXATO como ele aparece na tela ("Novo", "Transferir", "Salvar alterações") — não parafraseie, porque quem atende vai dizer ao cliente em que botão clicar. Se você não encontrar o rótulo escrito no arquivo, não inclua a ação. Em "oQueFaz", explique com suas palavras. Em "evidencia", copie um trecho LITERAL do arquivo que sustente a descrição.
 - campos: os campos de formulário. Em "nome", o rótulo exato do campo como está no arquivo. Diga qual é obrigatório e o que aceita, quando o arquivo disser.
-- avisos: as mensagens que o sistema mostra depois de uma ação, com o que as provoca.
+- avisos: as mensagens que o sistema mostra depois de uma ação. Em "texto", COPIE a mensagem como ela está escrita no arquivo — é o que o cliente vê na tela, e quem atende vai repetir. Não descreva a mensagem ("aviso de que o cadastro falhou"); cite-a. Em "quando", diga o que a provoca.
 - porQuePodeNaoAparecer: por que a tela, um item ou um botão pode não aparecer para alguém (permissão, plano, lista vazia, filtro). Cada item exige "evidencia" literal.
 
 Regras:

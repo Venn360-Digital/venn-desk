@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import { ancorar } from './ancorar.ts'
 import type { Extrator } from './com-modelo.ts'
+import { curto } from './limites.ts'
 import { ErroDeExtracao, type Extracao } from '../tipos.ts'
 
 /**
@@ -14,7 +15,7 @@ import { ErroDeExtracao, type Extracao } from '../tipos.ts'
  * um menu com uma tela inventada mandaria o cliente para um 404.
  */
 
-const rotulo = z.string().trim().min(1).max(60)
+const rotulo = curto
 const href = z.string().regex(/^\/[a-z0-9\/-]*$/)
 const papel = z.enum(['OWNER', 'ADMIN', 'GESTOR', 'ATENDENTE'])
 
@@ -42,7 +43,7 @@ export const esquemaDoMenu = z
                     })
                     .strict()
             )
-            .min(3),
+            .min(1),
         /** segmento de URL → rótulo. Inclui slugs antigos mantidos para a trilha. */
         segmentos: z.record(z.string().regex(/^[a-z0-9-]+$/), rotulo),
     })
@@ -63,7 +64,7 @@ export async function extrairMenu(navTs: string, extrator: Extrator): Promise<Ex
         esquema: esquemaDoMenu,
         instrucao: INSTRUCAO,
         arquivos: [{ caminho: 'packages/core/src/lib/nav.ts', conteudo: navTs }],
-        maxTokensSaida: 4_000,
+        maxTokensSaida: 8_000,
     })
 
     const ancoragem = ancorar(dados, [navTs])

@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import { ancorar } from './ancorar.ts'
 import type { Extrator } from './com-modelo.ts'
+import { curto, frase } from './limites.ts'
 import { ErroDeExtracao, type Extracao } from '../tipos.ts'
 
 /**
@@ -23,9 +24,9 @@ export const esquemaDosPlanos = z
                 z
                     .object({
                         id: z.enum(['flow', 'pro', 'advanced']),
-                        nome: z.string().trim().min(3).max(40),
+                        nome: curto,
                         precoMensal: z.number().positive(),
-                        descricao: z.string().trim().max(200),
+                        descricao: frase,
                         limites: z
                             .object({
                                 unidades: inteiro,
@@ -38,13 +39,13 @@ export const esquemaDosPlanos = z
                                 emailsMes: inteiro,
                             })
                             .strict(),
-                        itens: z.array(z.string().trim().min(3).max(160)).max(20),
+                        itens: z.array(curto).max(40),
                     })
                     .strict()
             )
             .length(3),
         unidadeAdicional: z
-            .object({ precoMensal: z.number().positive(), inclui: z.array(z.string().trim().max(120)).max(10) })
+            .object({ precoMensal: z.number().positive(), inclui: z.array(curto).max(20) })
             .strict(),
         descontoAnual: z.number().min(0).max(1),
     })
@@ -73,7 +74,7 @@ export async function extrairPlanos(
             { caminho: 'packages/core/src/lib/plan-limits.ts', conteudo: arquivos.planLimitsTs },
             { caminho: 'packages/core/src/lib/plans.ts', conteudo: arquivos.plansTs },
         ],
-        maxTokensSaida: 4_000,
+        maxTokensSaida: 8_000,
     })
 
     const fontes = [arquivos.planLimitsTs, arquivos.plansTs]

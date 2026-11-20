@@ -21,7 +21,16 @@ export interface Ancoragem {
     soltas: string[]
 }
 
-const PLACEHOLDER = /\{\{[a-zA-Z]+\}\}/g
+/**
+ * Os dois tipos de buraco num texto do produto.
+ *
+ * `{{Pessoas}}` é o placeholder que a extração cria para o vocabulário do
+ * nicho. `{quantidade}` é interpolação do próprio produto, que o modelo
+ * transcreve como está — e o literal em volta é que precisa existir, não o nome
+ * da variável. Tratar os dois igual poupou telas como "respostas rápidas", que
+ * reprovava por `{quantidade} respostas`.
+ */
+const PLACEHOLDER = /\{\{[a-zA-Z]+\}\}|\{[a-zA-Z][a-zA-Z0-9_.]*\}/g
 
 /**
  * Um trecho está ancorado quando aparece INTEIRO no arquivo ou quando as

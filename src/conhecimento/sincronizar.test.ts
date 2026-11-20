@@ -121,9 +121,9 @@ describe('sincronizarApp', () => {
             /// Planos com um número que não existe no arquivo: a ancoragem pega.
             'packages/core/src/lib/plan-limits.ts': {
                 planos: [
-                    { id: 'flow', nome: 'Plano Digital', precoMensal: 999, descricao: 'x', limites: { unidades: 1, agentes: 1, numerosWhatsApp: 1, creditos: 10000, mensagens: 10000, respostasFaladas: 400, destinatariosBroadcastMes: 1000, emailsMes: 10000 }, itens: [] },
-                    { id: 'pro', nome: 'Plano Prime', precoMensal: 590, descricao: 'x', limites: { unidades: 1, agentes: 2, numerosWhatsApp: 4, creditos: 20000, mensagens: 20000, respostasFaladas: 750, destinatariosBroadcastMes: 5000, emailsMes: 50000 }, itens: [] },
-                    { id: 'advanced', nome: 'Plano Multiclínica', precoMensal: 890, descricao: 'x', limites: { unidades: 3, agentes: 3, numerosWhatsApp: 6, creditos: 30000, mensagens: 30000, respostasFaladas: 1500, destinatariosBroadcastMes: 20000, emailsMes: 200000 }, itens: [] },
+                    { id: 'flow', nome: 'Plano Digital', precoMensal: 999, descricao: 'que precisam conectar', limites: { unidades: 1, agentes: 1, numerosWhatsApp: 1, creditos: 10000, mensagens: 10000, respostasFaladas: 400, destinatariosBroadcastMes: 1000, emailsMes: 10000 }, itens: [] },
+                    { id: 'pro', nome: 'Plano Prime', precoMensal: 590, descricao: 'que precisam conectar', limites: { unidades: 1, agentes: 2, numerosWhatsApp: 4, creditos: 20000, mensagens: 20000, respostasFaladas: 750, destinatariosBroadcastMes: 5000, emailsMes: 50000 }, itens: [] },
+                    { id: 'advanced', nome: 'Plano Multiclínica', precoMensal: 890, descricao: 'que precisam conectar', limites: { unidades: 3, agentes: 3, numerosWhatsApp: 6, creditos: 30000, mensagens: 30000, respostasFaladas: 1500, destinatariosBroadcastMes: 20000, emailsMes: 200000 }, itens: [] },
                 ],
                 unidadeAdicional: { precoMensal: 290, inclui: ['1 unidade'] },
                 descontoAnual: 0.1,
