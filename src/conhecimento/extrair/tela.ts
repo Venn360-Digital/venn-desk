@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { ancorar, ancoradoPorPalavras, paraAncorar } from './ancorar.ts'
+import { ancorar } from './ancorar.ts'
 import type { Extrator } from './com-modelo.ts'
 import { digerir, digestoEmTexto, LIMITE_PARA_CRU } from './digesto.ts'
 import { ErroDeExtracao, type Extracao } from '../tipos.ts'
@@ -149,23 +149,7 @@ export async function extrairTela(
     if (!ancoragem.ok) {
         throw new ErroDeExtracao(
             `tela ${rota}`,
-            `textos que não existem nos arquivos: ${ancoragem.soltas.slice(0, 6).join(' | ')}`,
-            consumo
-        )
-    }
-
-    /// A evidência é trecho de código, e o modelo a devolve reformatada: aqui a
-    /// exigência é de PALAVRAS, não da string inteira.
-    const normalizado = paraAncorar(crus)
-    const evidencias = [
-        ...dados.acoes.map((a) => a.evidencia),
-        ...dados.porQuePodeNaoAparecer.map((p) => p.evidencia),
-    ]
-    const inventadas = evidencias.filter((e) => !ancoradoPorPalavras(e, normalizado))
-    if (inventadas.length > 0) {
-        throw new ErroDeExtracao(
-            `tela ${rota}`,
-            `evidências que não vêm dos arquivos: ${inventadas.slice(0, 4).join(' | ')}`,
+            `afirmações que não vêm dos arquivos: ${ancoragem.soltas.slice(0, 6).join(' | ')}`,
             consumo
         )
     }
@@ -199,17 +183,14 @@ export function afirmacoesAncoraveis(tela: Tela): string[] {
          * de criar") e a ancoragem exigia o literal. Em 20/11/2026 isso
          * reprovou cinco telas por contradição interna, não por erro do modelo.
          */
-        ...tela.acoes.map((a) => a.nome),
+        ...tela.acoes.flatMap((a) => [a.nome, a.evidencia]),
         /**
          * `oQueAceita` fica fora: ele descreve a regra do campo ("mínimo de 8
          * caracteres"), e a regra mora no código como `min(8)`, não como texto.
-         * Exigi-la literal reprovou dezessete telas em 20/11/2026.
-         *
-         * A `evidencia` também sai daqui — ela é conferida por palavras, logo
-         * abaixo, porque é trecho de código reformatado pelo modelo.
          */
         ...tela.campos.map((c) => c.nome),
         ...tela.avisos.map((a) => a.texto),
+        ...tela.porQuePodeNaoAparecer.map((p) => p.evidencia),
     ].filter((t) => t !== '')
 }
 

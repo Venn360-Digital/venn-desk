@@ -14,6 +14,13 @@ describe('ancorar', () => {
         expect(r.ok).toBe(true)
     })
 
+    it('composição de coisas que existem passa: o produto monta rótulo em tempo de execução', () => {
+        /// `{editando ? 'Editar' : 'Criar'} agente` chega ao modelo como
+        /// "Criar/Editar agente", e "EDITOR_ROLES / canEdit" junta duas coisas
+        /// que existem. As duas são honestas, e as duas reprovavam antes.
+        expect(ancorar({ a: 'Agentes de IA / Clientes' }, [ARQUIVO]).ok).toBe(true)
+    })
+
     it('rejeita o que o modelo inventou, e diz o quê', () => {
         /// O defeito que isto impede: "Relatórios" no mapa do menu quando a
         /// tela não existe. O cliente seguiria o caminho e não acharia.

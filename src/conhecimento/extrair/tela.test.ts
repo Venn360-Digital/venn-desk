@@ -44,7 +44,7 @@ describe('extrairTela', () => {
         /// "Exportar para Excel" não existe nesta tela. Publicá-lo mandaria o
         /// cliente procurar um botão que não há.
         const inventado = { ...TELA_VALIDA, acoes: [{ nome: 'Exportar Excel', oQueFaz: 'Baixa a planilha.', evidencia: 'Exportar para Excel' }] }
-        await expect(extrairTela('/vendas/servicos', ARQUIVOS, extratorFalso(inventado))).rejects.toThrow(/não existem nos arquivos/)
+        await expect(extrairTela('/vendas/servicos', ARQUIVOS, extratorFalso(inventado))).rejects.toThrow(/não vêm dos arquivos/)
     })
 
     it('reprova detalhe interno no texto, mesmo ancorado', async () => {
@@ -136,12 +136,17 @@ describe('extrairTela', () => {
             dados: { oQueSeVe: ['cabeçalho fixo com busca e botão de criar', 'grade de cartões, um por item'] },
         })
 
+        /// Composição de palavras que existem passa (o produto monta rótulo em
+        /// tempo de execução); rótulo de outra tela não passa.
+        const rotuloComposto = { ...TELA_VALIDA, acoes: [{ nome: 'Novo / Item criado', oQueFaz: 'Abre o painel.', evidencia: 'Item criado' }] }
+        await expect(extrairTela('/vendas/servicos', ARQUIVOS, extratorFalso(rotuloComposto))).resolves.toBeDefined()
+
         const rotuloParafraseado = {
             ...TELA_VALIDA,
-            acoes: [{ nome: 'Criar novo procedimento agora', oQueFaz: 'Abre o painel.', evidencia: 'Item criado' }],
+            acoes: [{ nome: 'Exportar planilha do Excel', oQueFaz: 'Baixa tudo.', evidencia: 'Item criado' }],
         }
         await expect(extrairTela('/vendas/servicos', ARQUIVOS, extratorFalso(rotuloParafraseado))).rejects.toThrow(
-            /não existem nos arquivos/
+            /não vêm dos arquivos/
         )
     })
 
@@ -167,7 +172,7 @@ describe('extrairTela', () => {
             acoes: [{ nome: 'Novo', oQueFaz: 'Abre o painel.', evidencia: 'if (assinaturaVencida) bloquearTudoAgora()' }],
         }
         await expect(extrairTela('/vendas/servicos', ARQUIVOS, extratorFalso(comEvidenciaFalsa))).rejects.toThrow(
-            /evidências que não vêm dos arquivos/
+            /não vêm dos arquivos/
         )
     })
 

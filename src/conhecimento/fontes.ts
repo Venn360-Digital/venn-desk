@@ -4,7 +4,9 @@ import { extrairMenu, type Menu } from './extrair/menu.ts'
 import { extrairPapeis, type Papeis } from './extrair/papeis.ts'
 import { extrairPlanos, type Planos } from './extrair/planos.ts'
 import { extrairProduto, type Produto } from './extrair/produto.ts'
+import { extrairNovidades, juntarNovidades, type ItemDeNovidade } from './extrair/novidades.ts'
 import { extrairVocabulario } from './extrair/vocabulario.ts'
+import type { Commit } from './github.ts'
 import type { Extrator } from './extrair/com-modelo.ts'
 import { renderizarFaq } from './renderizar/faq.ts'
 import { CAMINHO_DO_MENU, renderizarMenu } from './renderizar/menu.ts'
@@ -12,6 +14,7 @@ import { CAMINHOS_DOS_PLANOS, renderizarPlanos } from './renderizar/planos.ts'
 import { CAMINHO_DOS_EMAILS, CHAVE_EMAILS, renderizarEmails } from './renderizar/emails.ts'
 import { CAMINHO_DOS_PAPEIS, CHAVE_PAPEIS, renderizarPapeis } from './renderizar/papeis.ts'
 import { CAMINHO_DO_PRODUTO, PREFIXO_PRODUTO, renderizarProduto } from './renderizar/produto.ts'
+import { CHAVE_NOVIDADES, renderizarNovidades } from './renderizar/novidades.ts'
 import { ErroDeExtracao, type AppSincronizavel, type ArtigoRenderizado, type ContextoDeRenderizacao, type Extracao } from './tipos.ts'
 
 /**
@@ -32,7 +35,7 @@ import { ErroDeExtracao, type AppSincronizavel, type ArtigoRenderizado, type Con
  * um clique.
  */
 
-export type TipoDeFonte = 'faq' | 'menu' | 'planos' | 'papeis' | 'emails' | 'produto'
+export type TipoDeFonte = 'faq' | 'menu' | 'planos' | 'papeis' | 'emails' | 'produto' | 'novidades'
 
 /**
  * O app cujo vocabulário escreveu o `PRODUCT.md`.
@@ -53,7 +56,16 @@ export interface Fonte<D = unknown> {
     /** Precisa do modelo? Sem `extrator`, a fonte é pulada e registrada. */
     precisaDeModelo: boolean
     caminhos(app: AppSincronizavel): string[]
-    extrair(arquivos: Record<string, string>, extrator: Extrator | null): Promise<Extracao<D>>
+    /**
+     * Pede o histórico do repositório em vez de arquivos. Só "novidades" usa:
+     * ela é a única fonte cujo material é o que MUDOU, e não o que está escrito.
+     */
+    precisaDeCommits?: boolean
+    extrair(
+        arquivos: Record<string, string>,
+        extrator: Extrator | null,
+        extras?: { commits?: Commit[]; anterior?: unknown }
+    ): Promise<Extracao<D>>
     renderizar(dados: D, ctx: ContextoDeRenderizacao, caminhos: string[]): ArtigoRenderizado[]
 }
 
@@ -174,6 +186,44 @@ export const FONTE_PRODUTO: Fonte<Produto> = {
 }
 
 /**
+ * O que o artigo de novidades guarda entre rodadas: os itens já publicados e
+ * até que commit eles cobrem.
+ */
+export interface DadosDasNovidades {
+    itens: ItemDeNovidade[]
+    ateCommit: string
+}
+
+export const FONTE_NOVIDADES: Fonte<DadosDasNovidades> = {
+    tipo: 'novidades',
+    descricao: 'o histórico de mudanças publicadas',
+    versaoDoExtrator: 1,
+    prefixoDaChave: CHAVE_NOVIDADES,
+    publicarDireto: true,
+    precisaDeModelo: true,
+    precisaDeCommits: true,
+    /// Nenhum arquivo: o material desta fonte é o histórico.
+    caminhos: () => [],
+    async extrair(_arquivos, extrator, extras) {
+        if (extrator === null) throw new ErroDeExtracao('novidades', 'esta fonte precisa do modelo e não há chave')
+
+        const anterior = (extras?.anterior ?? null) as DadosDasNovidades | null
+        const commits = extras?.commits ?? []
+        const extracao = await extrairNovidades(commits, extrator)
+
+        return {
+            dados: {
+                itens: juntarNovidades(extracao.dados.itens, anterior?.itens ?? [], new Date()),
+                ateCommit: commits[0]?.sha ?? anterior?.ateCommit ?? '',
+            },
+            extraidoPor: extracao.extraidoPor,
+            ...(extracao.consumo === undefined ? {} : { consumo: extracao.consumo }),
+        }
+    },
+    renderizar: (dados, ctx) => renderizarNovidades(dados.itens, ctx, dados.ateCommit === '' ? ctx.commit : dados.ateCommit),
+}
+
+/**
  * Na ordem em que sincronizam: as determinísticas primeiro.
  *
  * Importa porque o teto da rodada corta as que precisam do modelo, e uma fonte
@@ -186,6 +236,7 @@ export const FONTES: Fonte[] = [
     FONTE_PLANOS as Fonte,
     FONTE_PAPEIS as Fonte,
     FONTE_EMAILS as Fonte,
+    FONTE_NOVIDADES as Fonte,
 ]
 
 /** O caminho do vocabulário de um app. Não é fonte de artigo: alimenta as outras. */

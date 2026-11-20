@@ -23,12 +23,24 @@ export interface Ancoragem {
 
 const PLACEHOLDER = /\{\{[a-zA-Z]+\}\}/g
 
-export function ancorar(
-    saida: unknown,
-    arquivos: string[],
-    tolerar: RegExp[] = []
-): Ancoragem {
-    const texto = arquivos.map(normalizar).join('\n')
+/**
+ * Um trecho está ancorado quando aparece INTEIRO no arquivo ou quando as
+ * palavras dele aparecem.
+ *
+ * **Por que as duas formas, medido em 20/11/2026.** Exigir só o literal
+ * reprovava três coisas honestas: o rótulo que o produto monta em tempo de
+ * execução (`{editando ? 'Editar' : 'Criar'} agente`, que o modelo descreve
+ * como "Criar/Editar agente"), a afirmação que junta duas coisas que existem
+ * ("EDITOR_ROLES / canEdit") e a evidência de código devolvida com as aspas
+ * trocadas. Nenhuma delas é invenção, e as três derrubavam a tela inteira.
+ *
+ * O que a forma por palavras ainda barra é o que importa: um rótulo inventado
+ * ("Exportar para Excel" numa tela que não exporta) não tem como ter as suas
+ * palavras no arquivo. É a diferença entre conferir a redação e conferir o
+ * fato — e o que protege o cliente é o fato.
+ */
+export function ancorar(saida: unknown, arquivos: string[], tolerar: RegExp[] = []): Ancoragem {
+    const texto = paraAncorar(arquivos)
     const soltas: string[] = []
 
     for (const literal of literaisDe(saida)) {
@@ -37,12 +49,14 @@ export function ancorar(
         if (tolerar.some((re) => re.test(literal))) continue
 
         /// Um literal com placeholder vira vários pedaços; cada pedaço com
-        /// pelo menos três letras precisa existir.
+        /// pelo menos três letras precisa estar ancorado.
         const pedacos = literal
             .split(PLACEHOLDER)
-            .map(normalizar)
-            .filter((p) => p.length >= 3)
-        if (pedacos.some((p) => !texto.includes(p))) soltas.push(literal)
+            .map((p) => p.trim())
+            .filter((p) => normalizar(p).length >= 3)
+
+        const ancorado = pedacos.every((p) => texto.includes(normalizar(p)) || ancoradoPorPalavras(p, texto))
+        if (!ancorado) soltas.push(literal)
     }
 
     return { ok: soltas.length === 0, soltas }
@@ -63,7 +77,7 @@ function normalizar(s: string): string {
  * O que ainda protege: as palavras têm de estar lá. Uma evidência inventada não
  * tem como ter 70% das suas palavras longas no arquivo.
  */
-export const FRACAO_DE_PALAVRAS = 0.7
+export const FRACAO_DE_PALAVRAS = 0.8
 
 export function ancoradoPorPalavras(trecho: string, textoNormalizado: string): boolean {
     const palavras = normalizar(trecho)

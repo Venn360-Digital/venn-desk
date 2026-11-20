@@ -8,7 +8,8 @@ import type { Fila } from '../lib/ambiente.ts'
 import { extrairVocabulario } from './extrair/vocabulario.ts'
 import type { Extrator } from './extrair/com-modelo.ts'
 import { caminhoDoVocabulario, FONTES, type Fonte } from './fontes.ts'
-import { ErroDeLeitura, type LeitorDoRepositorio } from './github.ts'
+import { JANELA_EM_DIAS } from './extrair/novidades.ts'
+import { ErroDeLeitura, type Commit, type LeitorDoRepositorio } from './github.ts'
 import { contextoDaTela, type ArquivoEscolhido } from './mapa/contexto-da-tela.ts'
 import { montarIndice, type IndiceTecnico } from './mapa/indice.ts'
 import { chaveDaTela, PREFIXO_TELA } from './renderizar/tela.ts'
@@ -162,7 +163,8 @@ export async function sincronizarApp(pedido: PedidoDeSincronizacao): Promise<Res
             shas, chaves: [], versaoDoExtrator: fonte.versaoDoExtrator,
         })
 
-        /// Fonte que sumiu: arquiva o que ela tinha e registra.
+        /// Fonte que sumiu: arquiva o que ela tinha e registra. Fonte sem
+        /// caminho nenhum (novidades, que lê o histórico) nunca entra aqui.
         const ausentes = caminhos.filter((c) => shas[c] === undefined)
         if (ausentes.length > 0) {
             const arquivados = await escopo.artigos.arquivarDerivadosFora(fonte.prefixoDaChave, [])
@@ -178,6 +180,7 @@ export async function sincronizarApp(pedido: PedidoDeSincronizacao): Promise<Res
             anterior.estado !== 'falhou' &&
             anterior.estado !== 'pulada' &&
             anterior.versaoDoExtrator === fonte.versaoDoExtrator &&
+            caminhos.length > 0 &&
             mesmosShas(anterior.shas, shas)
         ) {
             await escopo.artigos.tocarDerivados(anterior.chaves, agora)
@@ -202,7 +205,33 @@ export async function sincronizarApp(pedido: PedidoDeSincronizacao): Promise<Res
             const arquivos: Record<string, string> = {}
             for (const c of caminhos) arquivos[c] = await ler(shas[c] ?? '')
 
-            const extracao = await (fonte as Fonte<unknown>).extrair(arquivos, pedido.extrator)
+            /**
+             * Só "novidades" pede o histórico, e ela pede os commits das duas
+             * pastas que afetam este app: a dele e o core compartilhado. O
+             * `desde` sai da janela da própria fonte, e os já publicados são
+             * descartados pelo sha na junção.
+             */
+            const extras: { commits?: Commit[]; anterior?: unknown } = {}
+            if (fonte.precisaDeCommits === true) {
+                const desde = new Date(agora.getTime() - JANELA_EM_DIAS * 24 * 60 * 60 * 1000)
+                const [doApp, doCore] = await Promise.all([
+                    leitor.commits(app.repositorio, { ref: commitSha, caminho: `${app.pastaNoRepositorio}/`, desde, limite: 40 }),
+                    leitor.commits(app.repositorio, { ref: commitSha, caminho: 'packages/core/', desde, limite: 60 }),
+                ])
+                const anteriorDaFonte = await escopo.artigos.porChave(fonte.prefixoDaChave).catch(() => null)
+                const jaPublicados = new Set(
+                    (((anteriorDaFonte?.dados ?? null) as { itens?: { sha: string }[] } | null)?.itens ?? []).map((i) => i.sha.slice(0, 7))
+                )
+                extras.commits = [...doApp, ...doCore]
+                    .filter((c) => /^(?:feat|fix)[(:]/.test(c.assunto))
+                    .filter((c) => !jaPublicados.has(c.sha.slice(0, 7)))
+                    .filter((c, i, lista) => lista.findIndex((o) => o.sha === c.sha) === i)
+                    .sort((a, b) => (a.data === b.data ? 0 : a.data < b.data ? 1 : -1))
+                    .slice(0, 40)
+                extras.anterior = anteriorDaFonte?.dados ?? null
+            }
+
+            const extracao = await (fonte as Fonte<unknown>).extrair(arquivos, pedido.extrator, extras)
             if (extracao.consumo !== undefined) consumo = somar(consumo, extracao.consumo)
 
             const artigos = (fonte as Fonte<unknown>).renderizar(extracao.dados, ctx, caminhos)
