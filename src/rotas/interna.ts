@@ -27,6 +27,7 @@ import { esquemaDoArtigo, STATUS, type StatusDoArtigo } from '../dominio/artigo.
 import { resolverAtores } from '../dominio/ator.ts'
 import { resumirCsat } from '../dominio/csat.ts'
 import { montarRelatorio } from '../dominio/relatorio.ts'
+import { resumirConsultas } from '../dominio/consultas.ts'
 import { nomesDeAgentes } from '../dados/agentes.ts'
 import { vigiarPrazos } from '../sla/vigiar.ts'
 import type { CaixaDeSaida } from '../correio/enviar.ts'
@@ -1075,13 +1076,25 @@ rotasInternas.get('/api/console/app/:app/base', async (c) => {
     const escopo = escopoDoApp(c.get('cliente'), c.get('app').id)
     const status = c.req.query('status')
 
-    const artigos = await escopo.artigos.listar(
-        status !== undefined && STATUS.includes(status as StatusDoArtigo)
-            ? { status: status as StatusDoArtigo }
-            : undefined
-    )
+    /**
+     * As consultas dos últimos 30 dias vêm JUNTO da lista, e não numa rota à
+     * parte: a tela precisa das duas para a mesma pergunta — "o que escrever
+     * agora?" — e separá-las só faria a tela esperar duas vezes.
+     */
+    const desde = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    const [artigos, consultas] = await Promise.all([
+        escopo.artigos.listar(
+            status !== undefined && STATUS.includes(status as StatusDoArtigo)
+                ? { status: status as StatusDoArtigo }
+                : undefined
+        ),
+        escopo.artigos.consultas(desde),
+    ])
+
+    const resumo = resumirConsultas(consultas)
 
     return c.json({
+        consultas: { ...resumo, dias: 30 },
         artigos: artigos.map((a) => ({
             id: a.id,
             titulo: a.titulo,
@@ -1092,6 +1105,8 @@ rotasInternas.get('/api/console/app/:app/base', async (c) => {
             /// avisar que editar ali muda os três produtos.
             global: a.appId === null,
             atualizadoEm: a.atualizadoEm.toISOString(),
+            /// Leituras inteiras em 30 dias. Só quem foi lido tem número.
+            leituras: resumo.leiturasPorArtigo[a.id] ?? 0,
         })),
     })
 })

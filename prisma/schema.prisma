@@ -119,6 +119,7 @@ model App {
     tickets     Ticket[]
     problems    Problem[]
     kbArticles  KbArticle[]
+    kbConsultas KbConsulta[]
     slaPolicies SlaPolicy[]
     macros      Macro[]
     automations Automation[]
@@ -660,6 +661,42 @@ model KbArticle {
 
     @@index([appId, status])
     @@map("kb_articles")
+}
+
+/**
+ * Uma consulta à base — o que foi perguntado e o que voltou.
+ *
+ * É o que transforma a base num ciclo em vez de um arquivo: as perguntas que
+ * voltam VAZIAS são a lista do que escrever em seguida, e as leituras dizem
+ * quais artigos valem manter. Sem isto, quem escreve adivinha.
+ *
+ * `texto` é escrito pelo usuário (chegou pelo chamado) — dado, nunca instrução,
+ * e pode conter informação pessoal: segue o mesmo tratamento dos chamados.
+ * `artigoLidoId` não é chave estrangeira de propósito: artigo apagado
+ * logicamente ou arquivado continua tendo sido lido, e o registro não deve
+ * impedir nem acompanhar a vida dele.
+ */
+model KbConsulta {
+    id    String @id @default(cuid())
+    appId String @map("app_id")
+    app   App    @relation(fields: [appId], references: [id])
+
+    /// O chamado em que a busca aconteceu, quando houve um.
+    ticketId String? @map("ticket_id")
+    /// Quem perguntou: `ia:agente`, `requester:<id>`, `agent:<id>`.
+    origem String
+
+    texto String
+    /// Ids devolvidos, na ordem de relevância. Vazio = dúvida sem artigo.
+    artigosDevolvidos String[] @map("artigos_devolvidos")
+    /// Preenchido quando a busca levou a uma leitura inteira.
+    artigoLidoId String? @map("artigo_lido_id")
+
+    criadoEm DateTime @default(now()) @map("criado_em")
+
+    @@index([appId, criadoEm])
+    @@index([appId, artigoLidoId])
+    @@map("kb_consultas")
 }
 
 enum KbStatus {

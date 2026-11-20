@@ -75,7 +75,23 @@ export async function atender(pedido: PedidoDeAtendimento): Promise<Atendimento>
      * fora duraria entre atendimentos e faria o segundo chamado herdar o
      * cansaço do primeiro.
      */
-    const contexto: Contexto = { ...pedido.contexto, memoria: { buscas: 0 } }
+    /**
+     * O chamado é lido ANTES do laço, e uma vez só.
+     *
+     * Ele já era lido no fim, para a trilha de custo. Agora também entra na
+     * memória do atendimento: cada busca na base fica ligada ao chamado em que
+     * aconteceu, e é isso que permite responder "quais chamados perguntaram
+     * algo que a base não tinha" — a pergunta de quem vai escrever o artigo.
+     */
+    const chamadoDoAtendimento = await pedido.contexto.escopoDoApp.chamados.porNumero(pedido.numero)
+
+    const contexto: Contexto = {
+        ...pedido.contexto,
+        memoria: {
+            buscas: 0,
+            ...(chamadoDoAtendimento === null ? {} : { ticketId: chamadoDoAtendimento.id }),
+        },
+    }
     const teto = pedido.teto ?? TETO_PADRAO
     const catalogo = ferramentasDoEscopo(contexto.escopo)
     const numeroLegivel = formatarNumero(contexto.app.prefixo, pedido.numero)
@@ -165,7 +181,7 @@ export async function atender(pedido: PedidoDeAtendimento): Promise<Atendimento>
      * Sem isto, "quanto a IA gastou neste chamado" só teria resposta na fatura
      * do mês, agregada, quando já não dá para saber qual chamado foi caro.
      */
-    const chamado = await contexto.escopoDoApp.chamados.porNumero(pedido.numero)
+    const chamado = chamadoDoAtendimento
     if (chamado !== null) {
         await contexto.escopoDoApp.eventos.registrar({
             ticketId: chamado.id,

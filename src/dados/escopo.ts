@@ -13,6 +13,7 @@ import {
 } from '../dominio/artigo.ts'
 import { parecidos } from '../dominio/busca.ts'
 import type { ChamadoMedido } from '../dominio/relatorio.ts'
+import type { ConsultaRegistrada } from '../dominio/consultas.ts'
 import {
     aoMudarStatus,
     metaEmMinutos,
@@ -274,6 +275,20 @@ export interface EscopoDoApp {
         mudarStatus(id: string, para: StatusDoArtigo): Promise<KbArticle>
         /** Só artigos publicados, ordenados por relevância. Usada pelo agente. */
         buscar(texto: string, limite: number): Promise<{ artigo: KbArticle; nota: number }[]>
+        /**
+         * Grava o que foi perguntado e o que voltou. Devolve o id, para a
+         * leitura inteira que vier depois se ligar a esta busca.
+         */
+        registrarConsulta(dados: {
+            texto: string
+            origem: string
+            ticketId?: string
+            artigosDevolvidos: string[]
+        }): Promise<{ id: string }>
+        /** A busca levou a uma leitura inteira. */
+        marcarLeitura(consultaId: string, artigoId: string): Promise<void>
+        /** As consultas do período, para o resumo. */
+        consultas(desde: Date): Promise<ConsultaRegistrada[]>
     }
 
     /**
@@ -1321,6 +1336,43 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                     texto,
                     limite
                 ).map(({ item, nota }) => ({ artigo: item.artigo, nota }))
+            },
+
+            async registrarConsulta(dados) {
+                const linha = await conexao.kbConsulta.create({
+                    data: {
+                        appId,
+                        texto: dados.texto,
+                        origem: dados.origem,
+                        ...(dados.ticketId === undefined ? {} : { ticketId: dados.ticketId }),
+                        artigosDevolvidos: dados.artigosDevolvidos,
+                    },
+                    select: { id: true },
+                })
+                return linha
+            },
+
+            async marcarLeitura(consultaId, artigoId) {
+                /// `updateMany` com `appId`: uma consulta de outro app não é
+                /// marcada, e zero linhas alteradas é silencioso de propósito —
+                /// marcar leitura nunca é motivo para falhar um atendimento.
+                await conexao.kbConsulta.updateMany({
+                    where: { id: consultaId, appId },
+                    data: { artigoLidoId: artigoId },
+                })
+            },
+
+            async consultas(desde) {
+                return conexao.kbConsulta.findMany({
+                    where: { appId, criadoEm: { gte: desde } },
+                    select: {
+                        texto: true,
+                        artigosDevolvidos: true,
+                        artigoLidoId: true,
+                        criadoEm: true,
+                    },
+                    orderBy: { criadoEm: 'asc' },
+                })
             },
         },
 

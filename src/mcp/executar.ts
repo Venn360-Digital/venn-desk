@@ -38,7 +38,17 @@ export interface Contexto {
      * Opcional: pelo MCP, cada chamada é uma sessão à parte e não há o que
      * lembrar. Quem a preenche é o laço do agente.
      */
-    memoria?: { buscas: number }
+    memoria?: {
+        buscas: number
+        /** O chamado deste atendimento, quando há um. Vai no registro da consulta. */
+        ticketId?: string
+        /**
+         * A última busca na base, para a leitura inteira que vier depois se
+         * ligar a ela. É assim que "devolvido" e "lido" viram coisas diferentes
+         * no indicador — ser um entre cinco resultados não é ser usado.
+         */
+        ultimaConsultaId?: string
+    }
 }
 
 export interface Resultado {
@@ -135,7 +145,7 @@ export async function executarFerramenta(
         case 'buscar_chamados':
             return buscarChamados(ctx, dados)
         case 'buscar_base':
-            return buscarBase(ctx, dados)
+            return buscarBase(ctx, dados, ator)
         case 'obter_artigo':
             return obterArtigo(ctx, dados)
         case 'classificar_chamado':
@@ -255,11 +265,34 @@ function comoArtigo(texto: string): string {
     ].join('\n')
 }
 
-async function buscarBase(ctx: Contexto, dados: Record<string, unknown>): Promise<Resultado> {
+async function buscarBase(
+    ctx: Contexto,
+    dados: Record<string, unknown>,
+    ator: string
+): Promise<Resultado> {
     const texto = dados['texto'] as string
     const limite = (dados['limite'] as number | undefined) ?? 5
 
     const achados = await ctx.escopoDoApp.artigos.buscar(texto, limite)
+
+    /**
+     * A consulta é registrada SEMPRE, com resultado ou sem — e o "sem" é o que
+     * mais vale: perguntas que voltam vazias são a lista do que escrever.
+     *
+     * Falha no registro não derruba a busca: `catch` engole de propósito. A
+     * métrica é importante; o atendimento em curso é mais.
+     */
+    try {
+        const { id } = await ctx.escopoDoApp.artigos.registrarConsulta({
+            texto,
+            origem: ator,
+            ...(ctx.memoria?.ticketId === undefined ? {} : { ticketId: ctx.memoria.ticketId }),
+            artigosDevolvidos: achados.map(({ artigo }) => artigo.id),
+        })
+        if (ctx.memoria !== undefined) ctx.memoria.ultimaConsultaId = id
+    } catch (erro) {
+        console.error('[base] falha ao registrar consulta:', erro)
+    }
 
     if (achados.length === 0) {
         /**
@@ -308,6 +341,15 @@ async function obterArtigo(ctx: Contexto, dados: Record<string, unknown>): Promi
     /// saber que existe, e um rascunho não é resposta de ninguém.
     if (artigo === null || artigo.status !== VISIVEL) {
         return { erro: true, texto: 'Não há artigo publicado com esse id nesta base.' }
+    }
+
+    /// Liga a leitura à última busca. Sem busca anterior (MCP de fora chamando
+    /// direto pelo id), não há o que ligar — e tudo bem.
+    const consultaId = ctx.memoria?.ultimaConsultaId
+    if (consultaId !== undefined) {
+        await ctx.escopoDoApp.artigos
+            .marcarLeitura(consultaId, artigo.id)
+            .catch((erro: unknown) => console.error('[base] falha ao marcar leitura:', erro))
     }
 
     return {

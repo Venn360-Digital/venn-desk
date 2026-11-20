@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { Globe, Plus } from 'lucide-react'
 
-import { api, type AppCadastrado, type Artigo, type StatusDoArtigo } from '../api.ts'
+import { api, type AppCadastrado, type Artigo, type ResumoDeConsultas, type StatusDoArtigo } from '../api.ts'
 import { Aviso, Botao, Campo, Quando, Vazio } from '../componentes/ui.tsx'
 
 /**
@@ -60,7 +60,7 @@ export function Base({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
 
     const { data, isPending } = useQuery({
         queryKey: ['base', app],
-        queryFn: () => api<{ artigos: Artigo[] }>(`/app/${app}/base`),
+        queryFn: () => api<{ artigos: Artigo[]; consultas: ResumoDeConsultas }>(`/app/${app}/base`),
         enabled: app !== undefined,
     })
 
@@ -114,6 +114,7 @@ export function Base({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
     if (isPending) return <Vazio>carregando…</Vazio>
 
     const artigos = data?.artigos ?? []
+    const consultas = data?.consultas
     const podeEditar = papel !== 'AGENTE'
     const abrir = (artigo: Artigo) => {
         setEditando(artigo.id)
@@ -150,6 +151,17 @@ export function Base({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
             </p>
 
             {erro !== null ? <Aviso>{erro}</Aviso> : null}
+
+            {consultas !== undefined && consultas.lacunas.length > 0 ? (
+                <Lacunas consultas={consultas} aoEscrever={podeEditar ? (exemplo) => {
+                    /// Começar o artigo a partir da pergunta: o título nasce
+                    /// com as palavras que alguém usou, que são as que a busca
+                    /// precisa achar depois.
+                    setEditando(null)
+                    setRascunho({ ...RASCUNHO_VAZIO, titulo: exemplo })
+                    setAberto(true)
+                } : undefined} />
+            ) : null}
 
             {podeEditar && abertoParaEscrever ? (
                 <Editor
@@ -194,6 +206,7 @@ export function Base({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
                                 <th className="px-3 py-2 font-medium">Artigo</th>
                                 <th className="px-3 py-2 font-medium">Tags</th>
                                 <th className="px-3 py-2 font-medium">Estado</th>
+                                <th className="px-3 py-2 text-right font-medium" title="Leituras inteiras pelo agente, 30 dias">Lido</th>
                                 <th className="px-3 py-2 font-medium">Atualizado</th>
                                 <th className="px-3 py-2" />
                             </tr>
@@ -222,6 +235,16 @@ export function Base({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
                                         >
                                             {ROTULOS[artigo.status]}
                                         </span>
+                                    </td>
+                                    <td className="px-3 py-2 text-right text-xs tabular-nums text-tinta-fraca">
+                                        {/* Zero fica apagado: a coluna existe para
+                                            destacar o que É lido, não para
+                                            envergonhar o que não é. */}
+                                        {artigo.leituras === 0 ? (
+                                            <span className="text-tinta-sutil">—</span>
+                                        ) : (
+                                            artigo.leituras
+                                        )}
                                     </td>
                                     <td className="px-3 py-2">
                                         <Quando iso={artigo.atualizadoEm} />
@@ -374,6 +397,58 @@ function Editor({
                     </Botao>
                 )}
             </div>
+        </section>
+    )
+}
+
+/**
+ * As perguntas que a base não respondeu — a fila de quem escreve.
+ *
+ * É o indicador mais útil desta tela e por isso vem ANTES da lista de
+ * artigos: com a base vazia, a pergunta de quem vai redigir é "por onde
+ * começo?", e a resposta honesta não é um palpite — é o que as pessoas
+ * perguntaram e não acharam, do mais frequente ao menos.
+ */
+function Lacunas({
+    consultas,
+    aoEscrever,
+}: {
+    consultas: ResumoDeConsultas
+    aoEscrever?: ((exemplo: string) => void) | undefined
+}) {
+    return (
+        <section className="space-y-2 rounded-sm border border-atencao/40 bg-atencao-fundo p-4">
+            <h2 className="text-xs font-medium text-atencao">
+                Dúvidas sem artigo — {consultas.semResposta} de {consultas.total} consulta(s) em{' '}
+                {consultas.dias} dias
+            </h2>
+            <ul className="space-y-1">
+                {consultas.lacunas.slice(0, 8).map((l) => (
+                    <li key={l.exemplo} className="flex items-baseline justify-between gap-3 text-xs">
+                        <span className="text-tinta">
+                            {/* Como alguém escreveu, com aspas: é citação, não título. */}
+                            “{l.exemplo}”
+                            <span className="ml-2 text-tinta-sutil">
+                                ×{l.vezes} · <Quando iso={l.ultimaEm} />
+                            </span>
+                        </span>
+                        {aoEscrever !== undefined ? (
+                            <button
+                                type="button"
+                                onClick={() => aoEscrever(l.exemplo)}
+                                className="shrink-0 rounded-xs border border-borda px-2 py-0.5 text-[11px] text-tinta-fraca transition hover:text-tinta"
+                            >
+                                escrever
+                            </button>
+                        ) : null}
+                    </li>
+                ))}
+            </ul>
+            {consultas.lacunas.length > 8 ? (
+                <p className="text-[11px] text-tinta-sutil">
+                    e mais {consultas.lacunas.length - 8} — as oito acima são as mais frequentes.
+                </p>
+            ) : null}
         </section>
     )
 }

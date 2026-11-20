@@ -126,6 +126,19 @@ export interface Artigo {
     status: StatusDoArtigo
     global: boolean
     atualizadoEm: string
+    /** Leituras inteiras pelo agente nos últimos 30 dias. */
+    leituras: number
+}
+
+/**
+ * O que as consultas à base ensinam. `lacunas` é a lista do que escrever:
+ * perguntas que voltaram vazias, agrupadas por parecença.
+ */
+export interface ResumoDeConsultas {
+    dias: number
+    total: number
+    semResposta: number
+    lacunas: { exemplo: string; vezes: number; ultimaEm: string }[]
 }
 
 export interface TemaDoWidget {

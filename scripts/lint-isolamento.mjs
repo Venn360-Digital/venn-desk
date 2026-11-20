@@ -36,6 +36,7 @@ const DELEGADOS = [
     'engLink',
     'approval',
     'kbArticle',
+    'kbConsulta',
     'slaPolicy',
     'slaTimer',
     'macro',
