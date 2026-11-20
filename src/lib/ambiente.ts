@@ -106,7 +106,7 @@ export interface Fila {
 
 /** O binding do Workers AI. Só o que usamos: `run` com um modelo de embedding. */
 export interface WorkersAi {
-    run(modelo: string, entrada: { text: string[] }): Promise<{ data: number[][] }>
+    run(modelo: string, entrada: { text: string[]; truncate_inputs?: boolean }): Promise<{ data: number[][] }>
 }
 
 /** O que o Workers entrega no binding de rate limit. */

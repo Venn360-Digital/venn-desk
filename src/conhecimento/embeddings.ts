@@ -19,11 +19,16 @@ export const MODELO_DE_EMBEDDING = '@cf/baai/bge-m3'
 export const DIMENSOES = 1024
 
 /**
- * O bge-m3 aceita até 8.192 tokens; cortar o texto em caracteres aqui é
- * grosseiro e suficiente — o que a busca precisa está no começo do artigo
- * (título três vezes, tags, primeiros parágrafos).
+ * Dois limites, medidos em produção em 20/11/2026: o `bge-m3` aceita 8.192
+ * tokens por TEXTO e cerca de 60.000 por CHAMADA ("Max context reached 100908
+ * tokens but model supports only 60000" foi a recusa do primeiro lote de 50
+ * artigos). Então cada texto é cortado em caracteres — o que a busca precisa
+ * está no começo: título três vezes, tags, primeiros parágrafos — e cada
+ * chamada leva poucos textos. 2.000 caracteres de português são ~600 tokens;
+ * oito por chamada ficam em ~5.000, longe do teto mesmo com texto denso.
  */
-const TAMANHO_MAXIMO = 8_000
+export const TAMANHO_MAXIMO = 2_000
+export const TEXTOS_POR_CHAMADA = 8
 
 /** O que `buscar_base` recebe: uma função, ou nada. */
 export type Embutidor = (texto: string) => Promise<number[] | null>
@@ -45,19 +50,26 @@ export function embutidorDoWorkersAi(ai: WorkersAi | undefined): Embutidor | und
  * falhou (dimensão errada, resposta vazia), nunca lança.
  */
 export async function embutirVarios(ai: WorkersAi, textos: string[]): Promise<(number[] | null)[]> {
-    if (textos.length === 0) return []
+    const saida: (number[] | null)[] = []
 
-    try {
-        const resposta = await ai.run(MODELO_DE_EMBEDDING, {
-            text: textos.map((t) => t.slice(0, TAMANHO_MAXIMO)),
-        })
-
-        return textos.map((_, i) => {
-            const vetor = resposta.data[i]
-            return vetor !== undefined && vetor.length === DIMENSOES ? vetor : null
-        })
-    } catch (erro) {
-        console.error('[embedding] o Workers AI falhou; a busca segue por palavra:', erro)
-        return textos.map(() => null)
+    for (let i = 0; i < textos.length; i += TEXTOS_POR_CHAMADA) {
+        const lote = textos.slice(i, i + TEXTOS_POR_CHAMADA)
+        try {
+            const resposta = await ai.run(MODELO_DE_EMBEDDING, {
+                text: lote.map((t) => t.slice(0, TAMANHO_MAXIMO)),
+                /// Rede de segurança: se um texto ainda passar do limite por
+                /// token, o modelo corta em vez de recusar a chamada inteira.
+                truncate_inputs: true,
+            })
+            for (let j = 0; j < lote.length; j++) {
+                const vetor = resposta.data[j]
+                saida.push(vetor !== undefined && vetor.length === DIMENSOES ? vetor : null)
+            }
+        } catch (erro) {
+            console.error('[embedding] o Workers AI falhou; a busca segue por palavra:', erro)
+            for (const _ of lote) saida.push(null)
+        }
     }
+
+    return saida
 }

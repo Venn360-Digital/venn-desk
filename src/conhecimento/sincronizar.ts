@@ -213,17 +213,33 @@ export async function sincronizarApp(pedido: PedidoDeSincronizacao): Promise<Res
 
     /// Embeddings por último e em lotes: o que foi criado ou mudou ganha vetor.
     /// Falha aqui não falha a rodada — a busca por palavra continua valendo.
+    let semVetor = 0
     if (pedido.embutir !== null && pendentesDeVetor.length > 0) {
-        for (let i = 0; i < pendentesDeVetor.length; i += 50) {
-            const lote = pendentesDeVetor.slice(i, i + 50)
+        /// `embutir` divide em chamadas pequenas por dentro (teto do bge-m3 por
+        /// chamada); aqui o lote é só para não segurar centenas de textos em
+        /// memória e gravar conforme chegam.
+        for (let i = 0; i < pendentesDeVetor.length; i += 32) {
+            const lote = pendentesDeVetor.slice(i, i + 32)
             const vetores = await pedido.embutir(lote.map((p) => p.texto))
             await Promise.all(
-                lote.map((p, j) => {
+                lote.map(async (p, j) => {
                     const v = vetores[j]
-                    return v === null || v === undefined ? Promise.resolve() : escopo.artigos.gravarEmbedding(p.id, v).catch((e: unknown) => console.error('[conhecimento] embedding não gravado:', e))
+                    if (v === null || v === undefined) {
+                        semVetor++
+                        return
+                    }
+                    try {
+                        await escopo.artigos.gravarEmbedding(p.id, v)
+                    } catch (e) {
+                        semVetor++
+                        console.error('[conhecimento] embedding não gravado:', e)
+                    }
                 })
             )
         }
+        /// Silêncio aqui já custou uma rodada inteira sem vetor (20/11/2026):
+        /// o que falhou no embedding vira aviso no resultado, sempre.
+        if (semVetor > 0) avisos.push(`${semVetor} de ${pendentesDeVetor.length} artigo(s) ficaram sem vetor: o Workers AI recusou ou a gravação falhou`)
     } else if (pedido.embutir === null && pendentesDeVetor.length > 0) {
         avisos.push(`${pendentesDeVetor.length} artigo(s) sem vetor: Workers AI indisponível`)
     }

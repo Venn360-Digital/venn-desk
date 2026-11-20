@@ -538,6 +538,17 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
         return { OR: [{ appId }, { appId: null }] }
     }
 
+    /** JSON com chaves ordenadas em toda profundidade, para comparar com o que o JSONB devolve. */
+    function jsonEstavel(valor: unknown): string {
+        const ordenar = (v: unknown): unknown =>
+            Array.isArray(v)
+                ? v.map(ordenar)
+                : v !== null && typeof v === 'object'
+                  ? Object.fromEntries(Object.entries(v as Record<string, unknown>).sort(([a], [b]) => (a < b ? -1 : 1)).map(([k, x]) => [k, ordenar(x)]))
+                  : v
+        return JSON.stringify(ordenar(valor))
+    }
+
     async function reler(id: string, alterados: number): Promise<Ticket> {
         if (alterados !== 1) {
             throw new ErroDeDominio('chamado_nao_encontrado', 'Chamado não encontrado.', 404)
@@ -1490,12 +1501,16 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                     where: { appId, chave: dados.chave },
                 })
 
+                /// JSONB reordena chaves ao gravar: comparar `fonte` por
+                /// `JSON.stringify` cru dizia "mudou" em toda rodada e
+                /// reescrevia (e re-embutia) 36 artigos iguais. Chaves
+                /// ordenadas antes de comparar.
                 const mesmoConteudo =
                     anterior !== null &&
                     anterior.titulo === dados.titulo &&
                     anterior.corpo === dados.corpo &&
                     JSON.stringify(anterior.tags) === JSON.stringify(dados.tags) &&
-                    JSON.stringify(anterior.fonte) === JSON.stringify(dados.fonte)
+                    jsonEstavel(anterior.fonte) === jsonEstavel(dados.fonte)
 
                 if (anterior !== null && mesmoConteudo) {
                     /// A fonte voltou depois de arquivada pela sincronização e

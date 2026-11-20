@@ -434,8 +434,11 @@ describe('a base viva no escopo', () => {
         expect(upsert?.args['update']).not.toHaveProperty('status')
     })
 
-    it('conteúdo igual é "inalterado" e não escreve nada', async () => {
-        const { conexao, chamadas } = conexaoFalsa({ 'kbArticle.findFirst': DERIVADO })
+    it('conteúdo igual é "inalterado" e não escreve nada — mesmo com o JSONB reordenando as chaves da fonte', async () => {
+        /// O JSONB devolve `{ sha, caminhos }` quando se gravou `{ caminhos, sha }`.
+        /// Em 20/11 isso marcou 36 artigos iguais como "atualizados" e os
+        /// re-embutiu de graça.
+        const { conexao, chamadas } = conexaoFalsa({ 'kbArticle.findFirst': { ...DERIVADO, fonte: { sha: 'abc', caminhos: DERIVADO.fonte.caminhos } } })
         const { efeito } = await escopoDoApp(conexao, 'app-a').artigos.sincronizarDerivado({
             chave: DERIVADO.chave,
             titulo: DERIVADO.titulo,

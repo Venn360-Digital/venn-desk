@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { DIMENSOES, embutidorDoWorkersAi, embutirVarios } from './embeddings.ts'
+import { DIMENSOES, embutidorDoWorkersAi, embutirVarios, TAMANHO_MAXIMO, TEXTOS_POR_CHAMADA } from './embeddings.ts'
 
 const vetor = (n = DIMENSOES) => Array.from({ length: n }, () => 0.1)
 
@@ -37,7 +37,38 @@ describe('embutirVarios', () => {
             },
         }
         await embutirVarios(ai, ['x'.repeat(20_000)])
-        expect(recebido.length).toBe(8_000)
+        expect(recebido.length).toBe(TAMANHO_MAXIMO)
+    })
+
+    it('divide em chamadas pequenas: o bge-m3 tem teto por CHAMADA, medido em produção', async () => {
+        /// 50 artigos numa chamada deram "Max context reached 100908 tokens
+        /// but model supports only 60000" em 20/11/2026 — e nenhum vetor.
+        const tamanhos: number[] = []
+        const ai = {
+            run: async (_m: string, e: { text: string[]; truncate_inputs?: boolean }) => {
+                tamanhos.push(e.text.length)
+                expect(e.truncate_inputs).toBe(true)
+                return { data: e.text.map(() => vetor()) }
+            },
+        }
+        const r = await embutirVarios(ai, Array.from({ length: 20 }, (_, i) => `t${i}`))
+        expect(r).toHaveLength(20)
+        expect(r.every((v) => v !== null)).toBe(true)
+        expect(Math.max(...tamanhos)).toBeLessThanOrEqual(TEXTOS_POR_CHAMADA)
+        expect(tamanhos.length).toBe(3)
+    })
+
+    it('uma chamada que falha não derruba as outras', async () => {
+        let vez = 0
+        const ai = {
+            run: async (_m: string, e: { text: string[] }) => {
+                if (vez++ === 0) throw new Error('8007')
+                return { data: e.text.map(() => vetor()) }
+            },
+        }
+        const r = await embutirVarios(ai, Array.from({ length: 10 }, (_, i) => `t${i}`))
+        expect(r.slice(0, 8).every((v) => v === null)).toBe(true)
+        expect(r.slice(8).every((v) => v !== null)).toBe(true)
     })
 })
 
