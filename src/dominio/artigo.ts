@@ -69,6 +69,46 @@ export function podeIrPara(de: StatusDoArtigo, para: StatusDoArtigo): boolean {
 }
 
 /**
+ * De onde o artigo veio — e, com isso, quem pode mexer nele.
+ *
+ * `MANUAL` é escrito por gente da Venn360. `DERIVADO` é gerado do repositório
+ * do produto e refeito a cada mudança em `main`. `SUGERIDO` nasce do
+ * atendimento (chamado resolvido por humano, lacuna repetida) e espera uma
+ * pessoa aprovar.
+ */
+export const ORIGENS = ['MANUAL', 'DERIVADO', 'SUGERIDO'] as const
+export type OrigemDoArtigo = (typeof ORIGENS)[number]
+
+/**
+ * Só o que uma pessoa escreveu uma pessoa edita.
+ *
+ * Editar um derivado à mão seria editar uma cópia que a próxima sincronização
+ * substitui — a correção duraria até o próximo merge e sumiria sem aviso. A
+ * recusa vem com a orientação certa: mude na fonte, no repositório.
+ *
+ * O sugerido É editável: ele é um rascunho para a pessoa lapidar antes de
+ * publicar, e depois de publicado é dela.
+ */
+export function podeEditarAMao(origem: OrigemDoArtigo): boolean {
+    return origem !== 'DERIVADO'
+}
+
+/**
+ * As transições que valem para cada origem.
+ *
+ * O derivado só anda entre rascunho e publicado: uma pessoa pode TIRAR do ar o
+ * que a sincronização publicou (e a sincronização respeita isso, ver
+ * `statusFixadoPor`), mas não arquiva — arquivar é a sincronização dizendo
+ * "a fonte sumiu", e uma pessoa dizendo o mesmo de um artigo cuja fonte existe
+ * criaria um artigo que ressuscita no próximo merge.
+ */
+export function transicoesPermitidas(origem: OrigemDoArtigo, de: StatusDoArtigo): StatusDoArtigo[] {
+    const todas = TRANSICOES[de]
+    if (origem !== 'DERIVADO') return todas
+    return todas.filter((para) => para !== 'ARQUIVADO')
+}
+
+/**
  * O que o agente e o widget enxergam.
  *
  * Só publicado. Rascunho é texto em revisão — entregá-lo ao modelo faria a IA

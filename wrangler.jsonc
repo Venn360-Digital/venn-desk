@@ -43,17 +43,40 @@
     // tempo gasto pelo primeiro. `max_retries: 2` porque falha de modelo
     // costuma ser transitória, e três tentativas de um atendimento que não
     // completa já é dinheiro suficiente para parar e deixar para um humano.
+    //
+    // A fila da BASE VIVA é outra, de propósito. Um job de sincronização com o
+    // repositório leva minutos (árvore, blobs, lotes no modelo); na mesma fila
+    // do atendimento, com `max_batch_size: 1`, ele atrasaria a resposta a um
+    // cliente. E a política é diferente: sincronização é idempotente por
+    // (app, commit) e falha deve ficar REGISTRADA e esperar o próximo tick,
+    // não repetir às cegas — por isso `max_retries: 1` com atraso.
     "queues": {
-        "producers": [{ "queue": "venn-desk-atendimento", "binding": "ATENDIMENTO" }],
+        "producers": [
+            { "queue": "venn-desk-atendimento", "binding": "ATENDIMENTO" },
+            { "queue": "venn-desk-conhecimento", "binding": "CONHECIMENTO" }
+        ],
         "consumers": [
             {
                 "queue": "venn-desk-atendimento",
                 "max_batch_size": 1,
                 "max_batch_timeout": 5,
                 "max_retries": 2
+            },
+            {
+                "queue": "venn-desk-conhecimento",
+                "max_batch_size": 1,
+                "max_batch_timeout": 10,
+                "max_retries": 1,
+                "retry_delay": 120
             }
         ]
     },
+
+    // Workers AI, só para o embedding da busca semântica da base (`bge-m3`,
+    // 1024 dimensões). Escolhido em 19/11/2026 por não exigir chave nova: a
+    // chave da Anthropic não serve embedding, e uma conta a mais em outro
+    // provedor era custo de operação sem ganho de qualidade medido.
+    "ai": { "binding": "AI" },
 
     // Teto de abertura por usuário e por tenant (seção 5). Em Workers um `Map`
     // em memória não conta nada: cada isolate teria o próprio contador.
@@ -113,7 +136,7 @@
     },
 
     // DATABASE_URL entra por `wrangler secret put`, nunca aqui.
-    "//secrets": "DATABASE_URL, SEGREDO_SESSAO, SEGREDO_LINKS, SLACK_SIGNING_SECRET, SLACK_BOT_TOKEN, ANTHROPIC_API_KEY",
+    "//secrets": "DATABASE_URL, SEGREDO_SESSAO, SEGREDO_LINKS, SLACK_SIGNING_SECRET, SLACK_BOT_TOKEN, ANTHROPIC_API_KEY, GITHUB_TOKEN_LEITURA (só leitura do venn-saas), DESK_CHAVE_PRIVADA_SUPORTE",
 
     "env": {
         "producao": {
@@ -157,7 +180,8 @@
             // do cliente.
             "queues": {
                 "producers": [
-                    { "queue": "venn-desk-atendimento-producao", "binding": "ATENDIMENTO" }
+                    { "queue": "venn-desk-atendimento-producao", "binding": "ATENDIMENTO" },
+                    { "queue": "venn-desk-conhecimento-producao", "binding": "CONHECIMENTO" }
                 ],
                 "consumers": [
                     {
@@ -165,9 +189,17 @@
                         "max_batch_size": 1,
                         "max_batch_timeout": 5,
                         "max_retries": 2
+                    },
+                    {
+                        "queue": "venn-desk-conhecimento-producao",
+                        "max_batch_size": 1,
+                        "max_batch_timeout": 10,
+                        "max_retries": 1,
+                        "retry_delay": 120
                     }
                 ]
             },
+            "ai": { "binding": "AI" },
             // As mesmas chaves do agente. O modelo e o esforço são decisão de
             // produto e valem nos dois ambientes.
             "//vars-do-agente": "MODELO_DO_AGENTE, ESFORCO_DO_AGENTE e as tarifas entram abaixo",

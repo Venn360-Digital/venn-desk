@@ -6,6 +6,7 @@ import { criarCliente, descartarCliente } from '../dados/cliente.ts'
 import { escopoDoApp } from '../dados/escopo.ts'
 import type { Ambiente } from '../lib/ambiente.ts'
 import { atender } from './atender.ts'
+import { embutidorDoWorkersAi } from '../conhecimento/embeddings.ts'
 
 /**
  * A fila do atendimento automático (Fase 4).
@@ -105,6 +106,7 @@ export async function consumirAtendimentos(
                         escopoDoApp: escopoDoApp(cliente, app.id),
                         app,
                         escopo: 'SUPORTE',
+                        ...(env.AI === undefined ? {} : { embutir: embutidorDoWorkersAi(env.AI) }),
                     },
                     numero: pedido.data.numero,
                     tarifa: {

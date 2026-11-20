@@ -2,69 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import { ErroDeDominio } from '../lib/erros.ts'
 
-import { escopoDoApp, type Conexao } from './escopo.ts'
-
-/**
- * A conexão falsa existe para provar o ISOLAMENTO sem banco — o Miniflare não
- * roda nesta máquina e um Postgres local não existe aqui.
- *
- * Ela registra todo argumento que a camada de escopo passa ao Prisma, e **lança
- * em `findUnique` e em `update`**. Essas duas são exatamente as formas que não
- * conseguem carregar o `appId` ao lado do `id`: se alguém as usar no escopo um
- * dia, a prova quebra aqui, e não em produção com dado de outro cliente na tela.
- */
-
-interface Chamada {
-    delegado: string
-    metodo: string
-    args: Record<string, unknown>
-}
-
-function conexaoFalsa(respostas: Record<string, unknown> = {}) {
-    const chamadas: Chamada[] = []
-
-    const delegado = (nome: string) =>
-        new Proxy(
-            {},
-            {
-                get(_alvo, metodo: string) {
-                    if (metodo === 'findUnique' || metodo === 'update') {
-                        return () => {
-                            throw new Error(
-                                `${nome}.${metodo} não pode ser usado no escopo: não aceita appId ao lado do id`
-                            )
-                        }
-                    }
-
-                    return (args: Record<string, unknown>) => {
-                        chamadas.push({ delegado: nome, metodo, args })
-                        const resposta = respostas[`${nome}.${metodo}`]
-                        if (metodo === 'findMany') return Promise.resolve(resposta ?? [])
-                        if (metodo === 'updateMany') return Promise.resolve(resposta ?? { count: 1 })
-                        if (metodo === 'create' || metodo === 'upsert') {
-                            return Promise.resolve(resposta ?? { id: `${nome}-novo` })
-                        }
-                        return Promise.resolve(resposta ?? null)
-                    }
-                },
-            }
-        )
-
-    const conexao = {
-        ticket: delegado('ticket'),
-        ticketMessage: delegado('ticketMessage'),
-        ticketEvent: delegado('ticketEvent'),
-        attachment: delegado('attachment'),
-        tenant: delegado('tenant'),
-        requester: delegado('requester'),
-        slaTimer: delegado('slaTimer'),
-        slaPolicy: delegado('slaPolicy'),
-        kbArticle: delegado('kbArticle'),
-        csatResponse: delegado('csatResponse'),
-    } as unknown as Conexao
-
-    return { conexao, chamadas }
-}
+import { escopoDoApp } from './escopo.ts'
+import { conexaoFalsa } from './testes/conexao-falsa.ts'
 
 const CHAMADO_A = {
     id: 'chamado-1',
@@ -417,5 +356,182 @@ describe('csat: a nota é do app, e a dedução não vem do cliente', () => {
          * que a linha nova nasça com o app certo, e é o que isto prova.
          */
         expect(chamadas[0]?.args['create']).toMatchObject({ appId: 'app-a' })
+    })
+})
+
+describe('a base viva no escopo', () => {
+    const DERIVADO = {
+        id: 'art-1',
+        appId: 'app-a',
+        origem: 'DERIVADO',
+        chave: 'derivado:faq:senha',
+        titulo: 'Como troco a senha',
+        corpo: 'Vá em Conta → Segurança.',
+        tags: ['faq'],
+        status: 'PUBLICADO',
+        fonte: { caminhos: ['apps/odontobox360/src/app/(dashboard)/suporte/page.tsx'], sha: 'abc' },
+        statusFixadoPor: null,
+    }
+
+    it('recusa editar à mão um artigo DERIVADO, e diz onde mudar', async () => {
+        /// A edição duraria até o próximo merge e sumiria sem aviso.
+        const { conexao, chamadas } = conexaoFalsa({ 'kbArticle.findFirst': DERIVADO })
+        const escopo = escopoDoApp(conexao, 'app-a')
+
+        await expect(escopo.artigos.alterar('art-1', { titulo: 'Outro' })).rejects.toMatchObject({
+            codigo: 'artigo_derivado',
+            status: 409,
+            message: expect.stringContaining('suporte/page.tsx'),
+        })
+        expect(chamadas.filter((c) => c.metodo === 'updateMany')).toHaveLength(0)
+    })
+
+    it('derivado não vai para ARQUIVADO à mão; para RASCUNHO vai, e FIXA o ator', async () => {
+        const { conexao, chamadas } = conexaoFalsa({ 'kbArticle.findFirst': DERIVADO })
+        const escopo = escopoDoApp(conexao, 'app-a')
+
+        await expect(escopo.artigos.mudarStatus('art-1', 'ARQUIVADO', { ator: 'agent:1' })).rejects.toMatchObject({
+            codigo: 'transicao_invalida',
+        })
+
+        await escopo.artigos.mudarStatus('art-1', 'RASCUNHO', { ator: 'agent:1' })
+        const escrita = chamadas.find((c) => c.metodo === 'updateMany')
+        expect(escrita?.args['data']).toEqual({ status: 'RASCUNHO', statusFixadoPor: 'agent:1' })
+        expect((escrita?.args['where'] as Record<string, unknown>)['OR']).toBeDefined()
+    })
+
+    it('a sincronização (sem ator) não fixa status', async () => {
+        const { conexao, chamadas } = conexaoFalsa({ 'kbArticle.findFirst': DERIVADO })
+        await escopoDoApp(conexao, 'app-a').artigos.mudarStatus('art-1', 'RASCUNHO')
+        const escrita = chamadas.find((c) => c.metodo === 'updateMany')
+        expect(escrita?.args['data']).toEqual({ status: 'RASCUNHO' })
+    })
+
+    it('sincronizarDerivado cria por upsert com o appId DENTRO da chave única', async () => {
+        const { conexao, chamadas } = conexaoFalsa({ 'kbArticle.findFirst': null })
+        const escopo = escopoDoApp(conexao, 'app-a')
+        const agora = new Date('2026-11-19T12:00:00Z')
+
+        const { efeito } = await escopo.artigos.sincronizarDerivado({
+            chave: 'derivado:faq:senha',
+            titulo: 'Como troco a senha',
+            corpo: 'Vá em Conta → Segurança.',
+            tags: ['faq'],
+            fonte: { sha: 'abc' },
+            dados: { p: 'x' },
+            publicarDireto: true,
+            agora,
+        })
+
+        expect(efeito).toBe('criado')
+        const upsert = chamadas.find((c) => c.metodo === 'upsert')
+        expect(upsert?.args['where']).toEqual({ appId_chave: { appId: 'app-a', chave: 'derivado:faq:senha' } })
+        const create = upsert?.args['create'] as Record<string, unknown>
+        expect(create['appId']).toBe('app-a')
+        expect(create['origem']).toBe('DERIVADO')
+        expect(create['status']).toBe('PUBLICADO')
+        /// O `update` NÃO toca status: quem tirou do ar continua mandando.
+        expect(upsert?.args['update']).not.toHaveProperty('status')
+    })
+
+    it('conteúdo igual é "inalterado" e não escreve nada', async () => {
+        const { conexao, chamadas } = conexaoFalsa({ 'kbArticle.findFirst': DERIVADO })
+        const { efeito } = await escopoDoApp(conexao, 'app-a').artigos.sincronizarDerivado({
+            chave: DERIVADO.chave,
+            titulo: DERIVADO.titulo,
+            corpo: DERIVADO.corpo,
+            tags: DERIVADO.tags,
+            fonte: DERIVADO.fonte,
+            dados: {},
+            publicarDireto: true,
+            agora: new Date(),
+        })
+        expect(efeito).toBe('inalterado')
+        expect(chamadas.filter((c) => c.metodo !== 'findFirst')).toHaveLength(0)
+    })
+
+    it('arquivado pela sincronização cuja fonte voltou REABRE; fixado por pessoa, não', async () => {
+        const arquivado = { ...DERIVADO, status: 'ARQUIVADO' }
+        const { conexao, chamadas } = conexaoFalsa({ 'kbArticle.findFirst': arquivado })
+        const mesmo = {
+            chave: DERIVADO.chave, titulo: DERIVADO.titulo, corpo: DERIVADO.corpo, tags: DERIVADO.tags,
+            fonte: DERIVADO.fonte, dados: {}, publicarDireto: true, agora: new Date(),
+        }
+        const { efeito } = await escopoDoApp(conexao, 'app-a').artigos.sincronizarDerivado(mesmo)
+        expect(efeito).toBe('reaberto')
+        expect(chamadas.find((c) => c.metodo === 'updateMany')?.args['data']).toMatchObject({ status: 'PUBLICADO' })
+
+        const fixado = { ...arquivado, statusFixadoPor: 'agent:1' }
+        const outra = conexaoFalsa({ 'kbArticle.findFirst': fixado })
+        const r = await escopoDoApp(outra.conexao, 'app-a').artigos.sincronizarDerivado(mesmo)
+        expect(r.efeito).toBe('inalterado')
+    })
+
+    it('arquivarDerivadosFora só alcança DERIVADOS deste app e fora das chaves vivas', async () => {
+        const { conexao, chamadas } = conexaoFalsa({ 'kbArticle.findMany': [DERIVADO] })
+        const arquivados = await escopoDoApp(conexao, 'app-a').artigos.arquivarDerivadosFora('derivado:faq:', ['derivado:faq:outra'])
+
+        expect(arquivados).toHaveLength(1)
+        const leitura = chamadas.find((c) => c.metodo === 'findMany')?.args['where'] as Record<string, unknown>
+        expect(leitura['appId']).toBe('app-a')
+        expect(leitura['origem']).toBe('DERIVADO')
+        expect(leitura['chave']).toEqual({ startsWith: 'derivado:faq:', notIn: ['derivado:faq:outra'] })
+        const escrita = chamadas.find((c) => c.metodo === 'updateMany')?.args['where'] as Record<string, unknown>
+        expect(escrita['appId']).toBe('app-a')
+    })
+
+    it('o SQL do vetor carrega o appId como parâmetro, na escrita e na leitura', async () => {
+        const { conexao, chamadas } = conexaoFalsa()
+        const escopo = escopoDoApp(conexao, 'app-a')
+        await escopo.artigos.gravarEmbedding('art-1', [0.1, 0.2])
+        await escopo.artigos.buscarPorVetor([0.1, 0.2], 5)
+
+        const [escrita, leitura] = chamadas.filter((c) => c.delegado === 'sql')
+        expect(escrita?.metodo).toBe('executeRaw')
+        expect(escrita?.args['valores']).toContain('app-a')
+        expect(escrita?.args['sql']).toContain('app_id')
+        expect(leitura?.metodo).toBe('queryRaw')
+        expect(leitura?.args['valores']).toContain('app-a')
+        expect(leitura?.args['sql']).toContain("status = 'PUBLICADO'")
+        /// O vetor vai como parâmetro, nunca concatenado no SQL.
+        expect(leitura?.args['sql']).not.toContain('0.1')
+    })
+
+    it('buscar sem vetor é a busca por palavra de sempre; com vetor, funde', async () => {
+        const publicados = [
+            { ...DERIVADO, id: 'a', titulo: 'Exportar contatos', corpo: 'Como exportar a lista de contatos.', tags: [] },
+            { ...DERIVADO, id: 'b', titulo: 'Agenda do profissional', corpo: 'Horários da agenda.', tags: [] },
+        ]
+        const { conexao } = conexaoFalsa({
+            'kbArticle.findMany': publicados,
+            'sql.queryRaw': [{ id: 'b', distancia: 0.1 }, { id: 'a', distancia: 0.2 }],
+        })
+        const escopo = escopoDoApp(conexao, 'app-a')
+
+        const soPalavra = await escopo.artigos.buscar('exportar contatos', 5)
+        expect(soPalavra.map((r) => r.artigo.id)).toEqual(['a'])
+
+        const hibrida = await escopo.artigos.buscar('exportar contatos', 5, { vetor: [0.1] })
+        /// "a" aparece nas duas listas; "b" só na do vetor. As duas entram,
+        /// e "a" primeiro.
+        expect(hibrida.map((r) => r.artigo.id)).toEqual(['a', 'b'])
+    })
+
+    it('sincronizações e eventos da base sempre levam o appId', async () => {
+        const { conexao, chamadas } = conexaoFalsa()
+        const escopo = escopoDoApp(conexao, 'app-a')
+        const agora = new Date()
+
+        await escopo.sincronizacoes.registrarPedido({ repositorio: 'o/r', commitSha: 'x', pedidaPor: 'cron', forcada: false })
+        await escopo.sincronizacoes.iniciar('s1', agora)
+        await escopo.sincronizacoes.concluir('s1', { criados: 1 }, agora)
+        await escopo.sincronizacoes.ultimaConcluida()
+        await escopo.eventosDaBase.registrar({ artigoId: 'art-1', ator: 'sistema:sincronizacao', evento: 'artigo:derivado-criado' })
+        await escopo.eventosDaBase.doArtigo('art-1')
+
+        for (const chamada of chamadas) {
+            const onde = (chamada.args['where'] ?? chamada.args['data']) as Record<string, unknown>
+            expect(onde['appId'], `${chamada.delegado}.${chamada.metodo}`).toBe('app-a')
+        }
     })
 })

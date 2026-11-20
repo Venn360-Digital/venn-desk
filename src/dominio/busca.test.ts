@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { dobrar, LIMIAR, parecidos, pontuar, termosDe } from './busca.ts'
+import { dobrar, fundir, LIMIAR, parecidos, pontuar, termosDe } from './busca.ts'
 
 describe('a busca por chamados parecidos', () => {
     it('dobra acento e caixa', () => {
@@ -105,5 +105,36 @@ describe('a busca por chamados parecidos', () => {
         expect(achados.length).toBe(2)
         expect(achados[0]?.nota).toBeGreaterThanOrEqual(achados[1]!.nota)
         expect(achados.map((a) => a.item.assunto)).not.toContain('agenda login')
+    })
+})
+
+describe('fundir', () => {
+    const ids = (r: { item: { id: string } }[]) => r.map((x) => x.item.id)
+
+    it('quem aparece cedo nas DUAS listas sobe acima de quem lidera uma só', () => {
+        /**
+         * O defeito que isto impede: a busca por vetor devolver um artigo
+         * só parecido no tom e ele passar na frente do que casou por palavra
+         * E por sentido. Posição nas duas listas vale mais que o topo de uma.
+         */
+        const palavra = [{ id: 'a' }, { id: 'b' }, { id: 'c' }]
+        const vetor = [{ id: 'd' }, { id: 'a' }, { id: 'b' }]
+        /// "d" lidera a lista do vetor e termina atrás de "a" e "b", que
+        /// aparecem nas duas.
+        expect(ids(fundir([palavra, vetor], (x) => x.id, 3))).toEqual(['a', 'b', 'd'])
+    })
+
+    it('uma lista vazia não apaga a outra', () => {
+        expect(ids(fundir([[{ id: 'a' }], []], (x) => x.id, 5))).toEqual(['a'])
+    })
+
+    it('respeita o limite', () => {
+        const lista = [{ id: 'a' }, { id: 'b' }, { id: 'c' }]
+        expect(fundir([lista, lista], (x) => x.id, 2)).toHaveLength(2)
+    })
+
+    it('nota é soma de posições, não média de escalas diferentes', () => {
+        const [primeiro] = fundir([[{ id: 'a' }], [{ id: 'a' }]], (x) => x.id, 1)
+        expect(primeiro?.nota).toBeCloseTo(2 / 61, 6)
     })
 })

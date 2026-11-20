@@ -1,6 +1,7 @@
 import type { App, PrismaClient } from '#prisma'
 
 import type { EscopoDoApp } from '../dados/escopo.ts'
+import type { Embutidor } from '../conhecimento/embeddings.ts'
 import { ErroDeDominio } from '../lib/erros.ts'
 import { formatarNumero } from '../dominio/numero.ts'
 import { grupoNoWidget, type Status } from '../dominio/estados.ts'
@@ -49,6 +50,12 @@ export interface Contexto {
          */
         ultimaConsultaId?: string
     }
+    /**
+     * Embute a consulta da base para a busca semântica. Opcional: sem o
+     * binding do Workers AI (teste, MCP de fora), a busca segue por palavra.
+     * Nunca lança — devolve `null` e a busca cai para o que existia.
+     */
+    embutir?: Embutidor
 }
 
 export interface Resultado {
@@ -273,7 +280,14 @@ async function buscarBase(
     const texto = dados['texto'] as string
     const limite = (dados['limite'] as number | undefined) ?? 5
 
-    const achados = await ctx.escopoDoApp.artigos.buscar(texto, limite)
+    /// Híbrida quando dá: o vetor da consulta acha o sinônimo que a palavra
+    /// não acha. Sem embutidor, ou com ele falhando, é a busca de antes.
+    const vetor = ctx.embutir === undefined ? null : await ctx.embutir(texto)
+    const achados = await ctx.escopoDoApp.artigos.buscar(
+        texto,
+        limite,
+        vetor === null ? {} : { vetor }
+    )
 
     /**
      * A consulta é registrada SEMPRE, com resultado ou sem — e o "sem" é o que

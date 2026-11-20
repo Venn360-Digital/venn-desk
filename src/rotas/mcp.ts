@@ -9,6 +9,7 @@ import { ErroDeDominio } from '../lib/erros.ts'
 import type { Ambiente } from '../lib/ambiente.ts'
 import { comCliente } from '../auth/middleware.ts'
 import { executarFerramenta } from '../mcp/executar.ts'
+import { embutidorDoWorkersAi } from '../conhecimento/embeddings.ts'
 import { ferramentasDoEscopo, paraOProtocolo, type Escopo } from '../mcp/ferramentas.ts'
 
 /**
@@ -156,6 +157,7 @@ rotasDoMcp.post('/mcp', comCliente, async (c) => {
                     escopoDoApp: escopoDoApp(cliente, app.id),
                     app,
                     escopo: credencial.escopo,
+                    ...(c.env.AI === undefined ? {} : { embutir: embutidorDoWorkersAi(c.env.AI) }),
                 },
                 nome,
                 argumentos

@@ -1,17 +1,19 @@
 import type { Prisma, PrismaClient } from '#prisma'
-import type { Attachment, CsatResponse, HealthEpisode, HealthState, KbArticle, Problem, SlaTimer, Ticket, TicketEvent, TicketMessage } from '#prisma'
+import type { Attachment, CsatResponse, HealthEpisode, HealthState, KbArticle, KbEvento, KbSincronizacao, Problem, SlaTimer, Ticket, TicketEvent, TicketMessage } from '#prisma'
 
 import { ErroDeDominio } from '../lib/erros.ts'
 import { transicionar, type Evento, type Status } from '../dominio/estados.ts'
 import {
-    podeIrPara,
+    podeEditarAMao,
     textoDeBusca,
+    transicoesPermitidas,
     VISIVEL,
     type DadosDoArtigo,
     type EdicaoDoArtigo,
+    type OrigemDoArtigo,
     type StatusDoArtigo,
 } from '../dominio/artigo.ts'
-import { parecidos } from '../dominio/busca.ts'
+import { fundir, parecidos } from '../dominio/busca.ts'
 import type { ChamadoMedido } from '../dominio/relatorio.ts'
 import type { ConsultaRegistrada } from '../dominio/consultas.ts'
 import {
@@ -50,6 +52,20 @@ import {
 
 /** Serve ao cliente e à transação: o escopo é o mesmo nos dois. */
 export type Conexao = PrismaClient | Prisma.TransactionClient
+
+/** O que a sincronização grava de cada artigo derivado. */
+export interface ArtigoDerivado {
+    /** `derivado:<fonte>:<slug>`, estável entre sincronizações. */
+    chave: string
+    titulo: string
+    corpo: string
+    tags: string[]
+    fonte: Prisma.InputJsonValue
+    dados: Prisma.InputJsonValue
+    /** Nasce PUBLICADO (true) ou RASCUNHO (false). Só vale na criação. */
+    publicarDireto: boolean
+    agora: Date
+}
 
 export interface Autor {
     /** `agent:<id>`, `requester:<id>`, `ia:<ferramenta>` ou `sistema`. */
@@ -268,13 +284,35 @@ export interface EscopoDoApp {
      * especificação. Ver `ondeDoArtigo` abaixo, que é onde isso mora.
      */
     artigos: {
-        listar(filtro?: { status?: StatusDoArtigo }): Promise<KbArticle[]>
+        listar(filtro?: { status?: StatusDoArtigo; origem?: OrigemDoArtigo }): Promise<KbArticle[]>
         porId(id: string): Promise<KbArticle | null>
+        /** Pela chave estável do derivado. Só deste app: derivado nunca é global. */
+        porChave(chave: string): Promise<KbArticle | null>
         criar(dados: DadosDoArtigo): Promise<KbArticle>
+        /**
+         * Edição à mão. Recusa com 409 quando o artigo é DERIVADO: a correção
+         * duraria até a próxima sincronização e sumiria sem aviso. A mensagem
+         * diz onde mudar.
+         */
         alterar(id: string, dados: EdicaoDoArtigo): Promise<KbArticle | null>
-        mudarStatus(id: string, para: StatusDoArtigo): Promise<KbArticle>
-        /** Só artigos publicados, ordenados por relevância. Usada pelo agente. */
-        buscar(texto: string, limite: number): Promise<{ artigo: KbArticle; nota: number }[]>
+        /**
+         * Muda o status respeitando as transições da origem. Quando uma
+         * PESSOA muda o status de um derivado, o `ator` fica em
+         * `statusFixadoPor` e a sincronização passa a não tocar nele.
+         */
+        mudarStatus(id: string, para: StatusDoArtigo, opcoes?: { ator?: string }): Promise<KbArticle>
+        /**
+         * Só artigos publicados, ordenados por relevância. Usada pelo agente.
+         *
+         * Com `vetor`, a busca é HÍBRIDA: palavra e cosseno fundidos por
+         * posição (RRF). Sem ele, só palavra — é o fallback quando o Workers
+         * AI não respondeu, e a razão de a assinatura aceitar os dois.
+         */
+        buscar(
+            texto: string,
+            limite: number,
+            opcoes?: { vetor?: number[] }
+        ): Promise<{ artigo: KbArticle; nota: number }[]>
         /**
          * Grava o que foi perguntado e o que voltou. Devolve o id, para a
          * leitura inteira que vier depois se ligar a esta busca.
@@ -289,6 +327,75 @@ export interface EscopoDoApp {
         marcarLeitura(consultaId: string, artigoId: string): Promise<void>
         /** As consultas do período, para o resumo. */
         consultas(desde: Date): Promise<ConsultaRegistrada[]>
+
+        /**
+         * Grava (ou regrava) um artigo derivado, pela chave.
+         *
+         * É um upsert: a mesma chave no mesmo app atualiza em vez de duplicar.
+         * O `status` NÃO é tocado na atualização — quem decide se o artigo
+         * está no ar é a primeira gravação (`publicarDireto`) e, depois, uma
+         * pessoa. A exceção é o artigo ARQUIVADO pela sincronização cuja
+         * fonte voltou: ele reabre, a menos que uma pessoa o tenha fixado.
+         *
+         * Devolve o efeito, para o resultado da sincronização contar criados,
+         * atualizados e inalterados — e para "inalterado" não gerar escrita.
+         */
+        sincronizarDerivado(dados: ArtigoDerivado): Promise<{
+            artigo: KbArticle
+            efeito: 'criado' | 'atualizado' | 'inalterado' | 'reaberto'
+        }>
+        /** Marca os derivados conferidos nesta rodada, numa escrita só. */
+        tocarDerivados(chaves: string[], agora: Date): Promise<void>
+        /**
+         * Arquiva os derivados deste prefixo cuja chave NÃO está entre as
+         * vivas: a fonte sumiu. Devolve os arquivados, para os eventos.
+         */
+        arquivarDerivadosFora(prefixoDaChave: string, chavesVivas: string[]): Promise<KbArticle[]>
+        /** Um rascunho SUGERIDO, para uma pessoa aprovar. */
+        criarSugerido(dados: {
+            titulo: string
+            corpo: string
+            tags: string[]
+            fonte: Prisma.InputJsonValue
+        }): Promise<KbArticle>
+        /** Grava o vetor da busca semântica. SQL cru: o Prisma não tem `vector`. */
+        gravarEmbedding(id: string, vetor: number[]): Promise<void>
+        /** Os publicados mais próximos do vetor, por cosseno. */
+        buscarPorVetor(vetor: number[], limite: number): Promise<{ id: string; distancia: number }[]>
+    }
+
+    /** As sincronizações da base com o repositório (uma por app e commit). */
+    sincronizacoes: {
+        registrarPedido(dados: {
+            repositorio: string
+            commitSha: string
+            pedidaPor: string
+            forcada: boolean
+        }): Promise<KbSincronizacao>
+        porId(id: string): Promise<KbSincronizacao | null>
+        iniciar(id: string, agora: Date): Promise<void>
+        aguardarLote(id: string, loteId: string): Promise<void>
+        concluir(id: string, resultado: Prisma.InputJsonValue, agora: Date): Promise<void>
+        falhar(id: string, erro: string, agora: Date): Promise<void>
+        /** A mais recente, em qualquer estado. */
+        ultima(): Promise<KbSincronizacao | null>
+        /** A mais recente que CONCLUIU: é dela que sai o sha anterior. */
+        ultimaConcluida(): Promise<KbSincronizacao | null>
+        /** Pedida ou em andamento, para não enfileirar duas. */
+        emAndamento(): Promise<KbSincronizacao | null>
+        listar(limite: number): Promise<KbSincronizacao[]>
+    }
+
+    /** A trilha dos artigos: quem fez o quê com cada um. */
+    eventosDaBase: {
+        registrar(dados: {
+            artigoId: string
+            ator: string
+            evento: string
+            antes?: Prisma.InputJsonValue
+            depois?: Prisma.InputJsonValue
+        }): Promise<void>
+        doArtigo(artigoId: string): Promise<KbEvento[]>
     }
 
     /**
@@ -1243,6 +1350,7 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                     where: {
                         ...ondeDoArtigo(),
                         ...(filtro?.status === undefined ? {} : { status: filtro.status }),
+                        ...(filtro?.origem === undefined ? {} : { origem: filtro.origem }),
                     },
                     orderBy: { atualizadoEm: 'desc' },
                 })
@@ -1250,6 +1358,12 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
 
             async porId(id) {
                 return conexao.kbArticle.findFirst({ where: { id, ...ondeDoArtigo() } })
+            },
+
+            async porChave(chave) {
+                /// `appId` igual, sem o `OR` global: derivado é sempre de um
+                /// app, porque o vocabulário é de um app.
+                return conexao.kbArticle.findFirst({ where: { appId, chave } })
             },
 
             async criar(dados) {
@@ -1270,6 +1384,19 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
             },
 
             async alterar(id, dados) {
+                const atual = await conexao.kbArticle.findFirst({ where: { id, ...ondeDoArtigo() } })
+                if (atual === null) return null
+
+                if (!podeEditarAMao(atual.origem as OrigemDoArtigo)) {
+                    const fonte = atual.fonte as { caminhos?: string[] } | null
+                    const onde = fonte?.caminhos?.[0] ?? 'no repositório do produto'
+                    throw new ErroDeDominio(
+                        'artigo_derivado',
+                        `Este artigo é gerado do produto e a sincronização o reescreveria. Mude em ${onde}.`,
+                        409
+                    )
+                }
+
                 const { count } = await conexao.kbArticle.updateMany({
                     where: { id, ...ondeDoArtigo() },
                     data: {
@@ -1285,7 +1412,7 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                     : null
             },
 
-            async mudarStatus(id, para) {
+            async mudarStatus(id, para, opcoes) {
                 const artigo = await conexao.kbArticle.findFirst({
                     where: { id, ...ondeDoArtigo() },
                 })
@@ -1296,46 +1423,206 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 const de = artigo.status as StatusDoArtigo
                 if (de === para) return artigo
 
-                if (!podeIrPara(de, para)) {
+                const origem = artigo.origem as OrigemDoArtigo
+                if (!transicoesPermitidas(origem, de).includes(para)) {
                     throw new ErroDeDominio(
                         'transicao_invalida',
-                        `Um artigo ${de.toLowerCase()} não vai direto para ${para.toLowerCase()}.`,
+                        origem === 'DERIVADO' && para === 'ARQUIVADO'
+                            ? 'Artigo gerado do produto não se arquiva à mão: tire do ar (rascunho), ou mude na fonte.'
+                            : `Um artigo ${de.toLowerCase()} não vai direto para ${para.toLowerCase()}.`,
                         422
                     )
                 }
 
+                /// Uma pessoa mexendo no status de um derivado FIXA o status: a
+                /// sincronização passa a respeitar a decisão dela. Sem ator (a
+                /// própria sincronização), nada é fixado.
+                const fixar = origem === 'DERIVADO' && opcoes?.ator !== undefined
                 await conexao.kbArticle.updateMany({
                     where: { id, ...ondeDoArtigo() },
-                    data: { status: para },
+                    data: { status: para, ...(fixar ? { statusFixadoPor: opcoes.ator } : {}) },
                 })
 
-                return { ...artigo, status: para }
+                return { ...artigo, status: para, ...(fixar ? { statusFixadoPor: opcoes.ator ?? null } : {}) }
             },
 
-            async buscar(texto, limite) {
+            async buscar(texto, limite, opcoes) {
                 /**
-                 * Lê os publicados e pontua em memória, sem `vector`.
+                 * Busca HÍBRIDA: palavra em memória e cosseno no Postgres,
+                 * fundidas por posição.
                  *
-                 * A coluna `embedding` existe desde a Fase 1 e continua vazia: a
-                 * busca semântica exige um provedor de embedding, que o Desk não
-                 * tem — a chave aqui é da Anthropic, que não serve embedding.
-                 * Essa decisão é do André e está pendente.
-                 *
-                 * Enquanto isso, casamento por palavra sobre uma base de
-                 * dezenas de artigos por app é barato e honesto. Quando o
-                 * vetor entrar, troca-se o corpo desta função e nada acima dela
-                 * muda — é por isso que ela devolve `{artigo, nota}` em vez do
-                 * que o Postgres devolveria.
+                 * A por palavra é a que existia e continua sendo o chão: ela
+                 * não depende de binding nenhum e acha o que a pessoa escreveu
+                 * com as palavras do artigo. A por vetor acha o sinônimo — "lista
+                 * de clientes" encontrando "exportar contatos" — e só entra
+                 * quando quem chamou conseguiu embutir a consulta. Sem vetor, o
+                 * resultado é exatamente o de antes.
                  */
                 const publicados = await conexao.kbArticle.findMany({
                     where: { ...ondeDoArtigo(), status: VISIVEL },
                 })
 
-                return parecidos(
+                /// Pede o dobro de cada lado: a fusão recompõe o topo a partir
+                /// das duas listas, e um artigo que é segundo numa e quarto na
+                /// outra pode ser o primeiro no conjunto.
+                const porPalavra = parecidos(
                     publicados.map((artigo) => ({ artigo, assunto: textoDeBusca(artigo) })),
                     texto,
-                    limite
+                    limite * 2
                 ).map(({ item, nota }) => ({ artigo: item.artigo, nota }))
+
+                if (opcoes?.vetor === undefined) return porPalavra.slice(0, limite)
+
+                const porId = new Map(publicados.map((a) => [a.id, a]))
+                const porVetor = (await this.buscarPorVetor(opcoes.vetor, limite * 2))
+                    .map(({ id }) => porId.get(id))
+                    .filter((a): a is KbArticle => a !== undefined)
+
+                return fundir(
+                    [porPalavra.map((p) => p.artigo), porVetor],
+                    (a) => a.id,
+                    limite
+                ).map(({ item, nota }) => ({ artigo: item, nota }))
+            },
+
+            async sincronizarDerivado(dados) {
+                const anterior = await conexao.kbArticle.findFirst({
+                    where: { appId, chave: dados.chave },
+                })
+
+                const mesmoConteudo =
+                    anterior !== null &&
+                    anterior.titulo === dados.titulo &&
+                    anterior.corpo === dados.corpo &&
+                    JSON.stringify(anterior.tags) === JSON.stringify(dados.tags) &&
+                    JSON.stringify(anterior.fonte) === JSON.stringify(dados.fonte)
+
+                if (anterior !== null && mesmoConteudo) {
+                    /// A fonte voltou depois de arquivada pela sincronização e
+                    /// ninguém fixou o status: reabre. Fixado, fica como a
+                    /// pessoa deixou.
+                    if (anterior.status === 'ARQUIVADO' && anterior.statusFixadoPor === null) {
+                        await conexao.kbArticle.updateMany({
+                            where: { id: anterior.id, appId },
+                            data: {
+                                status: dados.publicarDireto ? 'PUBLICADO' : 'RASCUNHO',
+                                sincronizadoEm: dados.agora,
+                            },
+                        })
+                        return { artigo: { ...anterior, status: dados.publicarDireto ? 'PUBLICADO' : 'RASCUNHO' }, efeito: 'reaberto' }
+                    }
+                    return { artigo: anterior, efeito: 'inalterado' }
+                }
+
+                /// `upsert` pela chave composta (appId, chave): o `appId` está
+                /// DENTRO do `where` único, como no `csat`. É a forma de escrita
+                /// que o lint aceita porque carrega o app.
+                const artigo = await conexao.kbArticle.upsert({
+                    where: { appId_chave: { appId, chave: dados.chave } },
+                    create: {
+                        appId,
+                        origem: 'DERIVADO',
+                        chave: dados.chave,
+                        titulo: dados.titulo,
+                        corpo: dados.corpo,
+                        tags: dados.tags,
+                        fonte: dados.fonte,
+                        dados: dados.dados,
+                        status: dados.publicarDireto ? 'PUBLICADO' : 'RASCUNHO',
+                        sincronizadoEm: dados.agora,
+                    },
+                    update: {
+                        titulo: dados.titulo,
+                        corpo: dados.corpo,
+                        tags: dados.tags,
+                        fonte: dados.fonte,
+                        dados: dados.dados,
+                        sincronizadoEm: dados.agora,
+                        /// Arquivado pela sincronização e a fonte voltou com
+                        /// conteúdo novo: reabre, salvo se uma pessoa fixou.
+                        ...(anterior?.status === 'ARQUIVADO' && anterior.statusFixadoPor === null
+                            ? { status: dados.publicarDireto ? 'PUBLICADO' : 'RASCUNHO' }
+                            : {}),
+                    },
+                })
+
+                return {
+                    artigo,
+                    efeito:
+                        anterior === null
+                            ? 'criado'
+                            : anterior.status === 'ARQUIVADO' && anterior.statusFixadoPor === null
+                              ? 'reaberto'
+                              : 'atualizado',
+                }
+            },
+
+            async tocarDerivados(chaves, agora) {
+                if (chaves.length === 0) return
+                await conexao.kbArticle.updateMany({
+                    where: { appId, origem: 'DERIVADO', chave: { in: chaves } },
+                    data: { sincronizadoEm: agora },
+                })
+            },
+
+            async arquivarDerivadosFora(prefixoDaChave, chavesVivas) {
+                const fora = await conexao.kbArticle.findMany({
+                    where: {
+                        appId,
+                        origem: 'DERIVADO',
+                        chave: { startsWith: prefixoDaChave, notIn: chavesVivas },
+                        status: { not: 'ARQUIVADO' },
+                    },
+                })
+                if (fora.length === 0) return []
+
+                await conexao.kbArticle.updateMany({
+                    where: { id: { in: fora.map((a) => a.id) }, appId },
+                    data: { status: 'ARQUIVADO' },
+                })
+
+                return fora.map((a) => ({ ...a, status: 'ARQUIVADO' as const }))
+            },
+
+            async criarSugerido(dados) {
+                return conexao.kbArticle.create({
+                    data: {
+                        appId,
+                        origem: 'SUGERIDO',
+                        status: 'RASCUNHO',
+                        titulo: dados.titulo,
+                        corpo: dados.corpo,
+                        tags: dados.tags,
+                        fonte: dados.fonte,
+                    },
+                })
+            },
+
+            async gravarEmbedding(id, vetor) {
+                /// O vetor vai como texto `[0.1,0.2,…]` convertido no Postgres:
+                /// o Prisma não tem o tipo, e o parâmetro continua parâmetro —
+                /// nada do vetor entra na string do SQL. O `app_id` está no
+                /// WHERE, como em toda escrita.
+                const literal = `[${vetor.join(',')}]`
+                await conexao.$executeRaw`
+                    UPDATE kb_articles
+                    SET embedding = ${literal}::vector
+                    WHERE id = ${id} AND (app_id = ${appId} OR app_id IS NULL)
+                `
+            },
+
+            async buscarPorVetor(vetor, limite) {
+                const literal = `[${vetor.join(',')}]`
+                const linhas = await conexao.$queryRaw<{ id: string; distancia: number }[]>`
+                    SELECT id, (embedding <=> ${literal}::vector) AS distancia
+                    FROM kb_articles
+                    WHERE (app_id = ${appId} OR app_id IS NULL)
+                      AND status = 'PUBLICADO'
+                      AND embedding IS NOT NULL
+                    ORDER BY embedding <=> ${literal}::vector
+                    LIMIT ${limite}
+                `
+                return linhas
             },
 
             async registrarConsulta(dados) {
@@ -1371,6 +1658,103 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                         artigoLidoId: true,
                         criadoEm: true,
                     },
+                    orderBy: { criadoEm: 'asc' },
+                })
+            },
+        },
+
+        sincronizacoes: {
+            async registrarPedido(dados) {
+                return conexao.kbSincronizacao.create({
+                    data: {
+                        appId,
+                        repositorio: dados.repositorio,
+                        commitSha: dados.commitSha,
+                        pedidaPor: dados.pedidaPor,
+                        forcada: dados.forcada,
+                    },
+                })
+            },
+
+            async porId(id) {
+                return conexao.kbSincronizacao.findFirst({ where: { id, appId } })
+            },
+
+            async iniciar(id, agora) {
+                await conexao.kbSincronizacao.updateMany({
+                    where: { id, appId },
+                    data: { estado: 'em_andamento', iniciadaEm: agora },
+                })
+            },
+
+            async aguardarLote(id, loteId) {
+                await conexao.kbSincronizacao.updateMany({
+                    where: { id, appId },
+                    data: { estado: 'aguardando_lote', loteId },
+                })
+            },
+
+            async concluir(id, resultado, agora) {
+                await conexao.kbSincronizacao.updateMany({
+                    where: { id, appId },
+                    data: { estado: 'concluida', resultado, terminadaEm: agora, erro: null },
+                })
+            },
+
+            async falhar(id, erro, agora) {
+                await conexao.kbSincronizacao.updateMany({
+                    where: { id, appId },
+                    data: { estado: 'falhou', erro, terminadaEm: agora },
+                })
+            },
+
+            async ultima() {
+                return conexao.kbSincronizacao.findFirst({
+                    where: { appId },
+                    orderBy: { criadaEm: 'desc' },
+                })
+            },
+
+            async ultimaConcluida() {
+                return conexao.kbSincronizacao.findFirst({
+                    where: { appId, estado: 'concluida' },
+                    orderBy: { criadaEm: 'desc' },
+                })
+            },
+
+            async emAndamento() {
+                return conexao.kbSincronizacao.findFirst({
+                    where: { appId, estado: { in: ['pedida', 'em_andamento', 'aguardando_lote'] } },
+                    orderBy: { criadaEm: 'desc' },
+                })
+            },
+
+            async listar(limite) {
+                return conexao.kbSincronizacao.findMany({
+                    where: { appId },
+                    orderBy: { criadaEm: 'desc' },
+                    take: limite,
+                })
+            },
+        },
+
+        eventosDaBase: {
+            async registrar(dados) {
+                await conexao.kbEvento.create({
+                    data: {
+                        appId,
+                        artigoId: dados.artigoId,
+                        ator: dados.ator,
+                        evento: dados.evento,
+                        ...(dados.antes === undefined ? {} : { antes: dados.antes }),
+                        ...(dados.depois === undefined ? {} : { depois: dados.depois }),
+                    },
+                })
+            },
+
+            async doArtigo(artigoId) {
+                return conexao.kbEvento.findMany({
+                    where: { appId, artigoId },
                     orderBy: { criadoEm: 'asc' },
                 })
             },

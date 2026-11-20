@@ -129,3 +129,37 @@ export function parecidos<T extends Candidato>(
         .sort((a, b) => b.nota - a.nota)
         .slice(0, limite)
 }
+
+/**
+ * Funde listas ordenadas de fontes diferentes numa só, por posição (RRF).
+ *
+ * A busca por palavra e a por vetor devolvem notas em escalas diferentes —
+ * fração de termos casados contra distância de cosseno — e somá-las seria somar
+ * metro com quilo. A fusão por posição ignora as notas e usa só a ORDEM: quem
+ * aparece cedo nas duas listas sobe; quem aparece em uma só fica, mais abaixo.
+ * A constante 60 é a da literatura (Cormack et al.) e amortece o peso do
+ * primeiro lugar, para uma lista não dominar a outra sozinha.
+ *
+ * Genérica de propósito: recebe as listas já ordenadas e uma função de
+ * identidade, e não sabe o que é artigo.
+ */
+const K_DA_FUSAO = 60
+
+export function fundir<T>(
+    listas: T[][],
+    idDe: (item: T) => string,
+    limite: number
+): { item: T; nota: number }[] {
+    const notas = new Map<string, { item: T; nota: number }>()
+
+    for (const lista of listas) {
+        lista.forEach((item, posicao) => {
+            const id = idDe(item)
+            const atual = notas.get(id) ?? { item, nota: 0 }
+            atual.nota += 1 / (K_DA_FUSAO + posicao + 1)
+            notas.set(id, atual)
+        })
+    }
+
+    return [...notas.values()].sort((a, b) => b.nota - a.nota).slice(0, limite)
+}

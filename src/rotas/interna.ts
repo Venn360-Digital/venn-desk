@@ -41,6 +41,7 @@ import {
 import { chavesDoApp, criarChave, revogarChave, TAMANHO_DO_PREFIXO } from '../dados/mcp.ts'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { atender } from '../agente/atender.ts'
+import { embutidorDoWorkersAi } from '../conhecimento/embeddings.ts'
 
 /**
  * A API interna — o que o Console consome, e o que a ponte do Slack vai chamar
@@ -897,6 +898,7 @@ rotasInternas.post('/api/console/app/:app/chamados/:numero/atender', async (c) =
                 /// Pelo Console, o agente atende como SUPORTE: as ferramentas
                 /// de engenharia são do canal de engenharia, não de um botão.
                 escopo: 'SUPORTE',
+                ...(c.env.AI === undefined ? {} : { embutir: embutidorDoWorkersAi(c.env.AI) }),
             },
             numero: chamado.numero,
             tarifa: {
@@ -1163,7 +1165,11 @@ rotasInternas.post('/api/console/app/:app/base/:id/status', async (c) => {
     if (!corpo.success) throw new ErroDeDominio('status_invalido', 'Status inválido.', 400)
 
     const escopo = escopoDoApp(c.get('cliente'), c.get('app').id)
-    const artigo = await escopo.artigos.mudarStatus(c.req.param('id'), corpo.data.status)
+    /// O ator vai junto: uma pessoa mudando o status de um artigo derivado FIXA
+    /// a decisão, e a sincronização passa a respeitá-la.
+    const artigo = await escopo.artigos.mudarStatus(c.req.param('id'), corpo.data.status, {
+        ator: `agent:${c.get('agente').id}`,
+    })
 
     return c.json({ artigo: { id: artigo.id, status: artigo.status } })
 })

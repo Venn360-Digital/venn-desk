@@ -60,8 +60,15 @@ model App {
     /// Chave PÚBLICA do token do app, em JWK. A privada é segredo do Worker
     /// daquele app e nunca passa por aqui.
     chavePublicaJwk Json   @map("chave_publica_jwk")
-    /// Repositório do app no GitHub, para os canais de engenharia (Fase 5).
+    /// Repositório do app no GitHub (`Venn360-Digital/venn-saas`). Serve à base
+    /// viva (Fase 4) e aos canais de engenharia (Fase 5).
     repositorio     String?
+    /// Onde o app mora dentro do monorepo (`apps/odontobox360`). É o que diz à
+    /// sincronização quais arquivos são DESTE app, e não do vizinho.
+    pastaNoRepositorio String? @map("pasta_no_repositorio")
+    /// Chave PÚBLICA do token que o Desk assina para `consultar_conta`, em JWK.
+    /// Aqui como registro; o app a lê de `/.well-known/venn-desk.json`.
+    chavePublicaDoDesk Json? @map("chave_publica_do_desk")
 
     /// Endereço público do app, para o e-mail e a página de status apontarem.
     urlApp   String? @map("url_app")
@@ -120,6 +127,8 @@ model App {
     problems    Problem[]
     kbArticles  KbArticle[]
     kbConsultas KbConsulta[]
+    kbSincronizacoes KbSincronizacao[]
+    kbEventos   KbEvento[]
     slaPolicies SlaPolicy[]
     macros      Macro[]
     automations Automation[]
@@ -652,15 +661,102 @@ model KbArticle {
     tags   String[]
     status KbStatus @default(RASCUNHO)
 
-    /// Embedding da busca semântica. `Unsupported` porque o Prisma não tem tipo
-    /// para `vector`; a consulta é SQL cru.
-    embedding Unsupported("vector(1536)")?
+    /**
+     * De onde o artigo veio — e, com isso, quem pode mexer nele.
+     *
+     * `MANUAL` é escrito por gente. `DERIVADO` é gerado do repositório do
+     * produto e refeito a cada mudança em `main`: editá-lo à mão seria editar
+     * uma cópia que a próxima sincronização apaga, então a edição é recusada e
+     * a orientação é "mude na fonte". `SUGERIDO` nasce do atendimento (chamado
+     * resolvido, lacuna repetida) e espera uma pessoa aprovar.
+     */
+    origem KbOrigem @default(MANUAL)
+    /// Chave estável do derivado dentro do app (`derivado:faq:<slug>`). Nula no
+    /// manual. É o que faz a re-sincronização ser upsert, não duplicata.
+    chave  String?
+    /// De onde saiu: {repositorio, caminhos, sha, commit, versaoDoExtrator,
+    /// extraidoPor} no derivado; {ticketId} ou {lacuna} no sugerido.
+    fonte  Json?
+    /// O JSON estruturado de que o corpo foi renderizado.
+    dados  Json?
+    sincronizadoEm DateTime? @map("sincronizado_em")
+    /// `agent:<id>` quando uma pessoa fixou o status de um derivado. A
+    /// sincronização não mexe no status de artigo fixado.
+    statusFixadoPor String? @map("status_fixado_por")
+
+    /// Embedding da busca semântica: `bge-m3` do Workers AI, 1024 dimensões.
+    /// `Unsupported` porque o Prisma não tem tipo para `vector`; a escrita e a
+    /// consulta são SQL cru, em `src/dados/escopo.ts`.
+    embedding Unsupported("vector(1024)")?
 
     criadoEm     DateTime @default(now()) @map("criado_em")
     atualizadoEm DateTime @updatedAt @map("atualizado_em")
 
+    @@unique([appId, chave])
     @@index([appId, status])
+    @@index([appId, origem, status])
     @@map("kb_articles")
+}
+
+enum KbOrigem {
+    MANUAL
+    DERIVADO
+    SUGERIDO
+
+    @@map("kb_origem")
+}
+
+/**
+ * Uma sincronização da base com o repositório: um app, um commit, o que
+ * aconteceu. É o que o Console mostra em "Sincronizado em … · commit …", e é
+ * onde o custo de cada rodada fica registrado.
+ */
+model KbSincronizacao {
+    id    String @id @default(cuid())
+    appId String @map("app_id")
+    app   App    @relation(fields: [appId], references: [id])
+
+    repositorio String
+    commitSha   String @map("commit_sha")
+    /// 'cron' ou 'agent:<id>'.
+    pedidaPor   String @map("pedida_por")
+    forcada     Boolean @default(false)
+    /// pedida | em_andamento | aguardando_lote | concluida | falhou
+    estado      String @default("pedida")
+    /// O lote do Message Batches, enquanto a extração espera o modelo.
+    loteId      String? @map("lote_id")
+
+    criadaEm    DateTime  @default(now()) @map("criada_em")
+    iniciadaEm  DateTime? @map("iniciada_em")
+    terminadaEm DateTime? @map("terminada_em")
+    resultado   Json?
+    erro        String?
+
+    @@index([appId, criadaEm])
+    @@index([appId, commitSha])
+    @@map("kb_sincronizacoes")
+}
+
+/**
+ * A trilha dos artigos. Artigo não tem chamado, então não cabe em
+ * `ticket_events`. `artigoId` sem chave estrangeira, pelo mesmo motivo de
+ * `KbConsulta.artigoLidoId`: o evento sobrevive ao artigo.
+ */
+model KbEvento {
+    id    String @id @default(cuid())
+    appId String @map("app_id")
+    app   App    @relation(fields: [appId], references: [id])
+
+    artigoId String @map("artigo_id")
+    ator     String
+    evento   String
+    antes    Json?
+    depois   Json?
+
+    criadoEm DateTime @default(now()) @map("criado_em")
+
+    @@index([appId, artigoId, criadoEm])
+    @@map("kb_eventos")
 }
 
 /**

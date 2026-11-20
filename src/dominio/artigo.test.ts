@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-    RESUMO_MAXIMO,
     esquemaDoArtigo,
+    podeEditarAMao,
     podeIrPara,
     resumir,
+    RESUMO_MAXIMO,
     textoDeBusca,
+    transicoesPermitidas,
 } from './artigo.ts'
 import { parecidos } from './busca.ts'
 
@@ -91,5 +93,21 @@ describe('resumir', () => {
         expect(curto.length).toBeLessThanOrEqual(RESUMO_MAXIMO + 1)
         expect(curto.endsWith('…')).toBe(true)
         expect(curto).not.toContain('palav…')
+    })
+})
+
+describe('origem do artigo', () => {
+    it('só o que uma pessoa escreveu uma pessoa edita', () => {
+        /// Editar um derivado à mão duraria até o próximo merge e sumiria
+        /// sem aviso. O sugerido É editável: é rascunho para lapidar.
+        expect(podeEditarAMao('MANUAL')).toBe(true)
+        expect(podeEditarAMao('SUGERIDO')).toBe(true)
+        expect(podeEditarAMao('DERIVADO')).toBe(false)
+    })
+
+    it('derivado anda entre rascunho e publicado, nunca para arquivado à mão', () => {
+        expect(transicoesPermitidas('DERIVADO', 'PUBLICADO')).toEqual(['RASCUNHO'])
+        expect(transicoesPermitidas('DERIVADO', 'RASCUNHO')).toEqual(['PUBLICADO'])
+        expect(transicoesPermitidas('MANUAL', 'PUBLICADO')).toEqual(['RASCUNHO', 'ARQUIVADO'])
     })
 })

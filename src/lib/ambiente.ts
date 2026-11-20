@@ -57,6 +57,25 @@ export interface Ambiente {
         ABERTURA_RATE_LIMITER: RateLimit
         /** A fila do atendimento automático. Ausente em ambiente sem Queues. */
         ATENDIMENTO?: Fila
+        /**
+         * A fila da base viva: sincronização com o repositório e sugestões de
+         * artigo. Separada da do atendimento porque um job de sincronização
+         * leva minutos e nunca deve atrasar uma resposta a cliente.
+         */
+        CONHECIMENTO?: Fila
+        /**
+         * Token do GitHub só de leitura (`Contents: read` no venn-saas). Segredo.
+         * Ausente, a sincronização não roda e o Console avisa.
+         */
+        GITHUB_TOKEN_LEITURA?: string
+        /** Workers AI, para o embedding da busca semântica (`bge-m3`). */
+        AI?: WorkersAi
+        /**
+         * Chave PRIVADA (JWK, Ed25519) com que o Desk assina o token de
+         * `consultar_conta` para os apps. Segredo. Ausente, a ferramenta não
+         * entra no catálogo.
+         */
+        DESK_CHAVE_PRIVADA_SUPORTE?: string
         /** Uma sala por chamado, para o tempo real (Fase 3). */
         SALAS?: DurableObjectNamespace
     }
@@ -73,6 +92,11 @@ export interface Ambiente {
 /** O produtor da fila. Só o que usamos. */
 export interface Fila {
     send(mensagem: unknown): Promise<void>
+}
+
+/** O binding do Workers AI. Só o que usamos: `run` com um modelo de embedding. */
+export interface WorkersAi {
+    run(modelo: string, entrada: { text: string[] }): Promise<{ data: number[][] }>
 }
 
 /** O que o Workers entrega no binding de rate limit. */

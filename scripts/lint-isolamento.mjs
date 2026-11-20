@@ -37,6 +37,8 @@ const DELEGADOS = [
     'approval',
     'kbArticle',
     'kbConsulta',
+    'kbSincronizacao',
+    'kbEvento',
     'slaPolicy',
     'slaTimer',
     'macro',
