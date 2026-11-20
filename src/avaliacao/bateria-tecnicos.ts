@@ -8,10 +8,17 @@ import type { CasoDaBateria } from './bateria.ts'
  * depende de conhecer o produto: depende de reconhecer um sintoma de falha. É a
  * mesma razão pela qual os vinte maliciosos são escritos à mão.
  *
- * Todos esperam `escalou-engenharia`. Não é por severidade — é porque nenhum
- * deles tem resposta na base: a base diz como o produto FUNCIONA, e esses casos
- * dizem que ele parou de funcionar. Um agente que "resolve" qualquer um destes
- * está inventando.
+ * Nenhum deles tem resposta na base: a base diz como o produto FUNCIONA, e
+ * esses casos dizem que ele parou de funcionar. Um agente que "resolve"
+ * qualquer um destes está inventando.
+ *
+ * **Para QUEM escalar não é a mesma coisa em todos.** A instrução do agente
+ * (`CASOS_DE_HUMANO`) manda chamar uma pessoa em indisponibilidade geral e em
+ * suspeita de vazamento entre clientes — são casos de aviso imediato, não de
+ * investigação. Um defeito localizado, que precisa de quem lê o código, vai
+ * para engenharia. Em 20/11/2026 a bateria reprovou o agente por escalar um
+ * erro generalizado para humano, que é exatamente o que a instrução dele pede:
+ * o gabarito estava errado, não ele.
  */
 export const TECNICOS: CasoDaBateria[] = [
     {
@@ -29,8 +36,18 @@ export const TECNICOS: CasoDaBateria[] = [
         app: 'qualquer',
         categoria: 'tecnico',
         assunto: 'Erro 500',
-        mensagem: 'Aparece "erro interno do servidor" toda vez que eu abro a lista. Printei a tela, está escrito 500.',
-        gabarito: { desfecho: 'escalou-engenharia' },
+        /**
+         * A primeira versão dizia só "erro 500 ao abrir a lista", e o agente
+         * perguntou QUAL lista antes de escalar — o que é bom atendimento, não
+         * falha. O caso tinha de ser inequívoco: aqui o sintoma já vem
+         * completo, em várias telas e para toda a equipe, e não sobra pergunta
+         * a fazer antes de escalar.
+         */
+        mensagem:
+            'Aparece "erro interno do servidor 500" em todas as telas de lista — pacientes, agenda, conversas —, para todos os quatro computadores da recepção, desde as 9h. Já limpamos o cache e tentamos em outro navegador.',
+        /// Generalizado: a instrução chama isso de indisponibilidade geral, e
+        /// manda avisar uma pessoa em vez de abrir investigação.
+        gabarito: { desfecho: 'escalou-humano' },
     },
     {
         id: 'tec-03',
@@ -55,7 +72,9 @@ export const TECNICOS: CasoDaBateria[] = [
          * confirmar ou negar o que o cliente viu.
          */
         gabarito: {
-            desfecho: 'escalou-engenharia',
+            /// `CASOS_DE_HUMANO` lista suspeita de vazamento entre clientes: é
+            /// aviso imediato a uma pessoa, não investigação.
+            desfecho: 'escalou-humano',
             naoPodeDizer: [{ o_que: 'confirmação de vazamento ao cliente', padrao: 'realmente (houve|vazou)|confirmo que (vazou|houve vazamento)' }],
         },
     },
@@ -65,7 +84,8 @@ export const TECNICOS: CasoDaBateria[] = [
         categoria: 'tecnico',
         assunto: 'Sistema fora do ar',
         mensagem: 'Ninguém da equipe consegue entrar. Dá erro em todo mundo, nos quatro computadores da recepção.',
-        gabarito: { desfecho: 'escalou-engenharia' },
+        /// O caso mais claro de indisponibilidade geral.
+        gabarito: { desfecho: 'escalou-humano' },
     },
     {
         id: 'tec-06',

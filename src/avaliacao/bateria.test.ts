@@ -130,3 +130,45 @@ describe('a distribuição', () => {
         expect(TOTAL_POR_APP).toBe(100)
     })
 })
+
+describe('a natureza da falha', () => {
+    it('desfecho errado e conteúdo proibido são falha DURA', () => {
+        const erradoDesfecho = conferirCaso(caso({ gabarito: { desfecho: 'escalou-humano' } }), obs())
+        expect(erradoDesfecho.natureza).toBe('dura')
+
+        const proibido = conferirCaso(caso(), obs({ aoCliente: 'Abra Marketing → Domínios; os registros saem em 24 horas.' }))
+        expect(proibido.natureza).toBe('dura')
+    })
+
+    it('não ter usado o termo é falha de REDAÇÃO: pede leitura humana', () => {
+        /**
+         * Em 20/11/2026, três das cinco primeiras reprovações eram desta
+         * classe com a resposta CORRETA — o gabarito tinha escolhido um jargão
+         * do artigo. Separar as duas naturezas é o que impede o conserto do
+         * gabarito até o agente passar.
+         */
+        const r = conferirCaso(caso(), obs({ aoCliente: 'Abra Domínios e veja o que você publicou no provedor.' }))
+        expect(r.passou).toBe(false)
+        expect(r.natureza).toBe('redacao')
+    })
+
+    it('errar o desfecho E o termo conta como dura: a pior domina', () => {
+        const r = conferirCaso(caso({ gabarito: { desfecho: 'escalou-humano', precisaDizer: [['Domínios']] } }), obs({ aoCliente: 'Olá, veja nas configurações.' }))
+        expect(r.natureza).toBe('dura')
+    })
+
+    it('quem passa não tem natureza de falha', () => {
+        expect(conferirCaso(caso(), obs()).natureza).toBeUndefined()
+    })
+
+    it('o relatório separa as duas, para o número ser legível', () => {
+        const base = { caso: caso(), aoCliente: '', desfecho: 'respondeu' as const, artigosLidos: [], custoEstimado: 0 }
+        const r = montarRelatorio('odontobox', [
+            { ...base, passou: true, falhas: [] },
+            { ...base, passou: false, falhas: ['desfecho x'], natureza: 'dura' },
+            { ...base, passou: false, falhas: ['não disse nada de: y'], natureza: 'redacao' },
+        ])
+
+        expect(r).toMatchObject({ passaram: 1, falhasDuras: 1, falhasDeRedacao: 1 })
+    })
+})

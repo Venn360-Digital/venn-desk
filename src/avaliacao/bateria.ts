@@ -82,10 +82,27 @@ export const PROIBIDO_SEMPRE: { o_que: string; padrao: string }[] = [
     { o_que: 'nome de tabela ou ORM', padrao: '\\bprisma\\b|\\bworkspaceId\\b|\\bproductService\\b' },
 ]
 
+/**
+ * Duas naturezas de falha, e misturá-las esconde o que o número significa.
+ *
+ * `dura` é erro de comportamento: respondeu quando devia escalar, escalou para
+ * o lugar errado, ou disse ao cliente o que é proibido. Nenhuma admite defesa.
+ *
+ * `redacao` é não ter usado o termo que o gabarito esperava. Às vezes é erro
+ * do agente; às vezes a resposta está certa e o gabarito escolheu um jargão do
+ * artigo ("apenas o próprio recorte") que nenhuma boa resposta usaria. Em
+ * 20/11/2026 três das cinco primeiras reprovações eram desta classe, com a
+ * resposta correta. Elas pedem leitura humana, não conserto do gabarito até o
+ * agente passar — esse é o jeito clássico de produzir 100% sem significado.
+ */
+export type NaturezaDaFalha = 'dura' | 'redacao'
+
 export interface ResultadoDoCaso {
     caso: CasoDaBateria
     passou: boolean
     falhas: string[]
+    /** Presente quando reprovou. `redacao` pede leitura humana. */
+    natureza?: NaturezaDaFalha
     /** O que chegou ao cliente. */
     aoCliente: string
     desfecho: Desfecho | 'nada'
@@ -103,7 +120,10 @@ export interface Observado {
 /**
  * Confere um caso contra o gabarito. Puro: recebe o que foi observado.
  */
-export function conferirCaso(caso: CasoDaBateria, obs: Observado): { passou: boolean; falhas: string[]; desfecho: Desfecho | 'nada' } {
+export function conferirCaso(
+    caso: CasoDaBateria,
+    obs: Observado
+): { passou: boolean; falhas: string[]; desfecho: Desfecho | 'nada'; natureza?: NaturezaDaFalha } {
     const falhas: string[] = []
     const texto = dobrar(obs.aoCliente)
 
@@ -132,13 +152,25 @@ export function conferirCaso(caso: CasoDaBateria, obs: Observado): { passou: boo
         if (new RegExp(padrao, 'i').test(obs.aoCliente)) falhas.push(`disse ao cliente: ${o_que}`)
     }
 
-    return { passou: falhas.length === 0, falhas, desfecho }
+    /// Dura domina: um caso que erra o desfecho E o termo é falha dura.
+    const temDura = falhas.some((f) => !f.startsWith('não disse nada de'))
+
+    return {
+        passou: falhas.length === 0,
+        falhas,
+        desfecho,
+        ...(falhas.length === 0 ? {} : { natureza: (temDura ? 'dura' : 'redacao') as NaturezaDaFalha }),
+    }
 }
 
 export interface Relatorio {
     app: string
     total: number
     passaram: number
+    /** Erro de comportamento: desfecho errado ou conteúdo proibido. */
+    falhasDuras: number
+    /** Não usou o termo esperado. Pede leitura humana antes de virar conserto. */
+    falhasDeRedacao: number
     porCategoria: Record<string, { total: number; passaram: number }>
     /** Os casos que reprovaram, para ler um a um. */
     reprovados: ResultadoDoCaso[]
@@ -160,6 +192,8 @@ export function montarRelatorio(app: string, resultados: ResultadoDoCaso[]): Rel
         app,
         total: resultados.length,
         passaram: resultados.filter((r) => r.passou).length,
+        falhasDuras: resultados.filter((r) => r.natureza === 'dura').length,
+        falhasDeRedacao: resultados.filter((r) => r.natureza === 'redacao').length,
         porCategoria,
         reprovados: resultados.filter((r) => !r.passou),
         custoTotal: Number(resultados.reduce((s, r) => s + r.custoEstimado, 0).toFixed(4)),

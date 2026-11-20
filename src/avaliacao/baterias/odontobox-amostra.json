@@ -1,0 +1,247 @@
+[
+  {
+    "id": "duvida-odontobox-derivado-emails-1",
+    "app": "odontobox",
+    "categoria": "duvida",
+    "assunto": "recebi email dizendo somente leitura",
+    "mensagem": "chegou um aviso que a clínica ficou em somente-leitura e não entendi o motivo, a gente não consegue mais mandar mensagem pro paciente. isso é por causa do pagamento atrasado?",
+    "gabarito": {
+      "desfecho": "escalou-humano",
+      "artigoEsperado": "derivado:emails"
+    }
+  },
+  {
+    "id": "duvida-odontobox-s-e-pacientes-dos-outros-1",
+    "app": "odontobox",
+    "categoria": "duvida",
+    "assunto": "atendente ve negocio de outro?",
+    "mensagem": "uma funcionaria minha reclamou que não consegue ver os pacientes de outro atendente, isso é normal? ela é só atendente mesmo, não é gerente.",
+    "gabarito": {
+      "desfecho": "respondeu",
+      "precisaDizer": [
+        [
+          "cuida"
+        ],
+        [
+          "administra",
+          "gerencia"
+        ]
+      ],
+      "artigoEsperado": "derivado:faq:atendente-ve-os-negocios-e-pacientes-dos-outros"
+    }
+  },
+  {
+    "id": "duvida-odontobox-gem-e-preenchida-sozinha-1",
+    "app": "odontobox",
+    "categoria": "duvida",
+    "assunto": "origem automatica dos contatos",
+    "mensagem": "os contatos que entram pelo anuncio da agencia já aparecem com a origem preenchida sozinha, mas não sei onde configuro isso. Tem que mexer em algum canal?",
+    "gabarito": {
+      "desfecho": "respondeu",
+      "precisaDizer": [
+        [
+          "Atendimento",
+          "Agentes",
+          "Canais"
+        ]
+      ],
+      "artigoEsperado": "derivado:faq:como-a-origem-e-preenchida-sozinha"
+    }
+  },
+  {
+    "id": "uso-odontobox-erivado-tela-atendimento-1",
+    "app": "odontobox",
+    "categoria": "uso",
+    "assunto": "sumiu a tela de atendimento",
+    "mensagem": "Entrei no menu de Atendimento e caiu direto em outra tela, não achei as conversas. Isso é normal ou travou algo no meu usuário?",
+    "rota": "/atendimento",
+    "gabarito": {
+      "desfecho": "respondeu",
+      "precisaDizer": [
+        [
+          "perfil",
+          "papel",
+          "atendente"
+        ],
+        [
+          "Agentes de IA"
+        ]
+      ],
+      "artigoEsperado": "derivado:tela:atendimento"
+    }
+  },
+  {
+    "id": "uso-odontobox-la-atendimento-etiquetas-1",
+    "app": "odontobox",
+    "categoria": "uso",
+    "assunto": "apaguei etiqueta sem querer",
+    "mensagem": "Excluí uma etiqueta por engano, ela já estava usada em vários atendimentos. Isso tira a etiqueta de todas as conversas que usavam ela? Não tem como desfazer, né?",
+    "rota": "/atendimento/etiquetas",
+    "gabarito": {
+      "desfecho": "respondeu",
+      "precisaDizer": [],
+      "artigoEsperado": "derivado:tela:atendimento-etiquetas"
+    }
+  },
+  {
+    "id": "uso-odontobox-imento-respostas-rapidas-1",
+    "app": "odontobox",
+    "categoria": "uso",
+    "assunto": "atalho de mensagem pronta",
+    "mensagem": "meus atendentes ficam digitando a mesma resposta de orçamento toda hora, dá pra criar um atalho tipo /orcamento que já manda o texto pronto?",
+    "rota": "/atendimento/respostas-rapidas",
+    "gabarito": {
+      "desfecho": "respondeu",
+      "precisaDizer": [
+        [
+          "Respostas rápidas",
+          "Atendimento"
+        ],
+        [
+          "Comando"
+        ]
+      ],
+      "artigoEsperado": "derivado:tela:atendimento-respostas-rapidas"
+    }
+  },
+  {
+    "id": "permissao-odontobox-derivado-papeis-1",
+    "app": "odontobox",
+    "categoria": "permissao",
+    "assunto": "atendente não vê trabalho da equipe",
+    "mensagem": "minha atendente reclamou que só consegue ver as conversas dela mesma, não aparece o trabalho dos outros. isso é normal ou é bug?",
+    "gabarito": {
+      "desfecho": "respondeu",
+      "precisaDizer": [
+        [
+          "papel"
+        ],
+        [
+          "apenas o próprio recorte"
+        ]
+      ],
+      "artigoEsperado": "derivado:papeis"
+    }
+  },
+  {
+    "id": "permissao-odontobox-derivado-papeis-2",
+    "app": "odontobox",
+    "categoria": "permissao",
+    "assunto": "gestor pode excluir cadastro?",
+    "mensagem": "preciso saber se o gestor da clínica consegue apagar um registro de paciente ou isso só o dono da conta pode fazer",
+    "gabarito": {
+      "desfecho": "respondeu",
+      "precisaDizer": [
+        [
+          "proprietário",
+          "administrador"
+        ]
+      ],
+      "artigoEsperado": "derivado:papeis"
+    }
+  },
+  {
+    "id": "permissao-odontobox-derivado-papeis-3",
+    "app": "odontobox",
+    "categoria": "permissao",
+    "assunto": "mudar permissão de funcionário",
+    "mensagem": "como faço pra trocar o papel de uma pessoa da equipe aqui no sistema? ela era atendente e agora vai virar gestora",
+    "gabarito": {
+      "desfecho": "respondeu",
+      "precisaDizer": [
+        [
+          "tela de usuários",
+          "usuários"
+        ]
+      ],
+      "artigoEsperado": "derivado:papeis"
+    }
+  },
+  {
+    "id": "integracao-odontobox-tela-atendimento-agentes-1",
+    "app": "odontobox",
+    "categoria": "integracao",
+    "assunto": "mudar agente de unidade",
+    "mensagem": "Preciso transferir um agente de IA pra outra unidade da empresa, isso é possível? Tenho duas unidades cadastradas e quero levar o agente inteiro com os números e tudo.",
+    "rota": "/atendimento/agentes",
+    "gabarito": {
+      "desfecho": "respondeu",
+      "precisaDizer": [
+        [
+          "mover para outra unidade",
+          "transferir o agente"
+        ]
+      ],
+      "artigoEsperado": "derivado:tela:atendimento-agentes"
+    }
+  },
+  {
+    "id": "integracao-odontobox-dimento-agentes-comandos-1",
+    "app": "odontobox",
+    "categoria": "integracao",
+    "assunto": "nao consigo editar os comandos do agente",
+    "mensagem": "to tentando mudar umas regras do meu agente de atendimento mas os campos aparecem tudo travado, não dá pra clicar em nada. isso é normal? uso no celular às vezes.",
+    "rota": "/atendimento/agentes/comandos",
+    "gabarito": {
+      "desfecho": "respondeu",
+      "precisaDizer": [
+        [
+          "permissão",
+          "administrar o agente"
+        ]
+      ],
+      "artigoEsperado": "derivado:tela:atendimento-agentes-comandos"
+    }
+  },
+  {
+    "id": "integracao-odontobox-to-agentes-gerenciamento-1",
+    "app": "odontobox",
+    "categoria": "integracao",
+    "assunto": "excluir agente e whatsapp",
+    "mensagem": "Preciso apagar um agente aqui mas meu whatsapp tá conectado nele, se eu excluir eu perco as conversas antigas? Já tentei duplicar ele antes mas não precisava.",
+    "rota": "/atendimento/agentes/gerenciamento",
+    "gabarito": {
+      "desfecho": "respondeu",
+      "precisaDizer": [
+        [
+          "desconectado",
+          "continuam guardados",
+          "histórico de mensagens continuam"
+        ]
+      ],
+      "artigoEsperado": "derivado:tela:atendimento-agentes-gerenciamento"
+    }
+  },
+  {
+    "id": "tec-01-odontobox",
+    "app": "odontobox",
+    "categoria": "tecnico",
+    "assunto": "Tela em branco depois de salvar",
+    "mensagem": "Preenchi tudo, cliquei em salvar e a tela ficou branca. Atualizei a página e o que eu tinha digitado sumiu. Já tentei três vezes, sempre igual.",
+    "rota": "/vendas/clientes",
+    "gabarito": {
+      "desfecho": "escalou-engenharia"
+    }
+  },
+  {
+    "id": "tec-02-odontobox",
+    "app": "odontobox",
+    "categoria": "tecnico",
+    "assunto": "Erro 500",
+    "mensagem": "Aparece \"erro interno do servidor 500\" em todas as telas de lista — pacientes, agenda, conversas —, para todos os quatro computadores da recepção, desde as 9h. Já limpamos o cache e tentamos em outro navegador.",
+    "gabarito": {
+      "desfecho": "escalou-humano"
+    }
+  },
+  {
+    "id": "tec-03-odontobox",
+    "app": "odontobox",
+    "categoria": "tecnico",
+    "assunto": "Fica carregando para sempre",
+    "mensagem": "A roda de carregando não para nunca nessa tela. Deixei vinte minutos aberto, em dois computadores diferentes e no celular. Nos outros lugares do sistema funciona.",
+    "rota": "/atendimento/conversas",
+    "gabarito": {
+      "desfecho": "escalou-engenharia"
+    }
+  }
+]

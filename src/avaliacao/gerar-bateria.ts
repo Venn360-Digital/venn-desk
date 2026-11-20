@@ -37,8 +37,14 @@ const esquemaDosCasos = z
                         /**
                          * Grupos de alternativas. Em cada grupo, ao menos uma
                          * precisa aparecer na resposta.
+                         *
+                         * Cada alternativa é um TERMO, com teto de 60
+                         * caracteres: o modelo tende a devolver a frase inteira
+                         * do artigo ("removendo-a de todos os registros e
+                         * conversas que a usam"), e exigir a frase literal mede
+                         * a redação do agente, não o acerto dele.
                          */
-                        precisaDizer: z.array(z.array(curto).min(1)).max(4),
+                        precisaDizer: z.array(z.array(z.string().trim().min(2).max(60)).min(1)).max(2),
                     })
                     .strict()
             )
@@ -53,7 +59,14 @@ Receberá UM artigo da base de conhecimento de um produto. Escreva perguntas que
 Para cada pergunta devolva:
 - assunto: o que a pessoa escreveria no campo de assunto (curto, às vezes mal escrito).
 - mensagem: o texto da dúvida, em uma ou três frases, na voz dela.
-- precisaDizer: os grupos de termos que uma boa resposta tem de conter. Cada grupo é uma lista de ALTERNATIVAS equivalentes (sinônimos, o caminho do menu e o nome da tela). Use TERMOS que aparecem no artigo, nunca uma frase inteira. De um a três grupos por pergunta.
+- precisaDizer: UM grupo, ou no máximo dois, de termos que uma boa resposta tem de conter. Cada grupo é uma lista de ALTERNATIVAS equivalentes (sinônimos, o caminho do menu, o nome da tela).
+
+Sobre os termos do gabarito, e isto é o mais fácil de errar:
+- **O teste é este: existe uma resposta CORRETA que não usaria nenhuma das alternativas do grupo?** Se existe, o grupo está errado — troque por alternativas mais amplas, ou não inclua o grupo. Prefira exigir pouco: um grupo com o nome da tela ou o conceito central costuma bastar.
+- Use TERMO, não frase: "Domínios", "registros", "crédito" — nunca "removendo-a de todos os registros e conversas que a usam". No máximo seis palavras.
+- Nunca use como termo o TÍTULO de uma seção do artigo ("Por que algo pode não aparecer", "Avisos que o sistema dá"): ninguém responde citando o título de uma seção.
+- Nunca use como termo algo que a própria pergunta já diz. Se o cliente escreveu "apareceu que preciso criar o agente primeiro", exigir "criar o agente primeiro" mede se o agente repete o cliente, não se ele ajuda.
+- Use só o que uma resposta AO CLIENTE pode dizer. Nunca nome de papel em maiúsculas (OWNER, ADMIN), nome de campo do banco, nome de arquivo, rota de API, nem símbolo solto: a resposta é proibida de citar isso, e exigi-lo seria exigir o erro.
 
 NÃO escreva pergunta cuja resposta não esteja no artigo. NÃO repita o título do artigo dentro da pergunta — o cliente não o conhece.`
 
@@ -82,15 +95,37 @@ export async function gerarCasosDeArtigo(p: {
     /// Título E corpo: o nome da tela está no título, e é um termo legítimo
     /// para a resposta citar.
     const noArtigo = dobrar(`${p.artigo.titulo}\n${p.artigo.corpo}`)
+    const escalar = exigeEscalonamento(p.artigo)
 
     return dados.casos.slice(0, p.quantas).map((c, i) => {
         /**
-         * Grupo cujo termo nenhum existe no artigo é DESCARTADO, não corrige a
-         * pergunta: o gabarito ficaria exigindo o que a base não diz, e a
-         * bateria reprovaria um agente certo.
+         * Duas peneiras, e as duas por experiência de 20/11/2026.
+         *
+         * A primeira: termo que não existe no artigo sai, senão o gabarito
+         * exige o que a base não diz e a bateria reprova um agente certo.
+         *
+         * A segunda: termo que a RESPOSTA é proibida de dizer sai também. O
+         * gerador devolveu `["OWNER","ADMIN","GESTOR"]` lido da tabela de
+         * papéis — e exigir isso seria exigir que o agente vaze nome técnico
+         * ao cliente, que é justamente o que a bateria reprova em outra linha.
          */
+        /**
+         * A terceira peneira: termo que o CLIENTE JÁ DISSE na pergunta não
+         * serve de gabarito.
+         *
+         * O gerador escolhia a mensagem de erro que a própria pergunta citava
+         * ("apareceu que preciso criar o agente primeiro"), e aí a bateria
+         * media se o agente ECOA o cliente — não se ele acrescenta algo. A
+         * resposta que explica sem repetir a mensagem é melhor, e era reprovada.
+         */
+        const naPergunta = dobrar(`${c.assunto}\n${c.mensagem}`)
+
         const grupos = c.precisaDizer
-            .map((grupo) => grupo.filter((t) => noArtigo.includes(dobrar(t))))
+            .map((grupo) =>
+                grupo.filter(
+                    (t) => noArtigo.includes(dobrar(t)) && servePraCliente(t) && !naPergunta.includes(dobrar(t))
+                )
+            )
             .filter((grupo) => grupo.length > 0)
 
         return {
@@ -100,13 +135,51 @@ export async function gerarCasosDeArtigo(p: {
             assunto: c.assunto,
             mensagem: c.mensagem,
             ...(p.rota === undefined ? {} : { rota: p.rota }),
-            gabarito: {
-                desfecho: 'respondeu' as const,
-                precisaDizer: grupos,
-                artigoEsperado: p.artigo.chave,
-            },
+            gabarito: escalar
+                ? /// Assunto de pessoa: o desfecho certo é o escalonamento, e
+                  /// de quem escala não se exige conteúdo.
+                  { desfecho: 'escalou-humano' as const, artigoEsperado: p.artigo.chave }
+                : { desfecho: 'respondeu' as const, precisaDizer: grupos, artigoEsperado: p.artigo.chave },
         }
     })
+}
+
+/** Até quantas palavras um termo de gabarito pode ter. */
+const PALAVRAS_NO_TERMO = 6
+
+/**
+ * O termo pode aparecer numa resposta ao cliente?
+ *
+ * Fora: nome em MAIÚSCULAS (papel, constante), identificador em camelCase,
+ * arquivo, rota de API, símbolo solto, e frase comprida. Tudo isso é proibido
+ * na resposta por outra regra — pôr no gabarito seria pedir o erro.
+ */
+export function servePraCliente(termo: string): boolean {
+    const t = termo.trim()
+    if (t.length < 2) return false
+    if (!/[\p{L}]/u.test(t)) return false
+    if (/^[A-Z][A-Z_]{2,}$/.test(t)) return false
+    if (/^[a-z]+[A-Z]/.test(t)) return false
+    if (/\.(?:tsx?|mjs|json|sql)\b|\/api\//.test(t)) return false
+    if (t.split(/\s+/).length > PALAVRAS_NO_TERMO) return false
+    return true
+}
+
+/**
+ * Os artigos cujo assunto a instrução manda ESCALAR, não responder.
+ *
+ * A seção 4 obriga chamar uma pessoa em cobrança, dado pessoal (LGPD),
+ * suspeita de vazamento e ameaça de cancelamento. Gerar desses artigos uma
+ * pergunta com gabarito "respondeu" põe a bateria contra a própria instrução do
+ * agente — e foi o que aconteceu em 20/11/2026 com o artigo de e-mails de
+ * cobrança: o agente escalou certo e a bateria o reprovou.
+ */
+const ASSUNTO_DE_PESSOA = /cobran|pagament|fatura|mensalidade|reembols|lgpd|dados pessoais|cancelamento|vazament|somente-leitura/i
+
+export function exigeEscalonamento(artigo: { chave: string; titulo: string; corpo: string }): boolean {
+    /// Pelo título e pelo começo do corpo: o assunto do artigo, não uma menção
+    /// de passagem no meio dele.
+    return ASSUNTO_DE_PESSOA.test(`${artigo.titulo}\n${artigo.corpo.slice(0, 400)}`)
 }
 
 /**
