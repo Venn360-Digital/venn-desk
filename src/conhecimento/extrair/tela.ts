@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { ancorar } from './ancorar.ts'
+import { ancorar, ancoradoPorPalavras, paraAncorar } from './ancorar.ts'
 import type { Extrator } from './com-modelo.ts'
 import { digerir, digestoEmTexto, LIMITE_PARA_CRU } from './digesto.ts'
 import { ErroDeExtracao, type Extracao } from '../tipos.ts'
@@ -22,8 +22,16 @@ import { ErroDeExtracao, type Extracao } from '../tipos.ts'
  * confere: o modelo só pode dizer o que consegue citar.
  */
 
-const frase = z.string().trim().min(10).max(400)
-const curto = z.string().trim().min(2).max(80)
+/**
+ * Os limites são FOLGADOS de propósito.
+ *
+ * O esquema é a forma, não o juízo: quem barra invenção é a ancoragem, e quem
+ * barra vazamento é o detector de detalhe interno. Um `max` apertado só derruba
+ * a tela inteira por causa de um rótulo comprido — medido em 20/11/2026, nove
+ * das 33 telas voltaram com "response did not match schema" por isso.
+ */
+const frase = z.string().trim().min(3).max(600)
+const curto = z.string().trim().min(1).max(140)
 
 export const esquemaDaTela = z
     .object({
@@ -39,11 +47,11 @@ export const esquemaDaTela = z
                         nome: curto,
                         oQueFaz: frase,
                         /** Trecho literal do arquivo que sustenta a descrição. */
-                        evidencia: z.string().trim().min(3).max(200),
+                        evidencia: z.string().trim().min(3).max(400),
                     })
                     .strict()
             )
-            .max(20),
+            .max(40),
         campos: z
             .array(
                 z
@@ -51,22 +59,22 @@ export const esquemaDaTela = z
                         nome: curto,
                         obrigatorio: z.boolean().optional(),
                         /** O que o campo aceita ou sugere, quando o arquivo diz. */
-                        oQueAceita: z.string().trim().min(1).max(200).optional(),
+                        oQueAceita: z.string().trim().min(1).max(300).optional(),
                     })
                     .strict()
             )
-            .max(25),
+            .max(40),
         /** Mensagens que o sistema devolve, com o que as provoca. */
         avisos: z
-            .array(z.object({ quando: curto, texto: z.string().trim().min(3).max(200) }).strict())
-            .max(15),
+            .array(z.object({ quando: curto, texto: z.string().trim().min(2).max(300) }).strict())
+            .max(30),
         /**
          * Por que a tela, um item ou um botão pode não aparecer. É o que mais
          * serve ao suporte, e cada item exige evidência.
          */
         porQuePodeNaoAparecer: z
-            .array(z.object({ situacao: frase, evidencia: z.string().trim().min(3).max(200) }).strict())
-            .max(10),
+            .array(z.object({ situacao: frase, evidencia: z.string().trim().min(3).max(400) }).strict())
+            .max(20),
     })
     .strict()
 
@@ -146,6 +154,22 @@ export async function extrairTela(
         )
     }
 
+    /// A evidência é trecho de código, e o modelo a devolve reformatada: aqui a
+    /// exigência é de PALAVRAS, não da string inteira.
+    const normalizado = paraAncorar(crus)
+    const evidencias = [
+        ...dados.acoes.map((a) => a.evidencia),
+        ...dados.porQuePodeNaoAparecer.map((p) => p.evidencia),
+    ]
+    const inventadas = evidencias.filter((e) => !ancoradoPorPalavras(e, normalizado))
+    if (inventadas.length > 0) {
+        throw new ErroDeExtracao(
+            `tela ${rota}`,
+            `evidências que não vêm dos arquivos: ${inventadas.slice(0, 4).join(' | ')}`,
+            consumo
+        )
+    }
+
     /// Nome de arquivo, tabela ou rota de API na saída é vazamento de detalhe
     /// interno para a boca de quem atende o cliente (ADR 0012).
     const interno = procurarDetalheInterno(dados)
@@ -175,10 +199,17 @@ export function afirmacoesAncoraveis(tela: Tela): string[] {
          * de criar") e a ancoragem exigia o literal. Em 20/11/2026 isso
          * reprovou cinco telas por contradição interna, não por erro do modelo.
          */
-        ...tela.acoes.flatMap((a) => [a.nome, a.evidencia]),
-        ...tela.campos.flatMap((c) => [c.nome, c.oQueAceita ?? '']),
+        ...tela.acoes.map((a) => a.nome),
+        /**
+         * `oQueAceita` fica fora: ele descreve a regra do campo ("mínimo de 8
+         * caracteres"), e a regra mora no código como `min(8)`, não como texto.
+         * Exigi-la literal reprovou dezessete telas em 20/11/2026.
+         *
+         * A `evidencia` também sai daqui — ela é conferida por palavras, logo
+         * abaixo, porque é trecho de código reformatado pelo modelo.
+         */
+        ...tela.campos.map((c) => c.nome),
         ...tela.avisos.map((a) => a.texto),
-        ...tela.porQuePodeNaoAparecer.map((p) => p.evidencia),
     ].filter((t) => t !== '')
 }
 

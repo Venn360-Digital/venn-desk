@@ -52,6 +52,33 @@ function normalizar(s: string): string {
     return dobrar(s).replace(/\s+/g, ' ').trim()
 }
 
+/**
+ * Ancoragem por PALAVRAS, para quando o literal exato é frágil.
+ *
+ * A `evidencia` de uma afirmação é um trecho de código, e o modelo a devolve
+ * reformatada: aspas trocadas, quebra de linha virada em espaço, um parêntese a
+ * menos. Exigir a string inteira reprovava evidência honesta — medido em
+ * 20/11/2026, era a maior causa de tela perdida.
+ *
+ * O que ainda protege: as palavras têm de estar lá. Uma evidência inventada não
+ * tem como ter 70% das suas palavras longas no arquivo.
+ */
+export const FRACAO_DE_PALAVRAS = 0.7
+
+export function ancoradoPorPalavras(trecho: string, textoNormalizado: string): boolean {
+    const palavras = normalizar(trecho)
+        .split(/[^a-z0-9]+/)
+        .filter((p) => p.length >= 4)
+    if (palavras.length === 0) return normalizar(trecho).length < 4
+    const presentes = palavras.filter((p) => textoNormalizado.includes(p)).length
+    return presentes / palavras.length >= FRACAO_DE_PALAVRAS
+}
+
+/** Normaliza os arquivos uma vez, para quem vai ancorar muitos trechos. */
+export function paraAncorar(arquivos: string[]): string {
+    return arquivos.map(normalizar).join('\n')
+}
+
 /** Todas as strings de um JSON, em qualquer profundidade. Números não entram. */
 export function literaisDe(valor: unknown): string[] {
     if (typeof valor === 'string') return [valor]

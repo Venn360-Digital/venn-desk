@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { ancorar, literaisDe } from './ancorar.ts'
+import { ancoradoPorPalavras, ancorar, literaisDe, paraAncorar } from './ancorar.ts'
 
 const ARQUIVO = `
   { label: "Agentes de IA", href: "/atendimento/agentes" },
@@ -34,5 +34,32 @@ describe('ancorar', () => {
 
     it('literaisDe percorre qualquer profundidade e ignora números', () => {
         expect(literaisDe({ a: ['x', { b: 'y', n: 3 }], c: null })).toEqual(['x', 'y'])
+    })
+})
+
+describe('ancoradoPorPalavras', () => {
+    const ARQUIVO = paraAncorar([
+        `if (!token || error) {
+            redirect('/login?erro=convite_invalido')
+        }
+        toast.error('Não foi possível carregar os domínios')`,
+    ])
+
+    it('aceita a evidência que o modelo reformatou', () => {
+        /// O modelo devolve o trecho com as aspas e as quebras trocadas. Exigir
+        /// a string inteira reprovava evidência honesta — foi a maior causa de
+        /// tela perdida em 20/11/2026.
+        expect(ancoradoPorPalavras(`if (!token || error) { redirect("/login?erro=convite_invalido") }`, ARQUIVO)).toBe(true)
+        expect(ancoradoPorPalavras('toast.error("Não foi possível carregar os domínios")', ARQUIVO)).toBe(true)
+    })
+
+    it('recusa a evidência inventada', () => {
+        expect(ancoradoPorPalavras('if (plano.expirado) { bloquearAcessoCompleto(usuario) }', ARQUIVO)).toBe(false)
+        expect(ancoradoPorPalavras('toast.error("A assinatura venceu ontem")', ARQUIVO)).toBe(false)
+    })
+
+    it('trecho só de símbolos e palavras curtas não trava nem passa de graça', () => {
+        expect(ancoradoPorPalavras('()', ARQUIVO)).toBe(true)
+        expect(ancoradoPorPalavras('xyzw abcd efgh', ARQUIVO)).toBe(false)
     })
 })

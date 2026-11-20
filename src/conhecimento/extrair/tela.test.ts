@@ -145,6 +145,32 @@ describe('extrairTela', () => {
         )
     })
 
+    it('"o que o campo aceita" é a REGRA descrita, e não precisa estar escrita no arquivo', async () => {
+        /**
+         * A regressão que isto tranca, de 20/11/2026: o modelo escrevia
+         * "Mínimo de 8 caracteres" e a ancoragem exigia esse texto no arquivo —
+         * mas a regra mora no código como `min(8)`, não como frase. Dezessete
+         * telas foram perdidas por isso.
+         */
+        const comRegra = {
+            ...TELA_VALIDA,
+            campos: [{ nome: 'Nome é obrigatório', obrigatorio: true, oQueAceita: 'Texto, até 80 caracteres' }],
+        }
+        await expect(extrairTela('/vendas/servicos', ARQUIVOS, extratorFalso(comRegra))).resolves.toMatchObject({
+            dados: { campos: [{ oQueAceita: 'Texto, até 80 caracteres' }] },
+        })
+    })
+
+    it('evidência inventada reprova a tela, mesmo com os rótulos certos', async () => {
+        const comEvidenciaFalsa = {
+            ...TELA_VALIDA,
+            acoes: [{ nome: 'Novo', oQueFaz: 'Abre o painel.', evidencia: 'if (assinaturaVencida) bloquearTudoAgora()' }],
+        }
+        await expect(extrairTela('/vendas/servicos', ARQUIVOS, extratorFalso(comEvidenciaFalsa))).rejects.toThrow(
+            /evidências que não vêm dos arquivos/
+        )
+    })
+
     it('sem arquivo não há tela', async () => {
         await expect(extrairTela('/x', [], extratorFalso(TELA_VALIDA))).rejects.toThrow('nenhum arquivo')
     })
