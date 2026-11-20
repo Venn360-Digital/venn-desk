@@ -44,7 +44,14 @@ export const esquemaDosPapeis = z
                     .object({
                         nome: curto,
                         oQuePermite: frase,
-                        papeis: z.array(curto).min(1),
+                        /**
+                         * SEM mínimo, e isso é a mesma lição pela quinta vez:
+                         * `min(1)` é juízo disfarçado de forma. `daPlataforma`
+                         * não pertence a papel de workspace nenhum — é o dono
+                         * do workspace da Venn360 — e o modelo devolvia a lista
+                         * vazia com razão, perdendo a fonte inteira.
+                         */
+                        papeis: z.array(curto),
                         /** A flag do código que sustenta a linha. */
                         evidencia: campoDeEvidencia,
                     })
@@ -89,8 +96,11 @@ export async function extrairPapeis(hookTs: string, extrator: Extrator): Promise
      * produção em 20/11/2026.
      */
     const chaves = new Set(dados.papeis.map((p) => p.chave.toUpperCase()))
-    const semCruzamento = dados.capacidades.filter((c) => !c.papeis.some((p) => chaves.has(p.toUpperCase())))
-    if (semCruzamento.length === dados.capacidades.length) {
+    /// Capacidade sem papel nenhum é legítima (`daPlataforma`): ela não entra
+    /// na conta de "nenhuma casa".
+    const comPapel = dados.capacidades.filter((c) => c.papeis.length > 0)
+    const semCruzamento = comPapel.filter((c) => !c.papeis.some((p) => chaves.has(p.toUpperCase())))
+    if (comPapel.length > 0 && semCruzamento.length === comPapel.length) {
         throw new ErroDeExtracao(
             'papeis',
             `nenhuma capacidade casa com os papéis declarados (papéis: ${[...chaves].join(', ')}; capacidades citam: ${dados.capacidades.flatMap((c) => c.papeis).slice(0, 6).join(', ')})`,

@@ -22,9 +22,11 @@ export function renderizarPapeis(papeis: Papeis, ctx: ContextoDeRenderizacao): A
     const tabela = [
         `| O que faz | ${colunas.join(' | ')} |`,
         `|---|${colunas.map(() => '---').join('|')}|`,
-        ...papeis.capacidades.map(
-            (c) => `| ${c.nome} | ${papeis.papeis.map((p) => (tem(c, p.chave) ? 'sim' : '—')).join(' | ')} |`
-        ),
+        /// Só as que dependem do papel entram na tabela; as outras ficam na
+        /// lista abaixo dela, com a explicação.
+        ...papeis.capacidades
+            .filter((c) => c.papeis.length > 0)
+            .map((c) => `| ${c.nome} | ${papeis.papeis.map((p) => (tem(c, p.chave) ? 'sim' : '—')).join(' | ')} |`),
     ].join('\n')
 
     return [
@@ -37,10 +39,15 @@ export function renderizarPapeis(papeis: Papeis, ctx: ContextoDeRenderizacao): A
                 tabela,
                 '',
                 '## O que cada permissão significa',
-                ...papeis.capacidades.map(
-                    (c) =>
-                        `- **${c.nome}** — ${c.oQuePermite} (${c.papeis.map((p) => nomes.get(p.toUpperCase()) ?? p.toLowerCase()).join(', ')})`
-                ),
+                ...papeis.capacidades.map((c) => {
+                    /// Capacidade sem papel não é erro: `daPlataforma` é de
+                    /// quem opera o produto, não de quem o usa.
+                    const quem =
+                        c.papeis.length === 0
+                            ? 'não depende do papel na equipe'
+                            : c.papeis.map((p) => nomes.get(p.toUpperCase()) ?? p.toLowerCase()).join(', ')
+                    return `- **${c.nome}** — ${c.oQuePermite} (${quem})`
+                }),
                 '',
                 'Esconder um item do menu não é permissão: o servidor recusa a ação de quem não pode, mesmo que a pessoa chegue à tela por um link.',
                 '',

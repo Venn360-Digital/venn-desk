@@ -62,6 +62,30 @@ describe('extrairPapeis', () => {
     })
 })
 
+describe('capacidade que não depende de papel', () => {
+    it('lista vazia é legítima e não derruba a fonte', async () => {
+        /**
+         * `daPlataforma` é do dono do workspace da Venn360 — quem opera o
+         * produto, não quem o usa. O modelo devolvia `papeis: []` com razão, e
+         * o `min(1)` do meu esquema perdeu a fonte três vezes em produção.
+         */
+        const comPlataforma = {
+            ...BOM,
+            capacidades: [
+                ...BOM.capacidades,
+                { nome: 'Acesso à plataforma Venn360', oQuePermite: 'Opera o produto, e não apenas o usa.', papeis: [], evidencia: 'daPlataforma' },
+            ],
+        }
+        const r = await extrairPapeis(HOOK, extratorFalso(comPlataforma))
+        expect(r.dados.capacidades).toHaveLength(3)
+
+        const [artigo] = renderizarPapeis(r.dados, CTX)
+        /// Fora da tabela (ela cruza papel), dentro da lista com a explicação.
+        expect(artigo?.corpo).not.toContain('| Acesso à plataforma Venn360 |')
+        expect(artigo?.corpo).toContain('não depende do papel na equipe')
+    })
+})
+
 describe('renderizarPapeis', () => {
     it('a tabela marca "sim" mesmo quando o modelo troca a caixa da chave', () => {
         const [artigo] = renderizarPapeis(BOM, CTX)

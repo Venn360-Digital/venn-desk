@@ -14,6 +14,12 @@ import { z } from 'zod'
  * certos nos tipos certos. Quem barra invenção é a ancoragem (`ancorar.ts`),
  * quem barra vazamento de detalhe interno é o detector de cada fonte. Apertar
  * limite aqui não protege nada: só troca uma extração boa por um erro.
+ *
+ * **`min` em lista é a forma mais traiçoeira disso.** `papeis: min(1)` numa
+ * capacidade derrubou a fonte de permissões três vezes, porque existe uma
+ * capacidade que de fato não pertence a papel nenhum (`daPlataforma`) — o
+ * modelo devolvia a lista vazia com razão. Antes de escrever `min(1)`, pergunte
+ * se o vazio é impossível ou só improvável; se for improvável, não é forma.
  */
 
 /** Rótulo, nome, título: uma linha. */
