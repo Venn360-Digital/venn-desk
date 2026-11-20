@@ -78,8 +78,8 @@ Devolva:
 - nome: o nome da tela como ela se apresenta.
 - paraQueServe: uma ou duas frases sobre o que se resolve ali. Escreva para quem atende, não para quem programa.
 - oQueSeVe: os blocos visíveis, na ordem da tela (ex.: "lista com busca e paginação", "painel lateral de edição").
-- acoes: cada ação que a pessoa pode executar, com o que ela faz. Em "evidencia", copie um trecho LITERAL do arquivo que sustenta a descrição (o rótulo do botão, o texto do aviso, o nome da função).
-- campos: os campos de formulário, dizendo qual é obrigatório e o que aceita, quando o arquivo disser.
+- acoes: cada ação que a pessoa pode executar. Em "nome", copie o RÓTULO EXATO como ele aparece na tela ("Novo", "Transferir", "Salvar alterações") — não parafraseie, porque quem atende vai dizer ao cliente em que botão clicar. Se você não encontrar o rótulo escrito no arquivo, não inclua a ação. Em "oQueFaz", explique com suas palavras. Em "evidencia", copie um trecho LITERAL do arquivo que sustente a descrição.
+- campos: os campos de formulário. Em "nome", o rótulo exato do campo como está no arquivo. Diga qual é obrigatório e o que aceita, quando o arquivo disser.
 - avisos: as mensagens que o sistema mostra depois de uma ação, com o que as provoca.
 - porQuePodeNaoAparecer: por que a tela, um item ou um botão pode não aparecer para alguém (permissão, plano, lista vazia, filtro). Cada item exige "evidencia" literal.
 
@@ -121,7 +121,9 @@ export async function extrairTela(
         esquema: esquemaDaTela,
         instrucao: `${INSTRUCAO}\n\nA tela fica no endereço ${rota}.`,
         arquivos: paraOModelo,
-        maxTokensSaida: 4_000,
+        /// Folga larga: JSON cortado no meio não tem como ser aproveitado, e
+        /// token de saída não gasto não é cobrado.
+        maxTokensSaida: 8_000,
     })
 
     /**
@@ -167,7 +169,12 @@ export async function extrairTela(
 export function afirmacoesAncoraveis(tela: Tela): string[] {
     return [
         tela.nome,
-        ...tela.oQueSeVe,
+        /**
+         * `oQueSeVe` NÃO entra, e isso é correção de um defeito meu: a
+         * instrução pede a descrição de um bloco ("cabeçalho com busca e botão
+         * de criar") e a ancoragem exigia o literal. Em 20/11/2026 isso
+         * reprovou cinco telas por contradição interna, não por erro do modelo.
+         */
         ...tela.acoes.flatMap((a) => [a.nome, a.evidencia]),
         ...tela.campos.flatMap((c) => [c.nome, c.oQueAceita ?? '']),
         ...tela.avisos.map((a) => a.texto),

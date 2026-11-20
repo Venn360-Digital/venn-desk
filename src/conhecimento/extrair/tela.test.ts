@@ -117,6 +117,34 @@ describe('extrairTela', () => {
         expect(registro.arquivos?.[0]?.conteudo).toContain('<h1>')
     })
 
+    it('"o que se vê" é DESCRIÇÃO e passa; rótulo de ação inventado NÃO passa', async () => {
+        /**
+         * A regressão que isto tranca, de 20/11/2026: a instrução pedia a
+         * descrição de um bloco ("cabeçalho com busca e botão de criar") e a
+         * ancoragem exigia o literal. Cinco das 33 telas foram reprovadas por
+         * essa contradição minha, não por erro do modelo.
+         *
+         * A linha divisória: descrever o que a tela TEM é livre; dizer o nome
+         * de um botão é afirmação, porque quem atende vai mandar o cliente
+         * clicar nele.
+         */
+        const descritivo = {
+            ...TELA_VALIDA,
+            oQueSeVe: ['cabeçalho fixo com busca e botão de criar', 'grade de cartões, um por item'],
+        }
+        await expect(extrairTela('/vendas/servicos', ARQUIVOS, extratorFalso(descritivo))).resolves.toMatchObject({
+            dados: { oQueSeVe: ['cabeçalho fixo com busca e botão de criar', 'grade de cartões, um por item'] },
+        })
+
+        const rotuloParafraseado = {
+            ...TELA_VALIDA,
+            acoes: [{ nome: 'Criar novo procedimento agora', oQueFaz: 'Abre o painel.', evidencia: 'Item criado' }],
+        }
+        await expect(extrairTela('/vendas/servicos', ARQUIVOS, extratorFalso(rotuloParafraseado))).rejects.toThrow(
+            /não existem nos arquivos/
+        )
+    })
+
     it('sem arquivo não há tela', async () => {
         await expect(extrairTela('/x', [], extratorFalso(TELA_VALIDA))).rejects.toThrow('nenhum arquivo')
     })

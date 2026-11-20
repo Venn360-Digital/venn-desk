@@ -63,6 +63,15 @@ export function extratorDaAnthropic(modelo: LanguageModel): Extrator {
                     },
                 ],
                 maxOutputTokens: pedido.maxTokensSaida,
+                /**
+                 * Esforço BAIXO, e medido: em 20/11/2026, seis das 33 telas
+                 * voltaram com "could not parse the response" porque o modelo
+                 * gastou o orçamento de saída raciocinando e a resposta veio
+                 * cortada no meio do JSON. Transcrever um arquivo para uma
+                 * forma fixa não precisa de raciocínio longo — precisa de
+                 * atenção ao esquema, que o próprio esquema cobra.
+                 */
+                providerOptions: { anthropic: { effort: 'low' } },
             })
 
             const consumo = somar(ZERO, {
