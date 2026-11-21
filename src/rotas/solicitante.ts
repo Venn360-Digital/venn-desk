@@ -381,7 +381,7 @@ rotasDoSolicitante.post('/api/app/:app/chamados/:numero/csat', async (c) => {
      * Falha de fila NÃO derruba a resposta: o cliente acabou de dar nota, e o
      * que ele espera é o recibo.
      */
-    if (resposta.nota >= NOTA_MINIMA_DO_CSAT && !resposta.atendidoPelaIa) {
+    if (c.env.SUGESTOES_AUTOMATICAS === 'sim' && resposta.nota >= NOTA_MINIMA_DO_CSAT && !resposta.atendidoPelaIa) {
         try {
             await c.env.CONHECIMENTO?.send({ tipo: 'sugerir-de-chamado', appId: escopo.appId, ticketId: chamado.id })
         } catch (erro) {

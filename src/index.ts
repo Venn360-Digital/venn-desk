@@ -189,7 +189,13 @@ export default {
              * os mesmos chamados. O horário é o de menos chamado aberto, para a
              * fila do atendimento não disputar com a da base.
              */
-            if (agora.getUTCHours() === 4 && agora.getUTCMinutes() === 0) {
+            /**
+             * Desligada por padrão, e por um motivo caro: em 20/11/2026 as
+             * rodadas da bateria somaram US$ 229 num dia porque nada avisava
+             * que a conta estava subindo. Um job que chama modelo sozinho todo
+             * dia só liga quando alguém escreve `SUGESTOES_AUTOMATICAS=sim`.
+             */
+            if (env.SUGESTOES_AUTOMATICAS === 'sim' && agora.getUTCHours() === 4 && agora.getUTCMinutes() === 0) {
                 const varridos = await varrerCandidatosASugestao(cliente, { agora, fila: env.CONHECIMENTO })
                 if (varridos.length > 0) console.log('[sugestoes]', JSON.stringify(varridos))
             }

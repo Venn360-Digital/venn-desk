@@ -51,6 +51,13 @@ export interface Ambiente {
         MODELO_DO_EXTRATOR_INCREMENTAL?: string
         /** O modelo da biblioteca de casos. Haiku 4.5 por padrão. */
         MODELO_DO_SUGERIDOR?: string
+        /**
+         * `sim` liga a varredura diária que gera rascunhos de artigo a partir
+         * dos chamados. DESLIGADA por padrão: é o único job que chama modelo
+         * sem ninguém pedir, e um dia de US$ 229 em novembro de 2026 ensinou
+         * que isso precisa de uma decisão escrita, não de um padrão.
+         */
+        SUGESTOES_AUTOMATICAS?: string
         /** Quanto o agente pensa: `low`, `medium`, `high`, `xhigh` ou `max`. */
         ESFORCO_DO_AGENTE?: string
         /**

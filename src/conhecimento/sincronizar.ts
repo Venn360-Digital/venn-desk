@@ -94,6 +94,16 @@ export interface ResultadoDaSincronizacao {
     custoEstimadoUsd: number
     duracaoMs: number
     avisos: string[]
+    /**
+     * O vocabulário deste app no commit da rodada.
+     *
+     * Fica no resultado, e não numa coluna de `apps`, porque é um FATO DA
+     * RODADA: foi com este vocabulário que os artigos desta rodada foram
+     * renderizados. É o que o detector de divergências precisa para dobrar o
+     * texto dos três apps antes de compará-los — sem ele, "Pacientes" contra
+     * "Clientes" apareceria como divergência em todo artigo.
+     */
+    vocabulario?: Vocabulario
 }
 
 export interface PedidoDeSincronizacao {
@@ -361,6 +371,7 @@ export async function sincronizarApp(pedido: PedidoDeSincronizacao): Promise<Res
         custoEstimadoUsd: Number(custoEstimado(consumo, pedido.tarifa).toFixed(4)),
         duracaoMs: Date.now() - inicio,
         avisos,
+        vocabulario,
     }
 }
 
