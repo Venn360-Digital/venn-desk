@@ -7,7 +7,7 @@ import { escopoDoApp } from '../dados/escopo.ts'
 import type { Ambiente } from '../lib/ambiente.ts'
 import { atender } from './atender.ts'
 import { embutidorDoWorkersAi } from '../conhecimento/embeddings.ts'
-import { saidaDeEngenharia } from '../slack/engenharia.ts'
+import { saidaDeAprovacao, saidaDeEngenharia } from '../slack/engenharia.ts'
 
 /**
  * A fila do atendimento automático (Fase 4).
@@ -111,6 +111,7 @@ export async function consumirAtendimentos(
                         escopo: 'SUPORTE',
                         ...(env.AI === undefined ? {} : { embutir: embutidorDoWorkersAi(env.AI) }),
                         abrirEngenharia: saidaDeEngenharia(escopoDoApp(cliente, app.id), app, env),
+                        pedirAprovacao: saidaDeAprovacao(app, env),
                     },
                     numero: pedido.data.numero,
                     tarifa: {

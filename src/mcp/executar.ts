@@ -74,6 +74,14 @@ export interface Contexto {
         resumo: string
         ponteiros: string | null
     }) => Promise<void>
+    /**
+     * Posta o pedido de aprovação no canal de aprovações.
+     *
+     * Injetável como `abrirEngenharia`. Sem ele o pedido continua registrado na
+     * trilha e a ferramenta DIZ que ninguém foi avisado — um pedido que o
+     * modelo acha que chegou e não chegou é pior que um pedido recusado.
+     */
+    pedirAprovacao?: (p: { problemaId: string; titulo: string; proposta: string; numero: string }) => Promise<void>
 }
 
 export interface Resultado {
@@ -185,6 +193,8 @@ export async function executarFerramenta(
             return escalar(ctx, dados, ator)
         case 'criar_problema':
             return criarProblema(ctx, dados)
+        case 'abrir_issue':
+            return pedirAprovacaoDeIssue(ctx, dados, ator)
         case 'vincular_incidente':
             return vincularIncidente(ctx, dados, ator)
         default:
@@ -753,6 +763,80 @@ async function escalar(
             }
         }
         throw erro
+    }
+}
+
+/**
+ * Pede aprovação para abrir a issue. NÃO abre nada.
+ *
+ * É a regra absoluta do projeto virada ferramenta: nenhuma credencial usada
+ * pela IA aprova issue, faz merge ou publica em produção. O que esta ferramenta
+ * faz é registrar o pedido na trilha e pôr dois botões na frente de uma pessoa
+ * cadastrada. O clique dela é a autorização, e sem o clique não existe issue.
+ *
+ * O texto do pedido é o que a IA escreveu, não o que o cliente escreveu — o
+ * canal de aprovações não recebe texto de fora.
+ */
+async function pedirAprovacaoDeIssue(
+    ctx: Contexto,
+    dados: Record<string, unknown>,
+    ator: string
+): Promise<Resultado> {
+    const chamado = await chamadoPeloNumero(ctx, dados['numero'] as string)
+    const problemaId = dados['problemaId'] as string
+    const proposta = dados['proposta'] as string
+
+    const problema = await ctx.escopoDoApp.problemas.porId(problemaId)
+    if (problema === null) {
+        return { erro: true, texto: 'Esse defeito não existe neste app. Crie com criar_problema antes.' }
+    }
+
+    if (problema.etapa === 'RECUSADO_PELO_GESTOR') {
+        return {
+            erro: true,
+            texto: 'Um gestor já recusou a correção deste defeito. Não peça de novo: o chamado está com uma pessoa.',
+        }
+    }
+
+    await ctx.escopoDoApp.eventos.registrar({
+        ticketId: chamado.id,
+        ator,
+        evento: 'aprovacao:pedida',
+        depois: { portao: 'ISSUE', problemaId, proposta },
+    })
+
+    await ctx.escopoDoApp.mensagens.adicionar(
+        {
+            ticketId: chamado.id,
+            autor: 'IA',
+            corpo: `Pedido de aprovação para abrir a issue de correção.\n\n${proposta}`,
+            visibilidade: 'INTERNA',
+            origem: 'MCP',
+        },
+        { ator }
+    )
+
+    let avisado = false
+    if (ctx.pedirAprovacao !== undefined) {
+        try {
+            await ctx.pedirAprovacao({
+                problemaId,
+                titulo: problema.titulo,
+                proposta,
+                numero: `${ctx.app.prefixo}-${chamado.numero}`,
+            })
+            avisado = true
+        } catch (erro) {
+            console.error('[mcp] pedido de aprovação não foi postado:', erro)
+        }
+    }
+
+    return {
+        texto: avisado
+            ? 'Pedido registrado e enviado ao canal de aprovações. Nenhuma issue foi criada: ' +
+              'isso depende do clique de um gestor. Diga ao cliente que o defeito está registrado, sem prazo.'
+            : 'Pedido registrado na linha do tempo do chamado. O canal de aprovações não está ' +
+              'configurado, então avise uma pessoa pelo Console. Nenhuma issue foi criada.',
     }
 }
 

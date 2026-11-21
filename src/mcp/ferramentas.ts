@@ -196,6 +196,26 @@ export const FERRAMENTAS: Ferramenta[] = [
         escopos: ['ENGENHARIA'],
     },
     {
+        nome: 'abrir_issue',
+        titulo: 'Pedir aprovação para abrir a issue',
+        descricao:
+            'PEDE aprovação para abrir a issue de correção no repositório do app. Não cria ' +
+            'nada no GitHub: o pedido vai para o canal de aprovações e só um gestor ou ' +
+            'administrador pode autorizar. Use depois de ter o defeito criado e o diagnóstico ' +
+            'escrito.',
+        argumentos: z.object({
+            problemaId: z.string().trim().min(1),
+            proposta: z
+                .string()
+                .trim()
+                .min(20)
+                .max(2_000)
+                .describe('O que você faria para corrigir, em uma ou duas frases, sem prometer prazo.'),
+            numero: numeroDoChamado.describe('O chamado que originou o defeito.'),
+        }),
+        escopos: ['ENGENHARIA'],
+    },
+    {
         nome: 'vincular_incidente',
         titulo: 'Ligar chamado a um defeito',
         descricao: 'Liga um chamado ao defeito que o explica, para o grupo andar junto.',

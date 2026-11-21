@@ -7,7 +7,13 @@ import { conferirAssinatura } from '../slack/assinatura.ts'
 import { appPorCanal } from '../dados/apps.ts'
 import { escopoDoApp } from '../dados/escopo.ts'
 import { agentePorEmail, agentePorSlackId, vincularSlackId } from '../dados/agentes.ts'
-import { aplicarBotao, aplicarReacao, notaDaThread, responderPelaThread } from '../slack/ponte.ts'
+import {
+    aplicarBotao,
+    aplicarReacao,
+    decidirPortaoDaIssue,
+    notaDaThread,
+    responderPelaThread,
+} from '../slack/ponte.ts'
 import { abrirModal, emailDoUsuario } from '../slack/cliente.ts'
 import { modalDeResposta } from '../slack/mensagens.ts'
 import { appsAtivos } from '../dados/apps.ts'
@@ -145,11 +151,57 @@ rotasDoSlack.post('/slack/interativo', comCliente, async (c) => {
     const app = typeof canal === 'string' ? await appPorCanal(c.get('cliente'), canal) : null
 
     if (payload['type'] === 'block_actions') {
-        if (app === null) return c.json(OK)
-        const escopo = escopoDoApp(c.get('cliente'), app.id)
         const acao = ((payload['actions'] ?? []) as { action_id?: unknown; value?: unknown }[])[0] ?? {}
         const actionId = typeof acao.action_id === 'string' ? acao.action_id : ''
         const chamadoId = typeof acao.value === 'string' ? acao.value : ''
+
+        if (actionId === 'aprovar_issue' || actionId === 'recusar_issue') {
+            /**
+             * O Portão 1. O `value` é o id do DEFEITO, não do chamado — o
+             * defeito é o que tem etapa e é o que agrupa os incidentes.
+             *
+             * O app vem do canal de aprovações, que é um só para os três
+             * produtos; então o defeito é procurado em cada app até achar, e é
+             * o escopo que garante que a decisão caia no produto certo.
+             */
+            const cliente = c.get('cliente')
+            const decisao = actionId === 'aprovar_issue' ? ('APROVADO' as const) : ('RECUSADO' as const)
+            const comPapel =
+                agenteDoSlack === null
+                    ? null
+                    : { id: agenteDoSlack.id, nome: agenteDoSlack.nome, papel: String(agenteDoSlack.papel) }
+
+            c.executionCtx.waitUntil(
+                (async () => {
+                    try {
+                        for (const candidato of await appsAtivos(cliente)) {
+                            const escopo = escopoDoApp(cliente, candidato.id)
+                            if ((await escopo.problemas.porId(chamadoId)) === null) continue
+                            const r = await decidirPortaoDaIssue({
+                                escopo,
+                                problemaId: chamadoId,
+                                decisao,
+                                agente: comPapel,
+                            })
+                            console.log('[slack] portão da issue:', JSON.stringify({ app: candidato.slug, decisao, ...r }))
+                            return
+                        }
+                        console.log('[slack] portão sobre defeito inexistente')
+                    } catch (erro) {
+                        console.error('[slack] portão da issue falhou:', erro)
+                    }
+                })()
+            )
+            return c.json(OK)
+        }
+
+        /**
+         * Daqui para baixo tudo age sobre um CHAMADO, e chamado tem app. O
+         * canal de aprovações é a exceção já tratada acima: ele é um só para os
+         * três produtos, então não pertence a app nenhum.
+         */
+        if (app === null) return c.json(OK)
+        const escopo = escopoDoApp(c.get('cliente'), app.id)
 
         if (actionId === 'responder_usuario') {
             /**
@@ -167,6 +219,7 @@ rotasDoSlack.post('/slack/interativo', comCliente, async (c) => {
             if (!aberto.ok) console.error('[slack] modal não abriu:', aberto.erro)
             return c.json(OK)
         }
+
 
         if (actionId === 'assumir' || actionId === 'escalar_engenharia' || actionId === 'resolver') {
             c.executionCtx.waitUntil(

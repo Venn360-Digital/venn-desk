@@ -173,3 +173,23 @@ o chamado, como `desk/ODB-1042`. O título ou o corpo da issue também servem. S
 a referência o evento é ignorado com uma linha no log, porque não há como saber
 a que chamado ele pertence — e todo evento do GitHub tem números soltos que não
 são chamado nenhum.
+
+## O canal de aprovações (Portão 1)
+
+Em `wrangler.jsonc`, em `vars`, nos dois ambientes:
+
+```jsonc
+"SLACK_CANAL_DE_APROVACOES": "C0APROVACOES"
+```
+
+É o id de `#desk-aprovacoes`. Um canal para os três apps: quem aprova decide
+sobre a plataforma, e um canal por produto espalharia a decisão em três lugares
+que ninguém acompanha junto.
+
+Quem decide precisa ter papel **GESTOR** ou **ADMIN** no Venn Desk, além de ter
+feito `/desk vincular`. Um agente de nível 1 clicando em "Aprovar" recebe uma
+recusa silenciosa no log (`sem_papel_de_aprovador`) e nada acontece — é a trava
+central do projeto, e ela é conferida no servidor, não no botão.
+
+Sem a variável, o pedido de aprovação continua sendo registrado na linha do
+tempo do chamado, e a ferramenta avisa o modelo de que ninguém foi notificado.

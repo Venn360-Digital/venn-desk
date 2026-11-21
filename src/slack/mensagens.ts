@@ -177,6 +177,75 @@ export function modalDeResposta(dados: { chamadoId: string; numero: string }): u
     }
 }
 
+export interface DadosDoPedidoDeAprovacao {
+    /** `ODB-1042`, o chamado que originou. */
+    numero: string
+    problemaId: string
+    titulo: string
+    /** O que a IA propõe fazer, em palavras dela. */
+    proposta: string
+    /** O que o Desk sabe sobre o risco da mudança, quando sabe. */
+    atencao?: string | undefined
+    urlNoConsole: string
+}
+
+/**
+ * O pedido de aprovação em `#desk-aprovacoes` (Portão 1, seção 6).
+ *
+ * Os dois botões são a regra absoluta do projeto virada interface: nenhuma
+ * ferramenta usada pela IA aprova issue, faz merge ou publica. A IA escreve a
+ * proposta; quem decide é uma pessoa cadastrada como gestor ou administrador, e
+ * o clique dela é o que existe de autorização.
+ *
+ * O `value` dos botões leva o id do defeito, montado por nós ao postar. Ele
+ * volta pela rede e é conferido contra o escopo do app antes de qualquer
+ * escrita, como todo payload de clique.
+ */
+export function mensagemDePedidoDeAprovacao(dados: DadosDoPedidoDeAprovacao): MensagemDoSlack {
+    const linhas = [
+        `*Aprovação pedida* · ${dados.numero}`,
+        `Defeito: ${dados.titulo}`,
+        `Proposta do N2: ${dados.proposta}`,
+        dados.atencao === undefined ? null : `:warning: ${dados.atencao}`,
+        'Nada é criado no GitHub até alguém clicar.',
+    ].filter((l): l is string => l !== null)
+
+    const corpo = linhas.join('\n')
+
+    return {
+        text: corpo,
+        blocks: [
+            { type: 'section', text: { type: 'mrkdwn', text: corpo } },
+            {
+                type: 'actions',
+                block_id: `defeito:${dados.problemaId}`,
+                elements: [
+                    {
+                        type: 'button',
+                        text: { type: 'plain_text', text: 'Aprovar' },
+                        style: 'primary',
+                        action_id: 'aprovar_issue',
+                        value: dados.problemaId,
+                    },
+                    {
+                        type: 'button',
+                        text: { type: 'plain_text', text: 'Recusar' },
+                        style: 'danger',
+                        action_id: 'recusar_issue',
+                        value: dados.problemaId,
+                    },
+                    {
+                        type: 'button',
+                        text: { type: 'plain_text', text: 'Abrir no Console' },
+                        url: dados.urlNoConsole,
+                        action_id: 'abrir_no_console',
+                    },
+                ],
+            },
+        ],
+    }
+}
+
 export interface DadosDaEngenharia {
     numero: string
     /** O resumo técnico escrito pelo N1 ao escalar. Texto nosso, não do cliente. */

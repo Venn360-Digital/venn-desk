@@ -55,6 +55,13 @@ export interface Ambiente {
          * Ausente, nenhum alerta é postado e o e-mail continua sendo o aviso.
          */
         SLACK_CANAL_DE_ALERTAS?: string
+        /**
+         * O canal `#desk-aprovacoes` (id, `C…`), onde ficam os portões de
+         * aprovação. Um para os três apps: quem aprova decide sobre a
+         * plataforma. Ausente, o pedido fica só na trilha do chamado e a
+         * ferramenta avisa o modelo de que ninguém foi notificado.
+         */
+        SLACK_CANAL_DE_APROVACOES?: string
         /** Chave da API do Claude, para o agente de atendimento. Segredo. */
         ANTHROPIC_API_KEY?: string
         /** O modelo do agente. Em `vars`, para trocar sem publicar código. */

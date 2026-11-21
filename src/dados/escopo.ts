@@ -332,6 +332,13 @@ export interface EscopoDoApp {
         abrir(dados: { titulo: string; causa?: string }): Promise<Problem>
         resolver(id: string): Promise<Problem | null>
         /**
+         * Recusa do gestor: estado final, e o único caminho que NÃO é para
+         * frente. Fica fora de `avancarEtapa` por isso — se passasse por lá,
+         * `avanca` o recusaria, que é justamente o que protege a etapa de
+         * andar para trás por evento do GitHub.
+         */
+        recusar(id: string): Promise<void>
+        /**
          * Move a etapa, e só para FRENTE.
          *
          * O GitHub entrega fora de ordem e reentrega: o check de um push antigo
@@ -340,6 +347,29 @@ export interface EscopoDoApp {
          * para a trilha dizer de onde para onde.
          */
         avancarEtapa(id: string, para: EtapaDeEngenharia): Promise<{ de: EtapaDeEngenharia; para: EtapaDeEngenharia } | null>
+    }
+
+    /**
+     * As decisões dos portões de aprovação (seções 6 e 8).
+     *
+     * Guarda a DECISÃO, não o pedido: o pedido fica na trilha do chamado
+     * (`aprovacao:pedida`) e na mensagem do canal. A assimetria é de propósito —
+     * um pedido é um fato do passado que não precisa de estado, e uma linha
+     * "pendente" num banco inevitavelmente discorda da realidade quando alguém
+     * decide por outro caminho.
+     *
+     * **Nenhuma ferramenta da IA escreve aqui.** É a regra absoluta do projeto:
+     * a IA pede, uma pessoa cadastrada decide. Quem chama é a rota do clique.
+     */
+    aprovacoes: {
+        registrar(dados: {
+            problemId: string
+            portao: 'ISSUE' | 'PRODUCAO'
+            decisao: 'APROVADO' | 'RECUSADO' | 'MAIS_INFORMACOES'
+            aprovadorId: string
+            justificativa?: string
+        }): Promise<void>
+        doProblema(problemId: string): Promise<{ portao: string; decisao: string; aprovadorId: string; criadoEm: Date }[]>
     }
 
     /** Issues, PRs, execuções de CI e deploys ligados a um defeito (seção 6). */
@@ -1400,6 +1430,10 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 })
             },
 
+            async recusar(id) {
+                await conexao.problem.updateMany({ where: { id, appId }, data: { etapa: 'RECUSADO_PELO_GESTOR' } })
+            },
+
             async avancarEtapa(id, para) {
                 const atual = await conexao.problem.findFirst({ where: { id, appId } })
                 if (atual === null) return null
@@ -2006,6 +2040,29 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 return conexao.kbEvento.findMany({
                     where: { appId, artigoId },
                     orderBy: { criadoEm: 'asc' },
+                })
+            },
+        },
+
+        aprovacoes: {
+            async registrar(dados) {
+                await conexao.approval.create({
+                    data: {
+                        appId,
+                        problemId: dados.problemId,
+                        portao: dados.portao,
+                        decisao: dados.decisao,
+                        aprovadorId: dados.aprovadorId,
+                        ...(dados.justificativa === undefined ? {} : { justificativa: dados.justificativa }),
+                    },
+                })
+            },
+
+            async doProblema(problemId) {
+                return conexao.approval.findMany({
+                    where: { appId, problemId },
+                    orderBy: { criadoEm: 'asc' },
+                    select: { portao: true, decisao: true, aprovadorId: true, criadoEm: true },
                 })
             },
         },

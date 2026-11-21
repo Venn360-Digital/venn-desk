@@ -88,6 +88,7 @@ export function conexaoFalsa(respostas: Record<string, unknown> = {}) {
         slackThread: delegado('slackThread'),
         problem: delegado('problem'),
         engLink: delegado('engLink'),
+        approval: delegado('approval'),
         $queryRaw: cru('queryRaw'),
         $executeRaw: cru('executeRaw'),
     } as unknown as Conexao

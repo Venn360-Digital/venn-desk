@@ -235,6 +235,47 @@ export async function notaDaThread(p: {
     return { destino: 'nota-interna' }
 }
 
+/**
+ * A decisão do Portão 1 (seção 6).
+ *
+ * **Só GESTOR e ADMIN.** É a trava central do projeto: a IA pede, uma pessoa
+ * cadastrada com papel de decisão autoriza. Um agente de nível 1 clicando em
+ * "Aprovar" seria a mesma coisa que a IA se aprovando, por outro caminho.
+ *
+ * A recusa é estado FINAL do defeito: dele não se sai por evento do GitHub nem
+ * por novo pedido da IA (a ferramenta recusa pedir de novo). Quem muda isso é
+ * uma pessoa, pelo Console.
+ */
+export async function decidirPortaoDaIssue(p: {
+    escopo: EscopoDoApp
+    problemaId: string
+    decisao: 'APROVADO' | 'RECUSADO'
+    agente: { id: string; nome: string; papel: string } | null
+}): Promise<{ decidido: boolean; motivo?: string }> {
+    if (p.agente === null) return { decidido: false, motivo: 'autor_nao_cadastrado' }
+    if (p.agente.papel !== 'GESTOR' && p.agente.papel !== 'ADMIN') {
+        return { decidido: false, motivo: 'sem_papel_de_aprovador' }
+    }
+
+    const problema = await p.escopo.problemas.porId(p.problemaId)
+    if (problema === null) return { decidido: false, motivo: 'defeito_de_outro_app' }
+
+    const jaDecidido = (await p.escopo.aprovacoes.doProblema(p.problemaId)).some((a) => a.portao === 'ISSUE')
+    if (jaDecidido) return { decidido: false, motivo: 'ja_decidido' }
+
+    await p.escopo.aprovacoes.registrar({
+        problemId: p.problemaId,
+        portao: 'ISSUE',
+        decisao: p.decisao,
+        aprovadorId: p.agente.id,
+    })
+
+    if (p.decisao === 'APROVADO') await p.escopo.problemas.avancarEtapa(p.problemaId, 'APROVADO_PELO_GESTOR')
+    else await p.escopo.problemas.recusar(p.problemaId)
+
+    return { decidido: true }
+}
+
 export type AcaoDoBotao = 'assumir' | 'escalar_engenharia' | 'resolver'
 
 /**

@@ -618,11 +618,11 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 - [ ] Canais `#eng-*` com o repositório do app e as ferramentas de engenharia do MCP
 - [x] `escalar("engenharia")` cria a thread de engenharia com o resumo técnico
 - [x] Problemas e vínculo de incidentes
-- [ ] Modelo de issue, `abrir_issue` e o Portão 1 em `#desk-aprovacoes`
+- [x] Modelo de issue, `abrir_issue` e o Portão 1 em `#desk-aprovacoes`
 - [x] Webhooks do GitHub (issue, PR, checks, deploy) atualizando `eng_links` e a etapa no widget
 - [ ] Portão de CI do Workers Builds como check obrigatório nas branches protegidas, builds de branches não produtivas ligados, revisão automática de PR, `CODEOWNERS`
 - [ ] Deploy de staging no merge e testes de fumaça com resultado na thread
-- [ ] Regras de limite: tamanho do diff, caminhos sensíveis, migrações
+- [x] Regras de limite: tamanho do diff, caminhos sensíveis, migrações
 - [ ] `CLAUDE.md` de cada app com as regras de correção via chamado
 
 * [ ] Estender as provas contra o Neon em branch descartável ao Conecta e ao Stagent, ou exigir revisão humana nas correções que toquem banco nesses apps
@@ -653,10 +653,25 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 > reprovou. O widget passa a mostrar a etapa em palavras de produto, sem issue,
 > PR nem nome de branch.
 >
-> **O que falta é o que escreve código**: `abrir_issue` com o portão de
-> aprovação, o agente N2 que lê o repositório e as regras de limite de diff.
-> Tudo isso precisa do GitHub App com permissão de ESCRITA (hoje é só
-> `contents: read`) e das proteções de branch configuradas — ver
+> **O Portão 1 está no ar, e é a trava central do projeto virada interface.**
+> `abrir_issue` NÃO abre issue: registra o pedido na trilha e põe dois botões na
+> frente de uma pessoa em `#desk-aprovacoes`. Só GESTOR e ADMIN decidem — um
+> atendente clicando em "Aprovar" contornaria a regra sem violá-la na letra, e
+> por isso o papel é conferido no servidor, não no botão. A recusa é estado final
+> do defeito, e a própria ferramenta se recusa a pedir de novo. O segundo clique
+> não decide outra vez: a primeira decisão é a que vale, e a trilha fica com uma
+> linha.
+>
+> As regras de limite dizem quando uma pessoa precisa LER o diff: mais de 400
+> linhas ou 20 arquivos, ou toque em migração, autenticação, middleware,
+> dependências, `CODEOWNERS` e configuração de CI — os dois últimos porque mudam
+> QUEM precisa aprovar, que é o caminho mais curto para desmontar a trava. Sem
+> conseguir medir o tamanho, exige revisão: "não sei o que mudou" tem de levar ao
+> mesmo lugar que "mudou muito".
+>
+> **O que falta é escrever o código da correção**: o agente N2 que lê o
+> repositório e abre o PR. Depende do GitHub App ganhar permissão de ESCRITA
+> (hoje é só `contents: read`) e das proteções de branch — ver
 > `docs/slack-bridge.md` para o padrão do que depende de painel.
 
 **Aceite:** um defeito plantado no staging do Odontobox, reportado pelo widget, chega a um PR em staging com teste, passando pela aprovação do gestor, sem intervenção manual além do clique. O usuário vê cada etapa no widget.

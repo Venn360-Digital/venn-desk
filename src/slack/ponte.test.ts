@@ -5,6 +5,7 @@ import { conexaoFalsa } from '../dados/testes/conexao-falsa.ts'
 import {
     abrirThreadDeEngenharia,
     aplicarBotao,
+    decidirPortaoDaIssue,
     aplicarReacao,
     avisarNaThread,
     espelharAbertura,
@@ -498,5 +499,98 @@ describe('abrirThreadDeEngenharia', () => {
             })
         ).toEqual({ abriu: false, motivo: 'sem_canal' })
         expect(slack.chamadas).toHaveLength(0)
+    })
+})
+
+describe('decidirPortaoDaIssue', () => {
+    const GESTOR = { id: 'ag-9', nome: 'Ana', papel: 'GESTOR' }
+    const comDefeito = {
+        'problem.findFirst': { id: 'pb-1', appId: 'app-1', titulo: 'agenda recorrente', etapa: 'ISSUE_CRIADA' },
+        'approval.findMany': [],
+        'problem.updateMany': { count: 1 },
+        'approval.create': { id: 'ap-1' },
+    }
+
+    it('gestor aprova: registra a decisão e avança a etapa', async () => {
+        const { conexao, chamadas } = conexaoFalsa(comDefeito)
+
+        const r = await decidirPortaoDaIssue({
+            escopo: escopoDoApp(conexao, 'app-1'),
+            problemaId: 'pb-1',
+            decisao: 'APROVADO',
+            agente: GESTOR,
+        })
+
+        expect(r).toEqual({ decidido: true })
+        const decisao = chamadas.find((c) => c.delegado === 'approval' && c.metodo === 'create')
+        expect(decisao?.args.data).toMatchObject({ portao: 'ISSUE', decisao: 'APROVADO', aprovadorId: 'ag-9' })
+        const etapa = chamadas.find((c) => c.delegado === 'problem' && c.metodo === 'updateMany')
+        expect(etapa?.args.data).toMatchObject({ etapa: 'APROVADO_PELO_GESTOR' })
+    })
+
+    it('AGENTE de nível 1 não aprova — seria a IA se aprovando por outro caminho', async () => {
+        /**
+         * A trava central do projeto: nenhuma credencial usada pela IA aprova
+         * issue, faz merge ou publica. Um atendente clicando em "Aprovar"
+         * contornaria a regra sem violá-la na letra.
+         */
+        const { conexao, chamadas } = conexaoFalsa(comDefeito)
+
+        const r = await decidirPortaoDaIssue({
+            escopo: escopoDoApp(conexao, 'app-1'),
+            problemaId: 'pb-1',
+            decisao: 'APROVADO',
+            agente: { id: 'ag-1', nome: 'Rita', papel: 'AGENTE' },
+        })
+
+        expect(r).toEqual({ decidido: false, motivo: 'sem_papel_de_aprovador' })
+        expect(chamadas).toHaveLength(0)
+    })
+
+    it('recusa é estado final do defeito', async () => {
+        const { conexao, chamadas } = conexaoFalsa(comDefeito)
+
+        expect(
+            await decidirPortaoDaIssue({
+                escopo: escopoDoApp(conexao, 'app-1'),
+                problemaId: 'pb-1',
+                decisao: 'RECUSADO',
+                agente: GESTOR,
+            })
+        ).toEqual({ decidido: true })
+
+        const etapa = chamadas.find((c) => c.delegado === 'problem' && c.metodo === 'updateMany')
+        expect(etapa?.args.data).toMatchObject({ etapa: 'RECUSADO_PELO_GESTOR' })
+    })
+
+    it('o segundo clique não decide de novo', async () => {
+        /// Dois gestores clicam ao mesmo tempo, ou alguém clica duas vezes. A
+        /// primeira decisão é a que vale, e a trilha fica com uma linha.
+        const { conexao, chamadas } = conexaoFalsa({
+            ...comDefeito,
+            'approval.findMany': [{ portao: 'ISSUE', decisao: 'APROVADO', aprovadorId: 'ag-9', criadoEm: new Date() }],
+        })
+
+        const r = await decidirPortaoDaIssue({
+            escopo: escopoDoApp(conexao, 'app-1'),
+            problemaId: 'pb-1',
+            decisao: 'RECUSADO',
+            agente: GESTOR,
+        })
+
+        expect(r).toEqual({ decidido: false, motivo: 'ja_decidido' })
+        expect(chamadas.some((c) => c.delegado === 'approval' && c.metodo === 'create')).toBe(false)
+    })
+
+    it('defeito de outro app não é decidido aqui', async () => {
+        const { conexao } = conexaoFalsa({ 'problem.findFirst': null })
+        expect(
+            await decidirPortaoDaIssue({
+                escopo: escopoDoApp(conexao, 'app-1'),
+                problemaId: 'pb-de-outro',
+                decisao: 'APROVADO',
+                agente: GESTOR,
+            })
+        ).toEqual({ decidido: false, motivo: 'defeito_de_outro_app' })
     })
 })
