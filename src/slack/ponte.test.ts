@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { escopoDoApp } from '../dados/escopo.ts'
 import { conexaoFalsa } from '../dados/testes/conexao-falsa.ts'
-import { aplicarReacao, espelharAbertura, notaDaThread } from './ponte.ts'
+import { aplicarBotao, aplicarReacao, espelharAbertura, notaDaThread, responderPelaThread } from './ponte.ts'
 
 const ABERTURA = {
     numero: 'ODB-1042',
@@ -249,5 +249,106 @@ describe('aplicarReacao', () => {
             agente: AGENTE,
         })
         expect(r.acao).toBe(null)
+    })
+})
+
+describe('aplicarBotao', () => {
+    const comChamado = {
+        'ticket.findFirst': { id: 'tkt-1', appId: 'app-1', status: 'NOVO', numero: 1042 },
+        'ticket.updateMany': { count: 1 },
+    }
+
+    it('assumir, escalar e resolver aplicam o evento e a trilha', async () => {
+        for (const [acao, evento] of [
+            ['assumir', 'assumir'],
+            ['escalar_engenharia', 'escalar_engenharia'],
+            ['resolver', 'resolver'],
+        ] as const) {
+            const { conexao, chamadas } = conexaoFalsa(comChamado)
+            const r = await aplicarBotao({
+                escopo: escopoDoApp(conexao, 'app-1'),
+                acao,
+                chamadoId: 'tkt-1',
+                agente: AGENTE,
+            })
+            expect(r).toEqual({ feito: true })
+            expect(chamadas.some((c) => c.delegado === 'ticketEvent' && JSON.stringify(c.args).includes(evento))).toBe(true)
+        }
+    })
+
+    it('chamado de OUTRO app não vira escrita', async () => {
+        /**
+         * O `value` do botão fomos nós que montamos, mas ele volta pela rede.
+         * Conferir contra o escopo é o que impede um payload remontado de
+         * escrever no chamado de outro produto.
+         */
+        const { conexao, chamadas } = conexaoFalsa({ 'ticket.findFirst': null })
+        const r = await aplicarBotao({
+            escopo: escopoDoApp(conexao, 'app-1'),
+            acao: 'resolver',
+            chamadoId: 'tkt-de-outro',
+            agente: AGENTE,
+        })
+
+        expect(r).toEqual({ feito: false, motivo: 'chamado_de_outro_app' })
+        expect(chamadas.some((c) => c.metodo === 'updateMany' || c.metodo === 'create')).toBe(false)
+    })
+
+    it('quem não está em agents não clica por ninguém', async () => {
+        const { conexao, chamadas } = conexaoFalsa(comChamado)
+        expect(
+            await aplicarBotao({ escopo: escopoDoApp(conexao, 'app-1'), acao: 'assumir', chamadoId: 'tkt-1', agente: null })
+        ).toEqual({ feito: false, motivo: 'autor_nao_cadastrado' })
+        expect(chamadas).toHaveLength(0)
+    })
+})
+
+describe('responderPelaThread', () => {
+    const comChamado = {
+        'ticket.findFirst': { id: 'tkt-1', appId: 'app-1', status: 'ABERTO', numero: 1042 },
+        'ticketMessage.create': { id: 'msg-1', criadoEm: new Date() },
+        'ticket.updateMany': { count: 1 },
+    }
+
+    it('a resposta do modal é PÚBLICA, ao contrário da mensagem de thread', async () => {
+        const { conexao, chamadas } = conexaoFalsa(comChamado)
+        const r = await responderPelaThread({
+            escopo: escopoDoApp(conexao, 'app-1'),
+            chamadoId: 'tkt-1',
+            texto: 'Abra Vendas e clique em Novo item.',
+            agente: AGENTE,
+            modoSombra: false,
+        })
+
+        expect(r).toEqual({ enviada: true })
+        const criada = chamadas.find((c) => c.delegado === 'ticketMessage' && c.metodo === 'create')
+        expect(criada?.args.data).toMatchObject({ visibilidade: 'PUBLICA', origem: 'SLACK', rascunho: false })
+    })
+
+    it('em modo sombra fica RASCUNHO, e nada sai', async () => {
+        /**
+         * O modo sombra não é sobre quem escreve: é sobre o app ainda não ter
+         * autorizado saída automática pela ponte. Quem aprova é o Console.
+         */
+        const { conexao, chamadas } = conexaoFalsa(comChamado)
+        const r = await responderPelaThread({
+            escopo: escopoDoApp(conexao, 'app-1'),
+            chamadoId: 'tkt-1',
+            texto: 'resposta',
+            agente: AGENTE,
+            modoSombra: true,
+        })
+
+        expect(r).toEqual({ enviada: false })
+        const criada = chamadas.find((c) => c.delegado === 'ticketMessage' && c.metodo === 'create')
+        expect(criada?.args.data).toMatchObject({ rascunho: true, visibilidade: 'PUBLICA' })
+    })
+
+    it('texto vazio e autor de fora não escrevem', async () => {
+        const { conexao, chamadas } = conexaoFalsa(comChamado)
+        const escopo = escopoDoApp(conexao, 'app-1')
+        expect((await responderPelaThread({ escopo, chamadoId: 'tkt-1', texto: '  ', agente: AGENTE, modoSombra: false })).motivo).toBe('vazia')
+        expect((await responderPelaThread({ escopo, chamadoId: 'tkt-1', texto: 'oi', agente: null, modoSombra: false })).motivo).toBe('autor_nao_cadastrado')
+        expect(chamadas).toHaveLength(0)
     })
 })

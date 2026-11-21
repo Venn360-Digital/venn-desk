@@ -126,6 +126,23 @@ export async function postar(config: ConfigDoSlack, postagem: Postagem): Promise
  * Separado de `postar` porque o método é outro e porque o `ts` aqui é
  * obrigatório: atualizar sem saber o quê não existe.
  */
+/**
+ * Abre um modal (`views.open`).
+ *
+ * O `trigger_id` vem do clique e vale três segundos — por isso esta chamada não
+ * pode esperar nada antes dela. É o único caminho pelo qual uma resposta ao
+ * CLIENTE pode sair do Slack: o atendente escreve no modal, com o aviso de que
+ * aquilo chega a quem abriu o chamado. Digitar na thread nunca alcança o
+ * cliente (ver `ponte.ts`).
+ */
+export async function abrirModal(
+    config: ConfigDoSlack,
+    alvo: { triggerId: string; view: unknown }
+): Promise<{ ok: true } | { ok: false; erro: string }> {
+    const resposta = await chamar(config, 'views.open', { trigger_id: alvo.triggerId, view: alvo.view })
+    return resposta.ok ? { ok: true } : resposta
+}
+
 export async function atualizar(
     config: ConfigDoSlack,
     alvo: { canal: string; ts: string; mensagem: MensagemDoSlack }

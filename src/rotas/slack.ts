@@ -7,7 +7,10 @@ import { conferirAssinatura } from '../slack/assinatura.ts'
 import { appPorCanal } from '../dados/apps.ts'
 import { escopoDoApp } from '../dados/escopo.ts'
 import { agentePorSlackId } from '../dados/agentes.ts'
-import { aplicarReacao, notaDaThread } from '../slack/ponte.ts'
+import { aplicarBotao, aplicarReacao, notaDaThread, responderPelaThread } from '../slack/ponte.ts'
+import { abrirModal } from '../slack/cliente.ts'
+import { modalDeResposta } from '../slack/mensagens.ts'
+import { appsAtivos } from '../dados/apps.ts'
 
 /**
  * A ponte com o Slack (seção 8) — por ora, só a metade que recebe.
@@ -68,11 +71,122 @@ rotasDoSlack.post('/slack/comandos', async (c) => {
     })
 })
 
-rotasDoSlack.post('/slack/interativo', async (c) => {
-    if (!(await conferido(c)).ok) return c.json({ erro: 'não autorizado' }, 401)
+/**
+ * Os botões e o modal (seção 8).
+ *
+ * O corpo vem como formulário com um campo `payload` contendo JSON — formato do
+ * Slack, não nosso. A assinatura cobre os bytes crus, então ela é conferida
+ * antes de qualquer parse.
+ *
+ * **Tudo responde 200 depressa.** O Slack desiste em três segundos e reentrega;
+ * uma resposta lenta vira ação dobrada. Por isso o trabalho que fala com o
+ * banco vai em `waitUntil`, menos a abertura do modal, que precisa acontecer
+ * dentro da requisição porque o `trigger_id` vale três segundos.
+ */
+rotasDoSlack.post('/slack/interativo', comCliente, async (c) => {
+    const conferencia = await conferido(c)
+    if (!conferencia.ok) return c.json({ erro: 'não autorizado' }, 401)
 
-    /// O Slack trata 200 com corpo vazio como "recebido, nada a mostrar".
-    console.log('[slack] interação recebida antes da ponte estar no ar')
+    const campos = new URLSearchParams(conferencia.corpoCru)
+    let payload: Record<string, unknown>
+    try {
+        payload = JSON.parse(campos.get('payload') ?? '{}') as Record<string, unknown>
+    } catch {
+        return c.json({ erro: 'payload inválido' }, 400)
+    }
+
+    const usuario = ((payload['user'] ?? {}) as { id?: unknown }).id
+    const agenteDoSlack =
+        typeof usuario === 'string' ? await agentePorSlackId(c.get('cliente'), usuario) : null
+    const agente = agenteDoSlack === null ? null : { id: agenteDoSlack.id, nome: agenteDoSlack.nome }
+
+    const canal = ((payload['channel'] ?? {}) as { id?: unknown }).id
+    const app = typeof canal === 'string' ? await appPorCanal(c.get('cliente'), canal) : null
+
+    if (payload['type'] === 'block_actions') {
+        if (app === null) return c.json(OK)
+        const escopo = escopoDoApp(c.get('cliente'), app.id)
+        const acao = ((payload['actions'] ?? []) as { action_id?: unknown; value?: unknown }[])[0] ?? {}
+        const actionId = typeof acao.action_id === 'string' ? acao.action_id : ''
+        const chamadoId = typeof acao.value === 'string' ? acao.value : ''
+
+        if (actionId === 'responder_usuario') {
+            /**
+             * O modal abre DENTRO da requisição: o `trigger_id` expira em três
+             * segundos, e mandá-lo para `waitUntil` o perderia.
+             */
+            const chamado = chamadoId === '' ? null : await escopo.chamados.porId(chamadoId)
+            const triggerId = payload['trigger_id']
+            if (chamado === null || typeof triggerId !== 'string') return c.json(OK)
+
+            const aberto = await abrirModal(
+                { token: c.env.SLACK_BOT_TOKEN },
+                { triggerId, view: modalDeResposta({ chamadoId, numero: `${app.prefixo}-${chamado.numero}` }) }
+            )
+            if (!aberto.ok) console.error('[slack] modal não abriu:', aberto.erro)
+            return c.json(OK)
+        }
+
+        if (actionId === 'assumir' || actionId === 'escalar_engenharia' || actionId === 'resolver') {
+            c.executionCtx.waitUntil(
+                aplicarBotao({ escopo, acao: actionId, chamadoId, agente })
+                    .then((r) => {
+                        if (!r.feito) console.log('[slack] botão sem efeito:', JSON.stringify({ actionId, motivo: r.motivo }))
+                    })
+                    .catch((erro: unknown) => console.error('[slack] botão falhou:', erro))
+            )
+            return c.json(OK)
+        }
+
+        /// `abrir_no_console` é só um link: o Slack manda o clique, e não há
+        /// nada a fazer deste lado.
+        return c.json(OK)
+    }
+
+    if (payload['type'] === 'view_submission') {
+        const view = (payload['view'] ?? {}) as Record<string, unknown>
+        if (view['callback_id'] !== 'responder_usuario') return c.json(OK)
+
+        /**
+         * O id do chamado vem de `private_metadata`, que fomos nós que
+         * preenchemos ao abrir o modal. O `view_submission` chega sem canal e
+         * sem thread, então o app é descoberto pelo próprio chamado — e a
+         * escrita só acontece se ele existir no escopo daquele app.
+         */
+        const chamadoId = typeof view['private_metadata'] === 'string' ? view['private_metadata'] : ''
+        const valores = (view['state'] ?? {}) as { values?: Record<string, Record<string, { value?: unknown }>> }
+        const texto = valores.values?.['resposta']?.['texto']?.value
+        if (chamadoId === '' || typeof texto !== 'string') return c.json(OK)
+
+        const cliente = c.get('cliente')
+        c.executionCtx.waitUntil(
+            (async () => {
+                try {
+                    for (const candidato of await appsAtivos(cliente)) {
+                        const escopo = escopoDoApp(cliente, candidato.id)
+                        if ((await escopo.chamados.porId(chamadoId)) === null) continue
+                        const r = await responderPelaThread({
+                            escopo,
+                            chamadoId,
+                            texto,
+                            agente,
+                            modoSombra: candidato.modoSombra,
+                        })
+                        console.log('[slack] resposta pelo modal:', JSON.stringify({ app: candidato.slug, ...r }))
+                        return
+                    }
+                    console.log('[slack] modal de chamado inexistente')
+                } catch (erro) {
+                    console.error('[slack] resposta pelo modal falhou:', erro)
+                }
+            })()
+        )
+
+        /// Corpo vazio fecha o modal. Qualquer outra coisa o Slack mostra como
+        /// erro de validação ao atendente.
+        return c.body(null, 200)
+    }
+
     return c.json(OK)
 })
 

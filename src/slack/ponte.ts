@@ -144,6 +144,99 @@ export async function notaDaThread(p: {
     return { destino: 'nota-interna' }
 }
 
+export type AcaoDoBotao = 'assumir' | 'escalar_engenharia' | 'resolver'
+
+/**
+ * Os botões da mensagem de abertura que agem sozinhos.
+ *
+ * "Responder ao usuário" não está aqui porque ele não age: abre um modal, e
+ * quem age é o envio dele. A separação é deliberada — um clique que já mandasse
+ * mensagem ao cliente seria um clique sem volta.
+ *
+ * O `chamadoId` vem do `value` do botão, que fomos NÓS que montamos quando a
+ * mensagem foi postada. Mesmo assim ele é conferido contra o escopo do app
+ * antes de qualquer escrita: o payload chega pela rede, e um id de outro app
+ * não pode virar escrita aqui.
+ */
+export async function aplicarBotao(p: {
+    escopo: EscopoDoApp
+    acao: AcaoDoBotao
+    chamadoId: string
+    agente: { id: string; nome: string } | null
+}): Promise<{ feito: boolean; motivo?: string }> {
+    if (p.agente === null) return { feito: false, motivo: 'autor_nao_cadastrado' }
+
+    const chamado = await p.escopo.chamados.porId(p.chamadoId)
+    if (chamado === null) return { feito: false, motivo: 'chamado_de_outro_app' }
+
+    const autor: Autor = { ator: `agent:${p.agente.id}` }
+
+    try {
+        if (p.acao === 'assumir') {
+            await p.escopo.chamados.alterar(p.chamadoId, { assigneeId: p.agente.id }, autor)
+            await p.escopo.chamados.aplicarEvento(p.chamadoId, 'assumir', autor)
+        } else if (p.acao === 'escalar_engenharia') {
+            await p.escopo.chamados.alterar(p.chamadoId, { nivel: 'N2' }, autor)
+            await p.escopo.chamados.aplicarEvento(p.chamadoId, 'escalar_engenharia', autor)
+        } else {
+            await p.escopo.chamados.aplicarEvento(p.chamadoId, 'resolver', autor)
+        }
+    } catch (erro) {
+        console.error(`[slack] botão ${p.acao} recusado:`, erro instanceof Error ? erro.message : erro)
+        return { feito: false, motivo: 'transicao_recusada' }
+    }
+
+    return { feito: true }
+}
+
+/**
+ * A resposta escrita no modal, que é a ÚNICA que sai do Slack para o cliente.
+ *
+ * Em modo sombra ela não sai: fica rascunho, como a da IA. O atendente que
+ * clicou é humano, mas o modo sombra não é sobre quem escreve — é sobre o app
+ * ainda não ter autorizado saída automática pela ponte, e o Console é onde se
+ * aprova.
+ */
+export async function responderPelaThread(p: {
+    escopo: EscopoDoApp
+    chamadoId: string
+    texto: string
+    agente: { id: string; nome: string } | null
+    /** `App.modoSombra`. */
+    modoSombra: boolean
+}): Promise<{ enviada: boolean; motivo?: string }> {
+    if (p.agente === null) return { enviada: false, motivo: 'autor_nao_cadastrado' }
+
+    const texto = p.texto.trim()
+    if (texto === '') return { enviada: false, motivo: 'vazia' }
+
+    const chamado = await p.escopo.chamados.porId(p.chamadoId)
+    if (chamado === null) return { enviada: false, motivo: 'chamado_de_outro_app' }
+
+    try {
+        await p.escopo.mensagens.adicionar(
+            {
+                ticketId: p.chamadoId,
+                autor: 'HUMANO',
+                corpo: texto,
+                visibilidade: 'PUBLICA',
+                origem: 'SLACK',
+                autorId: p.agente.id,
+                rascunho: p.modoSombra,
+            },
+            { ator: `agent:${p.agente.id}` }
+        )
+        if (!p.modoSombra) {
+            await p.escopo.chamados.aplicarEvento(p.chamadoId, 'responder_usuario', { ator: `agent:${p.agente.id}` })
+        }
+    } catch (erro) {
+        console.error('[slack] resposta ao cliente não gravada:', erro)
+        return { enviada: false, motivo: 'falha_ao_gravar' }
+    }
+
+    return { enviada: !p.modoSombra }
+}
+
 /** 👀 assume o chamado, ✅ resolve. Só de quem está em `agents` (seção 8). */
 export const REACOES: Record<string, 'assumir' | 'resolver'> = {
     eyes: 'assumir',

@@ -115,11 +115,63 @@ export function mensagemDeAbertura(dados: DadosDaAbertura): MensagemDoSlack {
                     },
                     {
                         type: 'button',
+                        text: { type: 'plain_text', text: 'Responder ao usuário' },
+                        action_id: 'responder_usuario',
+                        value: dados.chamadoId,
+                    },
+                    {
+                        type: 'button',
                         text: { type: 'plain_text', text: 'Escalar para engenharia' },
                         action_id: 'escalar_engenharia',
                         value: dados.chamadoId,
                     },
+                    {
+                        type: 'button',
+                        text: { type: 'plain_text', text: 'Resolver' },
+                        action_id: 'resolver',
+                        value: dados.chamadoId,
+                    },
                 ],
+            },
+        ],
+    }
+}
+
+/**
+ * O modal de resposta ao cliente.
+ *
+ * Existe para que responder ao cliente seja um ATO, e não o efeito de digitar
+ * no lugar errado. O aviso em cima não é enfeite: na thread, a mesma frase
+ * viraria nota interna, e a diferença entre as duas coisas é irreversível.
+ *
+ * `private_metadata` carrega o id do chamado porque o `view_submission` chega
+ * sem canal e sem thread — é o único jeito de saber a que chamado a resposta
+ * pertence sem confiar em texto digitado.
+ */
+export function modalDeResposta(dados: { chamadoId: string; numero: string }): unknown {
+    return {
+        type: 'modal',
+        callback_id: 'responder_usuario',
+        private_metadata: dados.chamadoId,
+        title: { type: 'plain_text', text: `Responder ${dados.numero}`.slice(0, 24) },
+        submit: { type: 'plain_text', text: 'Enviar ao cliente' },
+        close: { type: 'plain_text', text: 'Cancelar' },
+        blocks: [
+            {
+                type: 'section',
+                text: { type: 'mrkdwn', text: '*Isto chega ao cliente.* Para falar só com o time, escreva na thread.' },
+            },
+            {
+                type: 'input',
+                block_id: 'resposta',
+                label: { type: 'plain_text', text: 'Mensagem' },
+                element: {
+                    type: 'plain_text_input',
+                    action_id: 'texto',
+                    multiline: true,
+                    max_length: 3000,
+                    placeholder: { type: 'plain_text', text: 'Em passos, em português claro.' },
+                },
             },
         ],
     }

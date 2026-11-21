@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { mensagemDeAbertura, mensagemDeAtualizacao, type DadosDaAbertura } from './mensagens.ts'
+import { mensagemDeAbertura, mensagemDeAtualizacao, modalDeResposta, type DadosDaAbertura } from './mensagens.ts'
 
 const BASE: DadosDaAbertura = {
     numero: 'ODB-1042',
@@ -27,7 +27,7 @@ describe('a mensagem de abertura', () => {
         expect(text).toContain('obter_chamado("ODB-1042")')
     })
 
-    it('traz os três botões, amarrados ao chamado', () => {
+    it('traz os cinco botões, amarrados ao chamado', () => {
         const { blocks } = mensagemDeAbertura(BASE)
         const acoes = blocks[1] as { block_id: string; elements: { action_id: string }[] }
 
@@ -35,8 +35,29 @@ describe('a mensagem de abertura', () => {
         expect(acoes.elements.map((e) => e.action_id)).toEqual([
             'abrir_no_console',
             'assumir',
+            'responder_usuario',
             'escalar_engenharia',
+            'resolver',
         ])
+    })
+
+    it('o botão de responder abre um modal que avisa quem vai ler', () => {
+        /**
+         * O aviso não é enfeite. Na thread, a mesma frase viraria nota interna
+         * (ver `ponte.ts`), e a diferença entre as duas coisas é irreversível —
+         * por isso responder ao cliente é um ato separado, com confirmação.
+         */
+        const modal = modalDeResposta({ chamadoId: 'tkt-1', numero: 'ODB-1042' }) as {
+            callback_id: string
+            private_metadata: string
+            blocks: { text?: { text?: string } }[]
+        }
+
+        expect(modal.callback_id).toBe('responder_usuario')
+        /// O id vem daqui, nunca de texto digitado: o `view_submission` chega
+        /// sem canal e sem thread.
+        expect(modal.private_metadata).toBe('tkt-1')
+        expect(modal.blocks[0]?.text?.text).toContain('chega ao cliente')
     })
 
     it('NUNCA leva nome nem e-mail do solicitante', () => {
