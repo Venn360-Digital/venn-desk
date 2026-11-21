@@ -47,6 +47,7 @@ import { credencialDoAmbiente } from '../conhecimento/github-app.ts'
 import { urlDaFonte } from '../conhecimento/rotulos.ts'
 import { EXPIRA_MS, pedirSincronizacao } from '../conhecimento/sincronizar.ts'
 import { fontesDesatualizadas } from '../conhecimento/sugerir.ts'
+import { levantarDivergencias } from '../conhecimento/comparar-apps.ts'
 
 /**
  * A API interna — o que o Console consome, e o que a ponte do Slack vai chamar
@@ -252,6 +253,33 @@ rotasInternas.get('/api/console/fila', comCliente, comSessaoDeAgente, async (c) 
  * app por app faria o primeiro aparecer preenchido enquanto os outros ainda
  * giram.
  */
+/**
+ * O que difere entre os apps além do vocabulário (a etapa 8 do plano).
+ *
+ * Rota GLOBAL, e não por app, porque a pergunta é uma comparação: "o Stagent
+ * diz isto e o Odontobox diz aquilo". Pedi-la dentro de `/app/:app/` daria a
+ * impressão de que o resultado é só daquele app.
+ *
+ * **Custa zero.** É comparação de texto sobre o que já está no banco, sem
+ * modelo e sem GitHub. Apps sem sincronização concluída desde que o vocabulário
+ * passou a ser gravado no resultado ficam de fora, e a tela diz isso em vez de
+ * mostrar uma lista vazia como se não houvesse divergência.
+ */
+rotasInternas.get('/api/console/divergencias', comCliente, comSessaoDeAgente, async (c) => {
+    const { apps, achados } = await levantarDivergencias(c.get('cliente'))
+
+    return c.json({
+        apps,
+        referencia: apps[0] ?? null,
+        achados,
+        porTipo: {
+            conteudo: achados.filter((d) => d.tipo === 'conteudo').length,
+            ausente: achados.filter((d) => d.tipo === 'ausente').length,
+            palavraDeOutroNicho: achados.filter((d) => d.tipo === 'palavra-de-outro-nicho').length,
+        },
+    })
+})
+
 rotasInternas.get('/api/console/filtros', comCliente, comSessaoDeAgente, async (c) => {
     const cliente = c.get('cliente')
     const apps = await appsAtivos(cliente)

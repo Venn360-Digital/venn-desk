@@ -3,7 +3,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { ExternalLink, Globe, Plus } from 'lucide-react'
 
-import { api, type AppCadastrado, type Artigo, type OrigemDoArtigo, type ResumoDeConsultas, type StatusDoArtigo } from '../api.ts'
+import {
+    api,
+    type AppCadastrado,
+    type Artigo,
+    type Divergencia,
+    type Divergencias as DivergenciasDaApi,
+    type OrigemDoArtigo,
+    type ResumoDeConsultas,
+    type StatusDoArtigo,
+} from '../api.ts'
 import { Sincronizacao } from '../componentes/Sincronizacao.tsx'
 import { Aviso, Botao, Campo, Quando, Vazio } from '../componentes/ui.tsx'
 
@@ -170,6 +179,8 @@ export function Base({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
             {app !== undefined ? <Sincronizacao app={app} podeEditar={podeEditar} /> : null}
 
             {erro !== null ? <Aviso>{erro}</Aviso> : null}
+
+            <Divergencias />
 
             {consultas !== undefined && consultas.lacunas.length > 0 ? (
                 <Lacunas consultas={consultas} aoEscrever={podeEditar ? (exemplo) => {
@@ -499,6 +510,92 @@ function Editor({
  * começo?", e a resposta honesta não é um palpite — é o que as pessoas
  * perguntaram e não acharam, do mais frequente ao menos.
  */
+const ROTULO_DA_DIVERGENCIA: Record<Divergencia['tipo'], string> = {
+    conteudo: 'texto diferente',
+    ausente: 'falta aqui',
+    'palavra-de-outro-nicho': 'palavra de outro nicho',
+}
+
+/**
+ * O que difere entre os três apps além do vocabulário.
+ *
+ * Fica nesta tela, e não numa própria, porque é a mesma pergunta da base: o que
+ * está errado no que o agente vai ler. Recolhido por padrão — é diagnóstico,
+ * não trabalho do dia — e silencioso quando não há nada.
+ */
+function Divergencias() {
+    const [aberto, setAberto] = useState(false)
+    const { data } = useQuery({
+        queryKey: ['divergencias'],
+        queryFn: () => api<DivergenciasDaApi>('/divergencias'),
+        staleTime: 5 * 60_000,
+    })
+
+    if (data === undefined) return null
+
+    /**
+     * Sem dois apps comparáveis não há resposta, e dizer isso é diferente de
+     * mostrar lista vazia: lista vazia leria como "nada divergente", quando o
+     * certo é "ainda não deu para comparar". O vocabulário entra no resultado
+     * da sincronização, então basta uma rodada nova.
+     */
+    if (data.apps.length < 2) {
+        return (
+            <section className="rounded-sm border border-borda bg-superficie p-4 text-xs text-tinta-fraca">
+                A comparação entre os apps fica disponível depois da próxima sincronização de cada um.
+            </section>
+        )
+    }
+
+    if (data.achados.length === 0) {
+        return (
+            <section className="rounded-sm border border-borda bg-superficie p-4 text-xs text-tinta-fraca">
+                Nada diverge entre {data.apps.join(', ')} além do vocabulário de cada marca.
+            </section>
+        )
+    }
+
+    return (
+        <section className="space-y-2 rounded-sm border border-atencao/40 bg-atencao-fundo p-4">
+            <button type="button" onClick={() => setAberto(!aberto)} className="flex w-full items-baseline justify-between gap-3 text-left">
+                <h2 className="text-xs font-medium text-atencao">
+                    {data.achados.length} diferença(s) entre os apps além do vocabulário
+                </h2>
+                <span className="shrink-0 text-[11px] text-tinta-sutil">
+                    {data.porTipo.conteudo} de texto · {data.porTipo.ausente} faltando ·{' '}
+                    {data.porTipo.palavraDeOutroNicho} de outro nicho · {aberto ? 'fechar' : 'ver'}
+                </span>
+            </button>
+
+            <p className="text-[11px] text-tinta-sutil">
+                Comparado com o {data.referencia}, que é o app mais antigo. Os três produtos
+                compartilham o mesmo código, então o que difere aqui foi escrito à mão em algum
+                deles.
+            </p>
+
+            {aberto ? (
+                <ul className="space-y-1">
+                    {data.achados.slice(0, 40).map((d) => (
+                        <li key={`${d.app}-${d.tipo}-${d.chave}`} className="text-xs">
+                            <span className="text-tinta-sutil">{d.app}</span>{' '}
+                            <span className="rounded-xs bg-superficie px-1 py-0.5 text-[10px] text-tinta-fraca">
+                                {ROTULO_DA_DIVERGENCIA[d.tipo]}
+                            </span>{' '}
+                            <span className="text-tinta">{d.chave}</span>
+                            <span className="ml-2 text-tinta-sutil">{d.detalhe}</span>
+                        </li>
+                    ))}
+                    {data.achados.length > 40 ? (
+                        <li className="text-[11px] text-tinta-sutil">
+                            e mais {data.achados.length - 40}.
+                        </li>
+                    ) : null}
+                </ul>
+            ) : null}
+        </section>
+    )
+}
+
 function Lacunas({
     consultas,
     aoEscrever,

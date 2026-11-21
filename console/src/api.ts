@@ -153,6 +153,24 @@ export interface Artigo {
     } | null
 }
 
+/** O que difere entre os apps além do vocabulário. */
+export interface Divergencia {
+    tipo: 'conteudo' | 'ausente' | 'palavra-de-outro-nicho'
+    chave: string
+    /** O app em que o problema aparece. */
+    app: string
+    comparadoCom: string
+    detalhe: string
+}
+
+export interface Divergencias {
+    /** Os apps que entraram na comparação. O primeiro é a referência. */
+    apps: string[]
+    referencia: string | null
+    achados: Divergencia[]
+    porTipo: { conteudo: number; ausente: number; palavraDeOutroNicho: number }
+}
+
 /** Uma rodada de sincronização da base com o repositório. */
 export interface Sincronizacao {
     id: string
