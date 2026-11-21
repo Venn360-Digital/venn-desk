@@ -1,5 +1,5 @@
 import type { Prisma, PrismaClient } from '#prisma'
-import type { Attachment, CsatResponse, HealthEpisode, HealthState, KbArticle, KbEvento, KbSincronizacao, Problem, SlaTimer, Ticket, TicketEvent, TicketMessage } from '#prisma'
+import type { Attachment, CsatResponse, HealthEpisode, HealthState, KbArticle, KbEvento, KbSincronizacao, Problem, SlackThread, SlaTimer, Ticket, TicketEvent, TicketMessage } from '#prisma'
 
 import { ErroDeDominio } from '../lib/erros.ts'
 import { transicionar, type Evento, type Status } from '../dominio/estados.ts'
@@ -80,6 +80,13 @@ export interface DadosDaMensagem {
     origem?: 'WIDGET' | 'SLACK' | 'MCP' | 'CONSOLE' | 'PORTAL' | 'EMAIL'
     autorId?: string
     rascunho?: boolean
+    /**
+     * O id da mensagem no sistema de fora (o `ts` do Slack).
+     *
+     * É o que torna a ponte idempotente: o Events API reentrega, e sem isto a
+     * mesma mensagem de thread viraria duas notas internas.
+     */
+    externoId?: string
 }
 
 export interface FiltroDeLista {
@@ -483,6 +490,27 @@ export interface EscopoDoApp {
             depois?: Prisma.InputJsonValue
         }): Promise<void>
         doArtigo(artigoId: string): Promise<KbEvento[]>
+    }
+
+    /**
+     * As threads do Slack (seção 8): uma por chamado no canal de suporte, mais
+     * a de engenharia quando o chamado é escalado.
+     *
+     * Mora no escopo como tudo: o canal é do app, e uma thread do Odontobox
+     * nunca é encontrada pela consulta do Conecta.
+     */
+    threadsDoSlack: {
+        porChamado(ticketId: string): Promise<SlackThread | null>
+        /** O caminho de volta: o Slack manda canal e `ts`, e nós achamos o chamado. */
+        porThread(canal: string, threadTs: string): Promise<SlackThread | null>
+        /**
+         * Registra a thread do chamado. Idempotente por `ticketId`: se já
+         * existe, devolve a que existe sem tocar nela — duas aberturas
+         * espelhadas não podem virar duas threads.
+         */
+        registrar(dados: { ticketId: string; canal: string; threadTs: string }): Promise<{ thread: SlackThread; criada: boolean }>
+        /** A thread de engenharia, aberta quando o chamado é escalado. */
+        registrarEngenharia(ticketId: string, dados: { canal: string; threadTs: string }): Promise<void>
     }
 
     /**
@@ -974,6 +1002,7 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                         origem: dados.origem ?? 'WIDGET',
                         rascunho: dados.rascunho ?? false,
                         ...(dados.autorId === undefined ? {} : { autorId: dados.autorId }),
+                        ...(dados.externoId === undefined ? {} : { externoId: dados.externoId }),
                     },
                 })
 
@@ -1920,6 +1949,41 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 return conexao.kbEvento.findMany({
                     where: { appId, artigoId },
                     orderBy: { criadoEm: 'asc' },
+                })
+            },
+        },
+
+        threadsDoSlack: {
+            async porChamado(ticketId) {
+                return conexao.slackThread.findFirst({ where: { ticketId, appId } })
+            },
+
+            async porThread(canal, threadTs) {
+                /**
+                 * O `appId` está no `where` como em toda consulta, e aqui ele
+                 * faz trabalho de verdade: um canal mal cadastrado em dois apps
+                 * devolveria a thread do vizinho, e a nota interna de um
+                 * chamado iria para o outro produto.
+                 */
+                return conexao.slackThread.findFirst({ where: { canal, threadTs, appId } })
+            },
+
+            async registrar(dados) {
+                const existente = await conexao.slackThread.findFirst({
+                    where: { ticketId: dados.ticketId, appId },
+                })
+                if (existente !== null) return { thread: existente, criada: false }
+
+                const thread = await conexao.slackThread.create({
+                    data: { appId, ticketId: dados.ticketId, canal: dados.canal, threadTs: dados.threadTs },
+                })
+                return { thread, criada: true }
+            },
+
+            async registrarEngenharia(ticketId, dados) {
+                await conexao.slackThread.updateMany({
+                    where: { ticketId, appId },
+                    data: { canalEngenharia: dados.canal, threadTsEngenharia: dados.threadTs },
                 })
             },
         },

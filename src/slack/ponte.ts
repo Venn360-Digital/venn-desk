@@ -1,0 +1,196 @@
+import type { EscopoDoApp } from '../dados/escopo.ts'
+import type { Autor } from '../dados/escopo.ts'
+import { postar, type ConfigDoSlack } from './cliente.ts'
+import { mensagemDeAbertura, type DadosDaAbertura } from './mensagens.ts'
+import { neutralizar } from './neutralizar.ts'
+
+/**
+ * A ponte entre o Venn Desk e o Slack (seção 8).
+ *
+ * **Quem é a fonte da verdade.** O chamado. O Slack é uma superfície de
+ * trabalho: tudo o que acontece lá vira evento e mensagem aqui, e nada existe
+ * só lá. É por isso que a thread guarda o `ts` do Slack e não o contrário.
+ *
+ * **Falhar aqui não derruba nada.** Nenhuma função desta ponte lança: um Slack
+ * fora do ar, um token errado ou um canal apagado não podem impedir um chamado
+ * de ser aberto nem uma resposta de ser enviada. O que não espelha vira log, e
+ * o Console continua mostrando a verdade.
+ *
+ * **O que NUNCA vai para o Slack.** O texto do solicitante sem rótulo e sem
+ * neutralizar, anexo e dado pessoal. O conteúdo do chamado o Claude lê por
+ * ferramenta, em campo marcado como dado — ver `neutralizar.ts` e a mensagem de
+ * abertura.
+ */
+
+export interface ResultadoDoEspelho {
+    espelhou: boolean
+    /** Por que não espelhou, quando não espelhou. Vai para o log, não para o cliente. */
+    motivo?: 'sem_canal' | 'sem_token' | 'ja_existia' | 'falha_no_slack'
+}
+
+/**
+ * Posta o chamado no canal de suporte do app e registra a thread.
+ *
+ * Idempotente de propósito: a abertura pode ser espelhada duas vezes (uma
+ * reentrega de fila, um clique duplo no widget), e duas threads para o mesmo
+ * chamado dividiriam a conversa em duas — o atendente responderia numa e o
+ * cliente leria a outra.
+ */
+export async function espelharAbertura(p: {
+    escopo: EscopoDoApp
+    config: ConfigDoSlack
+    canal: string | null
+    dados: DadosDaAbertura
+}): Promise<ResultadoDoEspelho> {
+    if (p.canal === null || p.canal === '') return { espelhou: false, motivo: 'sem_canal' }
+
+    const jaTem = await p.escopo.threadsDoSlack.porChamado(p.dados.chamadoId)
+    if (jaTem !== null) return { espelhou: false, motivo: 'ja_existia' }
+
+    const resposta = await postar(p.config, { canal: p.canal, mensagem: mensagemDeAbertura(p.dados) })
+    if (!resposta.ok) {
+        console.error('[slack] não espelhei a abertura:', resposta.erro)
+        return { espelhou: false, motivo: resposta.erro === 'sem_token' ? 'sem_token' : 'falha_no_slack' }
+    }
+
+    await p.escopo.threadsDoSlack.registrar({
+        ticketId: p.dados.chamadoId,
+        canal: resposta.canal,
+        threadTs: resposta.ts,
+    })
+
+    return { espelhou: true }
+}
+
+export type DestinoDaMensagem = 'nota-interna' | 'ignorada'
+
+export interface MensagemDaThread {
+    /** O canal e o `ts` da thread-raiz: é por eles que achamos o chamado. */
+    canal: string
+    threadTs: string
+    /** O `ts` desta mensagem. Vira `externoId`, e é o que impede a duplicata. */
+    ts: string
+    /** O id do usuário do Slack (`U…`). */
+    usuario: string
+    texto: string
+    /** `true` quando o próprio Bridge escreveu. */
+    doBot: boolean
+}
+
+/**
+ * Uma mensagem na thread do chamado vira NOTA INTERNA.
+ *
+ * É o padrão da seção 8, e a escolha é deliberada: o que se escreve numa thread
+ * de suporte é conversa entre colegas. Para falar com o cliente existe botão e
+ * ferramenta, e o caminho mais curto nunca pode ser o que alcança quem está do
+ * lado de fora — um comentário interno publicado por engano é irreversível.
+ *
+ * O autor tem de estar cadastrado em `agents` pelo `slackId`. Sem isso qualquer
+ * convidado do canal escreveria na trilha de um chamado com a autoria de
+ * ninguém.
+ */
+export async function notaDaThread(p: {
+    escopo: EscopoDoApp
+    mensagem: MensagemDaThread
+    /** O agente dono daquele `slackId`, ou nulo se ninguém. */
+    agente: { id: string; nome: string } | null
+}): Promise<{ destino: DestinoDaMensagem; motivo?: string }> {
+    const m = p.mensagem
+
+    /// O eco do próprio Bridge não volta para dentro: cada postagem nossa
+    /// geraria uma nota, que geraria outra postagem.
+    if (m.doBot) return { destino: 'ignorada', motivo: 'do_bot' }
+
+    const texto = m.texto.trim()
+    if (texto === '') return { destino: 'ignorada', motivo: 'vazia' }
+
+    const thread = await p.escopo.threadsDoSlack.porThread(m.canal, m.threadTs)
+    if (thread === null) return { destino: 'ignorada', motivo: 'thread_sem_chamado' }
+
+    if (p.agente === null) return { destino: 'ignorada', motivo: 'autor_nao_cadastrado' }
+
+    try {
+        await p.escopo.mensagens.adicionar(
+            {
+                ticketId: thread.ticketId,
+                autor: 'HUMANO',
+                /**
+                 * O texto vem do Slack, que é interno, mas passa pelo mesmo
+                 * neutralizador do resto: um atendente colando o relato do
+                 * cliente dentro da thread traria de volta o texto de fora, e
+                 * ele não deve virar linha com significado na trilha.
+                 */
+                corpo: neutralizar(texto, 3_000),
+                visibilidade: 'INTERNA',
+                origem: 'SLACK',
+                autorId: p.agente.id,
+                externoId: m.ts,
+            },
+            { ator: `agent:${p.agente.id}` }
+        )
+    } catch (erro) {
+        /**
+         * Colisão do índice único `(appId, externoId)`: é a reentrega do Slack
+         * chegando de novo, e o certo é não fazer nada. Qualquer outro erro
+         * também não pode derrubar a ponte — o Slack repetiria o evento para
+         * sempre.
+         */
+        const codigo = (erro as { code?: string }).code
+        if (codigo === 'P2002') return { destino: 'ignorada', motivo: 'reentrega' }
+        console.error('[slack] não gravei a nota da thread:', erro)
+        return { destino: 'ignorada', motivo: 'falha_ao_gravar' }
+    }
+
+    return { destino: 'nota-interna' }
+}
+
+/** 👀 assume o chamado, ✅ resolve. Só de quem está em `agents` (seção 8). */
+export const REACOES: Record<string, 'assumir' | 'resolver'> = {
+    eyes: 'assumir',
+    white_check_mark: 'resolver',
+    heavy_check_mark: 'resolver',
+}
+
+export async function aplicarReacao(p: {
+    escopo: EscopoDoApp
+    canal: string
+    /** O `ts` da mensagem que recebeu a reação. Só a raiz da thread conta. */
+    ts: string
+    reacao: string
+    agente: { id: string; nome: string } | null
+}): Promise<{ acao: 'assumir' | 'resolver' | null; motivo?: string }> {
+    const acao = REACOES[p.reacao]
+    if (acao === undefined) return { acao: null, motivo: 'reacao_sem_efeito' }
+    if (p.agente === null) return { acao: null, motivo: 'autor_nao_cadastrado' }
+
+    /**
+     * Só na mensagem-raiz.
+     *
+     * Reagir a uma mensagem qualquer dentro da thread é gesto comum ("vi",
+     * "concordo"); se isso resolvesse o chamado, o Desk fecharia chamados por
+     * educação alheia.
+     */
+    const thread = await p.escopo.threadsDoSlack.porThread(p.canal, p.ts)
+    if (thread === null) return { acao: null, motivo: 'nao_e_a_raiz' }
+
+    const autor: Autor = { ator: `agent:${p.agente.id}` }
+
+    try {
+        if (acao === 'assumir') {
+            await p.escopo.chamados.alterar(thread.ticketId, { assigneeId: p.agente.id }, autor)
+            await p.escopo.chamados.aplicarEvento(thread.ticketId, 'assumir', autor)
+        } else {
+            await p.escopo.chamados.aplicarEvento(thread.ticketId, 'resolver', autor)
+        }
+    } catch (erro) {
+        /**
+         * A máquina de estados recusa o que não cabe (resolver o que já está
+         * fechado, por exemplo), e recusa é resposta legítima: o gesto no Slack
+         * não manda no ciclo do chamado. Fica no log e a thread segue.
+         */
+        console.error(`[slack] reação ${p.reacao} recusada:`, erro instanceof Error ? erro.message : erro)
+        return { acao: null, motivo: 'transicao_recusada' }
+    }
+
+    return { acao }
+}

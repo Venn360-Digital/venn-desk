@@ -4,6 +4,10 @@ import { registrarEntrada } from '../dados/entradas.ts'
 import type { Ambiente } from '../lib/ambiente.ts'
 import { comCliente } from '../auth/middleware.ts'
 import { conferirAssinatura } from '../slack/assinatura.ts'
+import { appPorCanal } from '../dados/apps.ts'
+import { escopoDoApp } from '../dados/escopo.ts'
+import { agentePorSlackId } from '../dados/agentes.ts'
+import { aplicarReacao, notaDaThread } from '../slack/ponte.ts'
 
 /**
  * A ponte com o Slack (seção 8) — por ora, só a metade que recebe.
@@ -132,15 +136,69 @@ rotasDoSlack.post('/slack/eventos', comCliente, async (c) => {
     if (!inedito) return c.json(OK)
 
     const evento = (corpo['event'] ?? {}) as Record<string, unknown>
-    /**
-     * A partir daqui entra a ponte de verdade — thread para chamado, mensagem
-     * para nota interna, reação para evento. Nada disso existe sem o token do
-     * bot, então por ora o evento fica registrado e segue.
-     *
-     * Registrado e não descartado: quando a outra metade entrar, `inbound_events`
-     * dirá o que chegou antes dela e se o cadastro estava certo.
-     */
-    console.log('[slack] evento registrado:', JSON.stringify({ tipo: evento['type'], idDoEvento }))
+    const tipo = evento['type']
 
+    /**
+     * O canal diz o app, e o app diz o escopo.
+     *
+     * Canal que não pertence a app nenhum é o caso comum de alguém convidar o
+     * Bridge para outro lugar: responde 200 e não faz nada. Reclamar faria o
+     * Slack reentregar para sempre um evento que nunca vamos tratar.
+     */
+    const canal = typeof evento['channel'] === 'string' ? evento['channel'] : ''
+    const app = await appPorCanal(c.get('cliente'), canal)
+    if (app === null) {
+        console.log('[slack] evento em canal sem app:', JSON.stringify({ tipo, canal }))
+        return c.json(OK)
+    }
+
+    const escopo = escopoDoApp(c.get('cliente'), app.id)
+    const usuario = typeof evento['user'] === 'string' ? evento['user'] : ''
+    const agente = usuario === '' ? null : await agentePorSlackId(c.get('cliente'), usuario)
+
+    if (tipo === 'message') {
+        /**
+         * Só mensagem DENTRO de thread, e só a de texto simples.
+         *
+         * `subtype` presente é edição, remoção, entrada no canal, arquivo
+         * compartilhado — coisas que não são alguém falando sobre o chamado. E
+         * mensagem fora de thread não tem chamado a que pertencer: o canal
+         * recebe uma thread por chamado, e conversa solta no canal é conversa
+         * do time.
+         */
+        const threadTs = typeof evento['thread_ts'] === 'string' ? evento['thread_ts'] : null
+        if (evento['subtype'] !== undefined || threadTs === null) return c.json(OK)
+
+        const r = await notaDaThread({
+            escopo,
+            agente: agente === null ? null : { id: agente.id, nome: agente.nome },
+            mensagem: {
+                canal,
+                threadTs,
+                ts: typeof evento['ts'] === 'string' ? evento['ts'] : '',
+                usuario,
+                texto: typeof evento['text'] === 'string' ? evento['text'] : '',
+                doBot: typeof evento['bot_id'] === 'string',
+            },
+        })
+        if (r.destino === 'ignorada') console.log('[slack] mensagem ignorada:', r.motivo)
+        return c.json(OK)
+    }
+
+    if (tipo === 'reaction_added') {
+        const item = (evento['item'] ?? {}) as Record<string, unknown>
+        const r = await aplicarReacao({
+            escopo,
+            canal: typeof item['channel'] === 'string' ? item['channel'] : canal,
+            ts: typeof item['ts'] === 'string' ? item['ts'] : '',
+            reacao: typeof evento['reaction'] === 'string' ? evento['reaction'] : '',
+            agente: agente === null ? null : { id: agente.id, nome: agente.nome },
+        })
+        if (r.acao === null) console.log('[slack] reação sem efeito:', r.motivo)
+        else console.log('[slack] reação aplicada:', JSON.stringify({ acao: r.acao, app: app.slug }))
+        return c.json(OK)
+    }
+
+    console.log('[slack] tipo de evento sem tratamento:', JSON.stringify({ tipo, idDoEvento }))
     return c.json(OK)
 })

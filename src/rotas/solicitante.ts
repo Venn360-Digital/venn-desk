@@ -17,6 +17,7 @@ import { assinar, VALIDADE_DO_LINK_S } from '../lib/assinatura.ts'
 import { ErroDeDominio } from '../lib/erros.ts'
 import type { Ambiente } from '../lib/ambiente.ts'
 import { avisarPorEmail } from '../correio/avisar.ts'
+import { espelharNoSlack } from '../slack/espelhar.ts'
 import { publicarNaSala } from '../tempo-real/publicar.ts'
 import { comApp, comCliente, comTokenDoApp } from '../auth/middleware.ts'
 import { lerTema } from '../dominio/tema.ts'
@@ -195,6 +196,17 @@ rotasDoSolicitante.post('/api/app/:app/chamados', async (c) => {
         numero: chamado.numero,
         assunto: chamado.assunto,
         requesterId: chamado.requesterId,
+        contexto: chamado.contexto,
+    })
+
+    /// A thread do chamado no canal do app (seção 8). Como o e-mail: em
+    /// `waitUntil`, e falhar não derruba a abertura.
+    espelharNoSlack(c, {
+        id: chamado.id,
+        numero: chamado.numero,
+        assunto: chamado.assunto,
+        tipo: chamado.tipo,
+        prioridade: chamado.prioridade,
         contexto: chamado.contexto,
     })
 

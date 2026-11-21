@@ -41,6 +41,14 @@ export interface Ambiente {
         SLACK_SIGNING_SECRET?: string
         /** Token do bot (`xoxb-…`), para a metade que POSTA. Também segredo. */
         SLACK_BOT_TOKEN?: string
+        /**
+         * A menção que acorda o Claude no canal de suporte (`<@U…>`).
+         *
+         * Em `vars`, não em segredo: é um id público do workspace. Montada por
+         * NÓS e nunca a partir de texto de chamado — ver `mensagens.ts`. Ausente,
+         * a mensagem de abertura sai sem menção e ninguém é acordado.
+         */
+        SLACK_MENCAO_DO_CLAUDE?: string
         /** Chave da API do Claude, para o agente de atendimento. Segredo. */
         ANTHROPIC_API_KEY?: string
         /** O modelo do agente. Em `vars`, para trocar sem publicar código. */

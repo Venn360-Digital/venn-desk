@@ -418,10 +418,22 @@ model TicketMessage {
     descartadoEm DateTime? @map("descartado_em")
     descartadoPor String?  @map("descartado_por")
 
+    /**
+     * O id da mensagem no sistema de fora que a originou — hoje o `ts` do
+     * Slack.
+     *
+     * Existe por uma garantia do Slack que trabalha contra nós: o Events API
+     * REENTREGA. Sem isto, cada reentrega viraria outra nota interna e a thread
+     * passaria a mentir sobre o que foi dito. Nulo para o que nasce aqui
+     * (widget, Console, IA), e nulos não colidem em índice único.
+     */
+    externoId String? @map("externo_id")
+
     criadoEm DateTime @default(now()) @map("criado_em")
 
     attachments Attachment[]
 
+    @@unique([appId, externoId])
     @@index([appId, ticketId, criadoEm])
     @@map("ticket_messages")
 }

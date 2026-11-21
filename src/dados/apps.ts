@@ -21,6 +21,23 @@ export async function appsAtivos(cliente: PrismaClient): Promise<App[]> {
     return cliente.app.findMany({ where: { excluidoEm: null }, orderBy: { nome: 'asc' } })
 }
 
+/**
+ * O app a que um canal do Slack pertence.
+ *
+ * O evento do Slack diz o canal, e tudo no Desk é por app: sem esta tradução
+ * não há escopo, e sem escopo não há isolamento. O canal de engenharia também
+ * conta, porque é lá que a thread do defeito vive.
+ *
+ * Devolve `null` quando o canal não é de nenhum app — o caso comum de alguém
+ * convidar o Bridge para um canal qualquer.
+ */
+export async function appPorCanal(cliente: PrismaClient, canal: string): Promise<App | null> {
+    if (canal === '') return null
+    return cliente.app.findFirst({
+        where: { excluidoEm: null, OR: [{ canalSuporte: canal }, { canalEngenharia: canal }] },
+    })
+}
+
 export interface DadosDoApp {
     slug: string
     nome: string
