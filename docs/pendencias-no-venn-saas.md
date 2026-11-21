@@ -107,10 +107,38 @@ resolve.
   número de WhatsApp, remetente nem cartão. É o que falta para a navegação
   automática nas telas (etapa 7) rodar sem disparar mensagem real.
 
-## Não é do venn-saas: fica comigo
+## 10. A tela de catálogo mistura rótulo fixo e rótulo de vocabulário
 
-O detector também mostrou que a documentação de tela sai do extrator com a
-palavra do nicho escrita por extenso em vez do marcador — "os produtos e
-serviços do catálogo" num artigo do Odontobox360, onde devia ser
-"procedimentos". A fonte está certa; quem erra é o extrator do Desk, e a
-correção é aqui.
+`packages/core/src/rotas/(dashboard)/vendas/servicos/ProcedimentosClient.tsx`,
+linhas 55 a 62:
+
+```ts
+function CATEGORY_TONES(v: Vocabulario) {
+    return {
+        service: { label: 'Serviço', tone: 'primary' },
+        procedure: { label: `${v.Servico}`, tone: 'info' },
+        product: { label: 'Produto', tone: 'neutral' },
+    }
+}
+```
+
+No Odontobox360 o filtro de categorias mostra "Serviço" e "Procedimento" lado a
+lado, porque a primeira é fixa e a segunda usa o vocabulário. No Conecta360 e no
+Stagent360 as duas viram "Serviço", duas opções com o mesmo nome. A descrição do
+diálogo na linha 449 também é fixa: "Produto ou serviço do catálogo".
+
+Isto não impede o Desk de documentar a tela (ele copia o que está lá, e é o que
+deve fazer), mas o artigo herda a ambiguidade da interface.
+
+## Era meu, e está corrigido
+
+Na primeira versão desta lista eu atribuí a mim o artigo do Odontobox360 que diz
+"os produtos e serviços do catálogo". Estava errado: aquela frase é o texto
+literal da interface, igual nos três apps, e o artigo está fiel.
+
+O defeito meu era outro, e real: o digesto que o extrator manda ao modelo
+descartava a interpolação do vocabulário, então das 32 telas documentadas
+nenhuma devolveu um único marcador, embora a instrução peça. O efeito era o
+artigo publicar a palavra do app base nos três. Corrigido em 21/11/2026 — o
+digesto da tela de catálogo agora entrega `{{Servico}}` onde antes não entregava
+nada. Os artigos só refletem a correção na próxima documentação das telas.

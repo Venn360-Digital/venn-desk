@@ -17,6 +17,8 @@
  * que o modelo poderia repetir como se fosse rótulo.
  */
 
+import { PALAVRAS_DO_VOCABULARIO } from '../tipos.ts'
+
 export interface Digesto {
     /** `aria-label`, `title`, `alt`: o que um leitor de tela anuncia. */
     acessibilidade: string[]
@@ -37,6 +39,17 @@ const RUIDO =
     /^(?:[a-z0-9-]+:)?(?:flex|grid|block|hidden|absolute|relative|w-|h-|p[xytblr]?-|m[xytblr]?-|gap-|text-|bg-|border|rounded|shadow|overflow|truncate|items-|justify-|space-|min-|max-|top-|left-|right-|bottom-|z-|opacity-|cursor-|transition|duration|animate|font-|leading-|tracking-|whitespace|select-|pointer-|ring-|outline|sr-only|col-|row-|order-|basis-|shrink|grow|inline|table|sticky|fixed|static|invisible|visible|aspect-|object-|divide-|from-|via-|to-)/
 const SO_SIMBOLO = /^[^\p{L}]*$/u
 const CAMINHO = /^[./@]|\/(?:api|components|lib|hooks)\//
+/**
+ * Interpolação que o digesto NÃO entende fica fora: `${total}` no texto
+ * publicado seria lixo.
+ *
+ * O marcador do vocabulário é a exceção, e por isso é testado antes: ele é a
+ * única interpolação que o resto do caminho sabe resolver (`ancorar.ts` o
+ * ignora na verificação, `resolverPlaceholders` o troca pelo vocabulário de
+ * cada app). Sem esta exceção o filtro descartava exatamente o que a conversão
+ * acabou de produzir, e o marcador nunca chegava ao modelo.
+ */
+const MARCADOR_DO_VOCABULARIO = /\{\{[A-Za-z]+\}\}/g
 const INTERPOLADO = /\$\{|\{\{/
 
 function limpar(bruto: string): string | null {
@@ -45,11 +58,16 @@ function limpar(bruto: string): string | null {
     if (SO_SIMBOLO.test(t)) return null
     if (RUIDO.test(t)) return null
     if (CAMINHO.test(t)) return null
-    if (INTERPOLADO.test(t)) return null
+    if (INTERPOLADO.test(t.replace(MARCADOR_DO_VOCABULARIO, ''))) return null
     /// Sem nenhuma vogal não é palavra de gente; `camelCase` sem espaço e sem
     /// acento quase sempre é identificador.
-    if (!/[aeiouáâãàéêíóôõúüAEIOU]/.test(t)) return null
-    if (!t.includes(' ') && /^[a-z]+[A-Z]/.test(t)) return null
+    /// A vogal e o camelCase são medidos no texto SEM o marcador: `{{Servico}}`
+    /// sozinho não tem vogal fora do próprio marcador, e seria descartado.
+    const semMarcador = t.replace(MARCADOR_DO_VOCABULARIO, '').trim()
+    if (semMarcador !== '') {
+        if (!/[aeiouáâãàéêíóôõúüAEIOU]/.test(semMarcador)) return null
+        if (!t.includes(' ') && /^[a-z]+[A-Z]/.test(semMarcador)) return null
+    }
     return t
 }
 
@@ -77,13 +95,39 @@ function doAtributo(texto: string, atributos: string[]): string[] {
     return [...achados]
 }
 
+/**
+ * A interpolação do vocabulário vira o MARCADOR que o extrator deve devolver.
+ *
+ * Medido em 21/11/2026: das 32 telas documentadas, nenhuma devolveu um único
+ * marcador, embora a instrução peça. O motivo não era o modelo desobedecendo —
+ * era o digesto. `label: ${v.Servico}` é template literal, e os padrões de
+ * rótulo só colhiam aspas; `{v.Servicos}` em JSX era excluído pela classe que
+ * proíbe chaves. A informação nunca chegava ao prompt, então o modelo escrevia
+ * a palavra do app base e os três apps publicavam a mesma.
+ *
+ * Convertido aqui, o resto do caminho já funciona: `ancorar.ts` ignora
+ * marcador na verificação e `resolverPlaceholders` o troca pelo vocabulário de
+ * cada app na renderização.
+ */
+function comMarcadoresDoVocabulario(texto: string): string {
+    return texto.replace(
+        /\$?\{\s*(?:v|vocab|vocabulario)\(?\)?\.([A-Za-z]+)\s*\}|\b(?:v|vocab|vocabulario)\(?\)?\.([A-Za-z]+)\b/g,
+        (tudo, deChave: string | undefined, solta: string | undefined) => {
+            const chave = deChave ?? solta ?? ''
+            return (PALAVRAS_DO_VOCABULARIO as string[]).includes(chave) ? `{{${chave}}}` : tudo
+        }
+    )
+}
+
 export function digerir(conteudo: string): Digesto {
     /// Comentários fora: eles falam com quem programa, não com quem usa — e um
     /// comentário com instrução dentro não deve nem chegar ao prompt.
-    const semComentarios = conteudo
-        .replace(/\/\*[\s\S]*?\*\//g, ' ')
-        .replace(/^[ \t]*\/\/.*$/gm, ' ')
-        .replace(/^[ \t]*\/\/\/.*$/gm, ' ')
+    const semComentarios = comMarcadoresDoVocabulario(
+        conteudo
+            .replace(/\/\*[\s\S]*?\*\//g, ' ')
+            .replace(/^[ \t]*\/\/.*$/gm, ' ')
+            .replace(/^[ \t]*\/\/\/.*$/gm, ' ')
+    )
 
     return {
         acessibilidade: doAtributo(semComentarios, ['aria-label', 'title', 'alt']),
@@ -94,12 +138,28 @@ export function digerir(conteudo: string): Digesto {
                 /// `label: 'Nome'` em objeto de coluna, aba, opção.
                 ...colher(semComentarios, /\b(?:label|rotulo|titulo|nome)\s*:\s*'((?:[^'\\]|\\.)*)'/g),
                 ...colher(semComentarios, /\b(?:label|rotulo|titulo|nome)\s*:\s*"([^"]+)"/g),
+                /// Acento grave: é a forma em que o rótulo do vocabulário
+                /// aparece (`label: \`{{Servico}}\``), e sem ela o filtro de
+                /// categorias da tela de catálogo chegava ao modelo com uma
+                /// opção a menos do que a tela mostra.
+                ...colher(semComentarios, /\b(?:label|rotulo|titulo|nome)\s*:\s*`((?:[^`\\]|\\.)*)`/g),
             ]),
         ],
         textos: [
             ...new Set([
                 /// Texto solto entre tags, que é o que se lê na tela.
                 ...colher(semComentarios, />\s*([\p{Lu}\p{Ll}][^<>{}]{2,150}?)\s*</gu),
+                /**
+                 * O mesmo texto entre tags, quando traz marcador do
+                 * vocabulário. Precisa de padrão próprio porque o de cima
+                 * proíbe chaves — proibição que existe para não colher
+                 * expressão JSX (`{pode ? 'a' : 'b'}`), e que também barrava
+                 * `{{Pessoas}}`.
+                 */
+                ...colher(
+                    semComentarios,
+                    />\s*((?:[^<>{}]|\{\{[A-Za-z]+\}\})*\{\{[A-Za-z]+\}\}(?:[^<>{}]|\{\{[A-Za-z]+\}\})*)\s*</gu
+                ),
                 ...doAtributo(semComentarios, ['description', 'descricao', 'mensagem', 'message', 'texto', 'text']),
             ]),
         ],

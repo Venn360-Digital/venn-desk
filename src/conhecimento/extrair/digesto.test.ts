@@ -74,3 +74,42 @@ describe('digerir', () => {
         expect(t).not.toContain('placeholder')
     })
 })
+
+describe('a interpolação do vocabulário chega ao modelo como marcador', () => {
+    /**
+     * O defeito que isto impede, medido em 21/11/2026: das 32 telas
+     * documentadas em produção, NENHUMA devolveu um marcador, embora a
+     * instrução peça. O modelo não estava desobedecendo — o digesto não
+     * entregava a informação. `label: ${v.Servico}` é template literal, e os
+     * padrões de rótulo só colhiam aspas; `{v.Servicos}` em JSX caía na classe
+     * que proíbe chaves.
+     *
+     * O efeito no cliente: o artigo da tela de catálogo saía com "Serviço" nos
+     * três apps, e o do Odontobox360 devia dizer "Procedimento".
+     */
+    it('converte as três formas de interpolação, e só as chaves que existem', () => {
+        const digesto = digerir(`
+            const CATEGORIAS = (v) => ({
+                service: { label: 'Serviço' },
+                procedure: { label: \`\${v.Servico}\` },
+                product: { label: 'Produto' },
+            })
+            export function Tela() {
+                return <p>Total de {v.Pessoas} no mês</p>
+            }
+        `)
+
+        expect(digesto.rotulos).toContain('Serviço')
+        expect(digesto.rotulos).toContain('{{Servico}}')
+        expect(digesto.textos.some((t) => t.includes('{{Pessoas}}'))).toBe(true)
+    })
+
+    it('não inventa marcador para propriedade que não é do vocabulário', () => {
+        /// `v.total` e `vocab.qualquerCoisa` não são palavras do vocabulário, e
+        /// trocá-las por marcador faria o renderizador deixar `{{total}}` no
+        /// texto publicado.
+        const digesto = digerir(`<p>Soma: {v.total} itens</p><span>{vocab.inexistente}</span>`)
+        expect(JSON.stringify(digesto)).not.toContain('{{total}}')
+        expect(JSON.stringify(digesto)).not.toContain('{{inexistente}}')
+    })
+})
