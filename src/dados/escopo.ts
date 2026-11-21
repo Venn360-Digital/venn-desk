@@ -244,6 +244,15 @@ export interface EscopoDoApp {
         candidatosASugestao(desde: Date, limite: number): Promise<ChamadoParaSugerir[]>
         /** Um chamado só, na mesma forma — o que a fila recebe por id. */
         paraSugestao(id: string): Promise<ChamadoParaSugerir | null>
+        /**
+         * Os chamados ABERTOS do mesmo solicitante, para a triagem comparar.
+         *
+         * Do mesmo solicitante, e não da mesma empresa: duas pessoas da mesma
+         * clínica relatando o mesmo problema são dois chamados legítimos, cada
+         * uma esperando resposta. Quem repete em minutos é quem clicou duas
+         * vezes ou não viu o primeiro.
+         */
+        abertosDoSolicitante(requesterId: string, exceto: string): Promise<{ id: string; numero: number; assunto: string }[]>
     }
 
     mensagens: {
@@ -922,6 +931,21 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 })
 
                 return (linhas as LinhaParaSugestao[]).map(comMensagens)
+            },
+
+            async abertosDoSolicitante(requesterId, exceto) {
+                return conexao.ticket.findMany({
+                    where: {
+                        appId,
+                        requesterId,
+                        excluidoEm: null,
+                        id: { not: exceto },
+                        status: { in: ['NOVO', 'ABERTO', 'AGUARDANDO_USUARIO', 'EM_ESPERA'] },
+                    },
+                    orderBy: { criadoEm: 'desc' },
+                    take: 20,
+                    select: { id: true, numero: true, assunto: true },
+                })
             },
 
             async paraSugestao(id) {

@@ -18,6 +18,8 @@ import { ErroDeDominio } from '../lib/erros.ts'
 import type { Ambiente } from '../lib/ambiente.ts'
 import { avisarPorEmail } from '../correio/avisar.ts'
 import { avisarNoSlack, espelharNoSlack } from '../slack/espelhar.ts'
+import { duplicadosProvaveis, tipoSugerido, type SinaisDoContexto } from '../dominio/triagem.ts'
+import { avisoDeDuplicata } from '../dominio/duplicata-aviso.ts'
 import { publicarNaSala } from '../tempo-real/publicar.ts'
 import { comApp, comCliente, comTokenDoApp } from '../auth/middleware.ts'
 import { lerTema } from '../dominio/tema.ts'
@@ -166,17 +168,29 @@ rotasDoSolicitante.post('/api/app/:app/chamados', async (c) => {
      * pergunta o impacto, mas não pergunta se existe contorno — isso quem lê é a
      * triagem, que reclassifica (Fase 4).
      */
-    const prioridade = prioridadeSugerida(
-        'DUVIDA',
-        corpo.data.impacto as Impacto,
-        'tem_contorno'
-    )
+    /**
+     * O TIPO é sugerido por regra, antes de qualquer modelo.
+     *
+     * Era fixo em DUVIDA, e isso dava a todo defeito o teto de prioridade de
+     * dúvida até a IA reclassificar — em app com atendimento automático
+     * desligado, para sempre. A IA reclassifica melhor e continua
+     * reclassificando; o palpite de regra é pior que o dela e infinitamente
+     * melhor que nenhum, porque é dele que saem a prioridade e o prazo.
+     */
+    const tipo = tipoSugerido({
+        assunto: corpo.data.assunto,
+        descricao: corpo.data.descricao,
+        contexto: (corpo.data.contexto ?? null) as SinaisDoContexto | null,
+    })
+
+    const prioridade = prioridadeSugerida(tipo, corpo.data.impacto as Impacto, 'tem_contorno')
 
     const chamado = await abrirChamado(c.get('cliente'), c.get('app').id, {
         tenantId: solicitante.tenantId,
         requesterId: solicitante.requesterId,
         assunto: corpo.data.assunto,
         descricao: corpo.data.descricao,
+        tipo,
         prioridade,
         origem: 'WIDGET',
         ...(corpo.data.contexto === undefined
@@ -198,6 +212,37 @@ rotasDoSolicitante.post('/api/app/:app/chamados', async (c) => {
         requesterId: chamado.requesterId,
         contexto: chamado.contexto,
     })
+
+    /**
+     * A suspeita de duplicata vira NOTA INTERNA, em `waitUntil`.
+     *
+     * Interna porque é palpite nosso sobre o trabalho, não resposta ao cliente;
+     * e em `waitUntil` porque é uma consulta a mais que ninguém está esperando
+     * para ver o número do chamado.
+     */
+    c.executionCtx.waitUntil(
+        (async () => {
+            try {
+                const escopoDaTriagem = c.get('escopo')
+                const abertos = await escopoDaTriagem.chamados.abertosDoSolicitante(
+                    solicitante.requesterId,
+                    chamado.id
+                )
+                const aviso = avisoDeDuplicata(
+                    duplicadosProvaveis({ assunto: chamado.assunto }, abertos),
+                    c.get('app').prefixo
+                )
+                if (aviso === null) return
+
+                await escopoDaTriagem.mensagens.adicionar(
+                    { ticketId: chamado.id, autor: 'SISTEMA', corpo: aviso, visibilidade: 'INTERNA', origem: 'WIDGET' },
+                    { ator: 'sistema' }
+                )
+            } catch (erro) {
+                console.error('[triagem] não consegui checar duplicatas:', erro)
+            }
+        })()
+    )
 
     /// A thread do chamado no canal do app (seção 8). Como o e-mail: em
     /// `waitUntil`, e falhar não derruba a abertura.
