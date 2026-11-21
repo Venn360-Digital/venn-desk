@@ -41,6 +41,21 @@ const MARCADORES: Record<PalavraDoVocabulario, string> = {
     servico: '{ser}', Servico: '{ser}', servicos: '{sers}', Servicos: '{sers}',
 }
 
+/**
+ * Rota, URL e código entre acentos graves NÃO entram na dobra.
+ *
+ * `/vendas/clientes` é o caminho do código e é igual nos três apps; no Conecta
+ * "clientes" é vocabulário, então dobrar transformava a rota em `/vendas/{pess}`
+ * e o menu divergia de um texto idêntico. O mesmo vale para nome de tabela e de
+ * arquivo no mapa técnico.
+ */
+function semCodigo(texto: string): string {
+    return texto
+        .replace(/`[^`]*`/g, '{cod}')
+        .replace(/https?:\/\/\S+/g, '{url}')
+        .replace(/(?:^|\s)\/[a-z0-9[\]/_.-]+/gi, ' {rota}')
+}
+
 function comMarcadores(texto: string, app: { nome: string; slug: string; vocabulario: Vocabulario }): string {
     const voc = app.vocabulario
     /// Plural antes de singular, senão "paciente" roe o começo de "pacientes".
@@ -51,7 +66,7 @@ function comMarcadores(texto: string, app: { nome: string; slug: string; vocabul
         [dobrar(app.nome), '{app}'] as const,
         [dobrar(app.slug), '{app}'] as const,
     ].sort((a, b) => b[0].length - a[0].length)
-    let saida = dobrar(texto)
+    let saida = semCodigo(dobrar(texto))
     for (const [palavra, marcador] of pares) {
         saida = saida.replace(new RegExp(`(?<![\\p{L}\\p{N}])${escapar(palavra)}(?![\\p{L}\\p{N}])`, 'gu'), marcador)
     }

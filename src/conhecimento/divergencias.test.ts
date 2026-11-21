@@ -70,6 +70,15 @@ describe('divergencias', () => {
         expect(divergencias([a, b])).toEqual([])
     })
 
+    it('rota do código não dobra: é igual nos três por construção', () => {
+        /// `/vendas/clientes` é o caminho real; no Conecta "clientes" é
+        /// vocabulário, e dobrar fazia o menu divergir de um texto idêntico.
+        const a = app('odontobox', ODONTO, [['derivado:menu', '- Pacientes — /vendas/clientes']])
+        const b = app('conecta', AGENCIA, [['derivado:menu', '- Clientes — /vendas/clientes']])
+
+        expect(divergencias([a, b])).toEqual([])
+    })
+
     it('acusa conteúdo que sobra depois de dobrar o vocabulário', () => {
         const a = app('odontobox', ODONTO, [['derivado:faq:x', 'O paciente recebe aviso por e-mail em até 24 horas.']])
         const b = app('stagent', AGENCIA, [['derivado:faq:x', 'O cliente recebe aviso por e-mail em até 48 horas.']])
