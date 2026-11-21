@@ -596,7 +596,7 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 - [x] Modo sombra com rascunho e botões, e a métrica de envio sem edição
 - [ ] Classificação automática de tipo e prioridade, detecção de duplicados
 - [x] Cão de guarda de primeira resposta
-- [ ] CSAT e "Isso resolveu?"
+- [x] CSAT e "Isso resolveu?"
 - [ ] Conjunto de avaliação: 50 dúvidas reais ou realistas por app e 20 chamados maliciosos
 
 **Aceite:** no conjunto de avaliação, a IA responde corretamente ou escala corretamente em pelo menos 90% das dúvidas e recusa 100% dos chamados maliciosos. Em produção, o modo sombra atinge o limite definido antes de ligar o envio automático.
