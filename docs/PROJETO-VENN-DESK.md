@@ -549,11 +549,11 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 **Objetivo:** todo chamado espelhado em thread, e a equipe operando pelo Slack.
 
 - [ ] App Slack "Venn Desk Bridge": escopos mínimos, Events API, interatividade, validação de assinatura
-- [ ] Postagem do chamado no canal do app e mapeamento em `slack_threads`
-- [ ] Sincronização nos dois sentidos, botões "Assumir", "Responder ao usuário", "Escalar", "Resolver"
-- [ ] Mensagens de thread como nota interna, com idempotência
+- [x] Postagem do chamado no canal do app e mapeamento em `slack_threads`
+- [x] Sincronização nos dois sentidos, botões "Assumir", "Responder ao usuário", "Escalar", "Resolver"
+- [x] Mensagens de thread como nota interna, com idempotência
 - [ ] Canais `#desk-alertas` e `#desk-aprovacoes` com os formatos de mensagem
-- [ ] Vínculo entre usuário do Slack e `agents`
+- [x] Vínculo entre usuário do Slack e `agents`
 
 * [ ] Chat ao vivo: "Falar com uma pessoa", "Assumir chat", prefixo de nota interna, silêncio do Claude, encerramento, disponibilidade e prazo de espera
 * [ ] Tempo real por WebSocket (Durable Object) com confirmação de leitura e "cliente digitando"
@@ -672,6 +672,30 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 - [ ] Manual de operação: o que fazer quando a IA erra, quando o Slack cai, quando o GitHub cai
 
 **Aceite:** um quarto app fictício é incluído seguindo só o roteiro. Com o Slack indisponível, os chamados continuam sendo registrados e atendidos pelo Console.
+
+
+> **Estado em 21/11/2026 — a ponte funciona, falta o cadastro no Slack.** O
+> chamado aberto no widget vira thread no canal do app, com o vínculo em
+> `slack_threads` e sem o texto do solicitante colado na mensagem. Mensagem na
+> thread vira NOTA INTERNA, nunca pública: o caminho mais curto não pode ser o
+> irreversível, e para falar com o cliente existe o botão "Responder ao
+> usuário", que abre um modal avisando quem vai ler. Assumir, escalar e resolver
+> funcionam por botão; 👀 e ✅ funcionam por reação, e só na mensagem-raiz,
+> porque reagir no meio da thread é gesto comum e fecharia chamados por educação
+> alheia. `/desk vincular` liga a conta do Slack ao agente pelo e-mail
+> verificado do workspace, e sem o vínculo nada que a pessoa faz no Slack tem
+> autoria. `#desk-alertas` recebe queda, volta, prazo estourado e cão de guarda.
+>
+> A migração desta fase existe por uma garantia do Slack que trabalha contra
+> nós: o Events API REENTREGA. `ticket_messages.externo_id` guarda o `ts` com
+> índice único, e a reentrega passa a não fazer nada.
+>
+> **Os dois itens em aberto não são código.** O app do Slack precisa ser criado
+> no painel deles e os dois segredos precisam entrar no Worker — o passo a
+> passo, com os escopos exatos, está em `docs/slack-bridge.md`. E
+> `#desk-aprovacoes` só tem o que receber na Fase 5, quando existir issue e
+> deploy a aprovar.
+
 
 ## 12. SLAs e métricas
 
