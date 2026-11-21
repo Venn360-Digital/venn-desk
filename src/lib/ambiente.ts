@@ -49,6 +49,8 @@ export interface Ambiente {
         MODELO_DO_EXTRATOR?: string
         /** O modelo de quando a tela já existia e só mudou. Haiku 4.5 por padrão. */
         MODELO_DO_EXTRATOR_INCREMENTAL?: string
+        /** O modelo da biblioteca de casos. Haiku 4.5 por padrão. */
+        MODELO_DO_SUGERIDOR?: string
         /** Quanto o agente pensa: `low`, `medium`, `high`, `xhigh` ou `max`. */
         ESFORCO_DO_AGENTE?: string
         /**

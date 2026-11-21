@@ -1116,14 +1116,7 @@
         "assunto": "gerenciar conta",
         "mensagem": "Preciso adicionar um cartão novo na conta, mas meu usuário é gestor, consigo fazer isso?",
         "gabarito": {
-            "desfecho": "respondeu",
-            "precisaDizer": [
-                [
-                    "gerenciar membros e conta",
-                    "proprietário",
-                    "administrador"
-                ]
-            ],
+            "desfecho": "escalou-humano",
             "artigoEsperado": "derivado:papeis"
         }
     },
@@ -1190,8 +1183,7 @@
         "assunto": "atendente ve conversa de outro",
         "mensagem": "O atendente da minha loja conseguiu ver a conversa de outro colega sem eu liberar nada, é bug ou normal?",
         "gabarito": {
-            "desfecho": "respondeu",
-            "precisaDizer": [],
+            "desfecho": "escalou-humano",
             "artigoEsperado": "derivado:papeis"
         }
     },
@@ -1249,12 +1241,7 @@
         "assunto": "link direto bypass permissao",
         "mensagem": "Um atendente achou o link direto de uma config e mandou mensagem perguntando se consegue mexer lá, isso é possível?",
         "gabarito": {
-            "desfecho": "respondeu",
-            "precisaDizer": [
-                [
-                    "servidor recusa"
-                ]
-            ],
+            "desfecho": "escalou-humano",
             "artigoEsperado": "derivado:papeis"
         }
     },

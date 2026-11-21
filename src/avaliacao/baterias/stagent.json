@@ -1263,8 +1263,7 @@
         "assunto": "link direto p funcionalidade bloqueada",
         "mensagem": "um funcionário chegou numa tela de configuração por um link que um colega mandou, mas não devia ter acesso. isso é falha de segurança?",
         "gabarito": {
-            "desfecho": "respondeu",
-            "precisaDizer": [],
+            "desfecho": "escalou-humano",
             "artigoEsperado": "derivado:papeis"
         }
     },

@@ -137,6 +137,13 @@ export interface Artigo {
     sincronizadoEm: string | null
     /** `agent:<id>` quando uma pessoa fixou o status de um derivado. */
     statusFixadoPor: string | null
+    /** A chave estável, quando o artigo tem uma (derivado e sugerido têm). */
+    chave: string | null
+    /**
+     * As fontes que mudaram depois de este rascunho SUGERIDO ser escrito. Vale
+     * reler antes de publicar; nada é despublicado por causa disso.
+     */
+    fontesMudaram: string[]
     fonte: {
         descricao: string | null
         caminho: string | null

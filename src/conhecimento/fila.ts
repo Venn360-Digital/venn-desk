@@ -12,6 +12,23 @@ import { ErroDeLeitura, leitorGitHub } from './github.ts'
 import { credencialDoAmbiente } from './github-app.ts'
 import { documentarTela } from './documentar.ts'
 import { sincronizarApp, type ResultadoDaSincronizacao } from './sincronizar.ts'
+import { sugerirDeChamado, sugerirDeLacuna, type ResultadoDaSugestao } from './sugerir.ts'
+import type { LanguageModel } from 'ai'
+
+/**
+ * O chamado vem por id, e pode não existir mais (exclusão lógica entre a
+ * varredura e a fila). Nesse caso não há sugestão nem erro: a mensagem é
+ * reconhecida e nada acontece.
+ */
+async function sugerirDoChamadoDaFila(
+    escopo: ReturnType<typeof escopoDoApp>,
+    ticketId: string,
+    modelo: LanguageModel
+): Promise<ResultadoDaSugestao | null> {
+    const chamado = await escopo.chamados.paraSugestao(ticketId)
+    if (chamado === null) return null
+    return sugerirDeChamado({ escopo, chamado, extrator: extratorDaAnthropic(modelo), agora: new Date() })
+}
 
 /**
  * A fila da base viva (`CONHECIMENTO`).
@@ -69,6 +86,8 @@ export const MODELO_PADRAO_DO_EXTRATOR = 'claude-sonnet-5'
  * de Haiku, e a ancoragem reprova se ele errar.
  */
 export const MODELO_INCREMENTAL = 'claude-haiku-4-5-20251001'
+/** O modelo da biblioteca de casos. Reescrever texto que existe é de Haiku. */
+export const MODELO_DO_SUGERIDOR = 'claude-haiku-4-5-20251001'
 
 export async function consumirConhecimento(lote: LoteDaFila, env: Ambiente['Bindings']): Promise<void> {
     const cliente = criarCliente(env.DATABASE_URL)
@@ -83,8 +102,43 @@ export async function consumirConhecimento(lote: LoteDaFila, env: Ambiente['Bind
             }
 
             if (pedido.data.tipo === 'sugerir-de-chamado' || pedido.data.tipo === 'sugerir-de-lacuna') {
-                /// Chega com a biblioteca de casos. Até lá, reconhecido e fora.
-                console.log('[conhecimento] tipo ainda não atendido:', pedido.data.tipo)
+                const chaveDoModelo = env.ANTHROPIC_API_KEY
+                if (chaveDoModelo === undefined || chaveDoModelo === '') {
+                    console.error('[conhecimento] sem ANTHROPIC_API_KEY: a sugestão fica sem rascunho')
+                    mensagem.ack()
+                    continue
+                }
+
+                try {
+                    /**
+                     * Haiku, não Sonnet. Escrever um caso a partir de um
+                     * chamado já resolvido é reescrever texto que existe, e
+                     * quem lê o rascunho é uma pessoa antes de publicar — o
+                     * erro aqui custa um clique, não um cliente.
+                     */
+                    const modelo = createAnthropic({ apiKey: chaveDoModelo })(
+                        env.MODELO_DO_SUGERIDOR ?? MODELO_DO_SUGERIDOR
+                    )
+                    const escopo = escopoDoApp(cliente, pedido.data.appId)
+                    const resultado =
+                        pedido.data.tipo === 'sugerir-de-chamado'
+                            ? await sugerirDoChamadoDaFila(escopo, pedido.data.ticketId, modelo)
+                            : await sugerirDeLacuna({
+                                  escopo,
+                                  exemplo: pedido.data.exemplo,
+                                  vezes: pedido.data.vezes,
+                                  extrator: extratorDaAnthropic(modelo),
+                                  agora: new Date(),
+                              })
+
+                    if (resultado !== null && (resultado.criou || resultado.recusa !== null)) {
+                        console.log('[conhecimento] sugestão', JSON.stringify({ tipo: pedido.data.tipo, chave: resultado.chave, criou: resultado.criou, recusa: resultado.recusa }))
+                    }
+                } catch (erro) {
+                    /// `ack`: a sugestão não melhora repetindo, e o chamado
+                    /// continua lá para a varredura de amanhã.
+                    console.error('[conhecimento] sugestão falhou:', erro instanceof Error ? erro.message : erro)
+                }
                 mensagem.ack()
                 continue
             }

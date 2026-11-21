@@ -12,6 +12,7 @@ import {
     NOTA_MINIMA,
     podeAvaliar,
 } from '../dominio/csat.ts'
+import { NOTA_MINIMA_DO_CSAT } from '../conhecimento/sugerir.ts'
 import { assinar, VALIDADE_DO_LINK_S } from '../lib/assinatura.ts'
 import { ErroDeDominio } from '../lib/erros.ts'
 import type { Ambiente } from '../lib/ambiente.ts'
@@ -370,6 +371,23 @@ rotasDoSolicitante.post('/api/app/:app/chamados/:numero/csat', async (c) => {
         evento: 'csat:avaliou',
         depois: { nota: resposta.nota, atendidoPelaIa: resposta.atendidoPelaIa },
     })
+
+    /**
+     * Nota alta num chamado que um humano respondeu é a melhor fonte de artigo
+     * que existe, e é agora que ela aparece. A varredura da noite acharia o
+     * mesmo chamado; o gancho só adianta, e a chave do rascunho é a mesma, de
+     * modo que os dois caminhos não geram dois rascunhos.
+     *
+     * Falha de fila NÃO derruba a resposta: o cliente acabou de dar nota, e o
+     * que ele espera é o recibo.
+     */
+    if (resposta.nota >= NOTA_MINIMA_DO_CSAT && !resposta.atendidoPelaIa) {
+        try {
+            await c.env.CONHECIMENTO?.send({ tipo: 'sugerir-de-chamado', appId: escopo.appId, ticketId: chamado.id })
+        } catch (erro) {
+            console.error('[sugestoes] não consegui enfileirar o chamado avaliado:', erro)
+        }
+    }
 
     return c.json({ nota: resposta.nota, registradaEm: resposta.criadoEm.toISOString() })
 })

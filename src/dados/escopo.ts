@@ -100,6 +100,63 @@ export type ChamadoNaFila = Ticket & {
     }
 }
 
+/**
+ * O chamado encerrado como a biblioteca de casos precisa dele.
+ *
+ * `select`, não `include`: traz o nome da empresa e do solicitante porque a
+ * anonimização precisa saber o que apagar, e NÃO traz e-mail, telefone,
+ * contexto do widget nem anexo — o que não é lido não pode vazar para um
+ * artigo.
+ */
+export interface ChamadoParaSugerir {
+    id: string
+    numero: number
+    assunto: string
+    tipo: 'DUVIDA' | 'INCIDENTE' | 'PROBLEMA' | 'SOLICITACAO'
+    status: 'NOVO' | 'ABERTO' | 'AGUARDANDO_USUARIO' | 'EM_ESPERA' | 'RESOLVIDO' | 'FECHADO'
+    resolvidoEm: Date | null
+    tenant: { nome: string }
+    requester: { nome: string }
+    mensagens: {
+        autor: 'USUARIO' | 'IA' | 'HUMANO' | 'SISTEMA'
+        corpo: string
+        visibilidade: 'PUBLICA' | 'INTERNA'
+        rascunho: boolean
+        criadoEm: Date
+    }[]
+    csat: { nota: number } | null
+}
+
+/**
+ * O `select` da biblioteca de casos, num lugar só.
+ *
+ * Duas consultas o usam (a varredura por período e a fila por id) e elas têm de
+ * trazer EXATAMENTE os mesmos campos: a elegibilidade decide por mensagem e por
+ * nota, e um campo a menos numa das duas faria a fila recusar o que a varredura
+ * aprovou.
+ */
+const SELECAO_PARA_SUGESTAO = {
+    id: true,
+    numero: true,
+    assunto: true,
+    tipo: true,
+    status: true,
+    resolvidoEm: true,
+    tenant: { select: { nome: true } },
+    requester: { select: { nome: true } },
+    csat: { select: { nota: true } },
+    messages: {
+        orderBy: { criadoEm: 'asc' },
+        select: { autor: true, corpo: true, visibilidade: true, rascunho: true, criadoEm: true },
+    },
+} as const
+
+type LinhaParaSugestao = Omit<ChamadoParaSugerir, 'mensagens'> & { messages: ChamadoParaSugerir['mensagens'] }
+
+/// `messages` é o nome da relação no schema; `mensagens` é o nome no domínio.
+/// A tradução fica aqui, não no chamador.
+const comMensagens = ({ messages, ...resto }: LinhaParaSugestao): ChamadoParaSugerir => ({ ...resto, mensagens: messages })
+
 export interface EscopoDoApp {
     readonly appId: string
 
@@ -168,6 +225,18 @@ export interface EscopoDoApp {
         ): Promise<Ticket>
         /** Liga o chamado ao defeito que o explica (Fase 5). */
         vincularProblema(id: string, problemId: string, autor: Autor): Promise<Ticket>
+        /**
+         * Chamados encerrados que podem render artigo, com mensagens e CSAT no
+         * mesmo ida-e-volta.
+         *
+         * A elegibilidade NÃO mora aqui: quem decide é
+         * `src/conhecimento/sugerir.ts`, que roda sem banco e tem teste. Esta
+         * consulta só reduz o universo ao que vale olhar — encerrado no
+         * período, não excluído.
+         */
+        candidatosASugestao(desde: Date, limite: number): Promise<ChamadoParaSugerir[]>
+        /** Um chamado só, na mesma forma — o que a fila recebe por id. */
+        paraSugestao(id: string): Promise<ChamadoParaSugerir | null>
     }
 
     mensagens: {
@@ -351,13 +420,24 @@ export interface EscopoDoApp {
          * vivas: a fonte sumiu. Devolve os arquivados, para os eventos.
          */
         arquivarDerivadosFora(prefixoDaChave: string, chavesVivas: string[]): Promise<KbArticle[]>
-        /** Um rascunho SUGERIDO, para uma pessoa aprovar. */
+        /**
+         * Um rascunho SUGERIDO, para uma pessoa aprovar.
+         *
+         * `chave` é o que impede o segundo rascunho do mesmo chamado: a
+         * varredura é diária e o gancho do CSAT é imediato, então os dois
+         * chegam ao mesmo chamado. Upsert por `(appId, chave)`, e o `update`
+         * não toca em `status` nem no corpo — se alguém já editou o rascunho, a
+         * varredura da noite não desfaz.
+         */
         criarSugerido(dados: {
+            chave: string
             titulo: string
             corpo: string
             tags: string[]
             fonte: Prisma.InputJsonValue
-        }): Promise<KbArticle>
+        }): Promise<{ artigo: KbArticle; criado: boolean }>
+        /** Os rascunhos SUGERIDOS esperando aprovação, mais novos primeiro. */
+        sugeridosPendentes(limite: number): Promise<KbArticle[]>
         /** Grava o vetor da busca semântica. SQL cru: o Prisma não tem `vector`. */
         gravarEmbedding(id: string, vetor: number[]): Promise<void>
         /**
@@ -798,6 +878,30 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 })
 
                 return reler(id, count)
+            },
+
+            async candidatosASugestao(desde, limite) {
+                const linhas = await conexao.ticket.findMany({
+                    where: {
+                        appId,
+                        excluidoEm: null,
+                        status: { in: ['RESOLVIDO', 'FECHADO'] },
+                        resolvidoEm: { gte: desde },
+                    },
+                    orderBy: { resolvidoEm: 'desc' },
+                    take: limite,
+                    select: SELECAO_PARA_SUGESTAO,
+                })
+
+                return (linhas as LinhaParaSugestao[]).map(comMensagens)
+            },
+
+            async paraSugestao(id) {
+                const linha = await conexao.ticket.findFirst({
+                    where: { id, appId, excluidoEm: null },
+                    select: SELECAO_PARA_SUGESTAO,
+                })
+                return linha === null ? null : comMensagens(linha as LinhaParaSugestao)
             },
 
             async alterar(id, campos, autor) {
@@ -1607,16 +1711,42 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
             },
 
             async criarSugerido(dados) {
-                return conexao.kbArticle.create({
+                const existente = await this.porChave(dados.chave)
+                if (existente !== null) {
+                    /**
+                     * Já existe rascunho para esta chave. Só a trilha da fonte
+                     * é atualizada — título, corpo e status ficam como estão,
+                     * porque alguém pode já ter editado ou publicado. A
+                     * varredura da noite não desfaz o trabalho da tarde.
+                     */
+                    await conexao.kbArticle.updateMany({
+                        where: { id: existente.id, appId },
+                        data: { fonte: dados.fonte, sincronizadoEm: new Date() },
+                    })
+                    return { artigo: existente, criado: false }
+                }
+
+                const artigo = await conexao.kbArticle.create({
                     data: {
                         appId,
                         origem: 'SUGERIDO',
                         status: 'RASCUNHO',
+                        chave: dados.chave,
                         titulo: dados.titulo,
                         corpo: dados.corpo,
                         tags: dados.tags,
                         fonte: dados.fonte,
+                        sincronizadoEm: new Date(),
                     },
+                })
+                return { artigo, criado: true }
+            },
+
+            async sugeridosPendentes(limite) {
+                return conexao.kbArticle.findMany({
+                    where: { ...ondeDoArtigo(), origem: 'SUGERIDO', status: 'RASCUNHO' },
+                    orderBy: { criadoEm: 'desc' },
+                    take: limite,
                 })
             },
 

@@ -299,6 +299,14 @@ export function Base({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
                                                     fixado
                                                 </span>
                                             ) : null}
+                                            {artigo.fontesMudaram.length > 0 ? (
+                                                <span
+                                                    className="shrink-0 rounded-xs bg-atencao-fundo px-1.5 py-0.5 text-[10px] font-medium text-atencao"
+                                                    title={`A fonte mudou desde que este rascunho foi escrito: ${artigo.fontesMudaram.join(', ')}. Vale reler antes de publicar.`}
+                                                >
+                                                    fonte mudou
+                                                </span>
+                                            ) : null}
                                         </div>
                                     </td>
                                     <td className="px-3 py-2 text-xs text-tinta-fraca">

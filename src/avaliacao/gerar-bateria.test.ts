@@ -282,6 +282,21 @@ describe('desfechoPelaPergunta', () => {
         expect(desfechoPelaPergunta('sócio saiu', 'o proprietário saiu da empresa, quem gerencia agora?')).toBe('escalou-humano')
     })
 
+    it('cobre os mesmos eixos que CASOS_DE_HUMANO, que é o que o agente obedece', () => {
+        /**
+         * Quatro das cinco falhas de permissão do Conecta em 20/11/2026 eram o
+         * agente seguindo a instrução: a bateria chamava de erro o que ela
+         * própria manda fazer.
+         */
+        expect(desfechoPelaPergunta('gerenciar conta', 'preciso adicionar um cartão novo, sou gestor, consigo?')).toBe('escalou-humano')
+        expect(desfechoPelaPergunta('atendente', 'um colega viu a conversa de outro atendente sem eu liberar nada')).toBe('escalou-humano')
+        expect(desfechoPelaPergunta('permissão', 'um atendente achou o link direto de uma config, consegue mexer?')).toBe('escalou-humano')
+        expect(desfechoPelaPergunta('urgente', 'quero falar com uma pessoa agora')).toBe('escalou-humano')
+        /// E a dúvida de produto sobre o MESMO assunto continua de resposta.
+        expect(desfechoPelaPergunta('visibilidade', 'quem vê qual conversa dentro da equipe?')).toBeNull()
+        expect(desfechoPelaPergunta('papéis', 'o que um atendente consegue fazer?')).toBeNull()
+    })
+
     it('pergunta que descreve DEFEITO pede engenharia: não há artigo que responda', () => {
         expect(desfechoPelaPergunta('menu', 'cliquei no gerenciamento e a página fica em branco')).toBe('escalou-engenharia')
         expect(desfechoPelaPergunta('lista', 'só fica carregando e não abre nada')).toBe('escalou-engenharia')

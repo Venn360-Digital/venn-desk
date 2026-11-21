@@ -181,8 +181,39 @@ export function servePraCliente(termo: string): boolean {
  * agente — e foi o que aconteceu em 20/11/2026 com o artigo de e-mails de
  * cobrança: o agente escalou certo e a bateria o reprovou.
  */
-const ASSUNTO_DE_PESSOA =
-    /cobran|pagament|fatura|mensalidade|reembols|comprar|compra de|lgpd|dados pessoais|cancelamento|encerrar contrato|vazament|somente-leitura|titularidade|propriet[^ ]* (saiu|deixou|mudou)/i
+/**
+ * Os assuntos que a instrução do agente manda entregar a uma pessoa.
+ *
+ * Espelha `CASOS_DE_HUMANO` de `src/agente/instrucoes.ts`, eixo por eixo, e é
+ * por isso que existe: medido em 20/11/2026, quatro das cinco falhas de
+ * permissão do Conecta eram o agente OBEDECENDO aquela lista — pergunta sobre
+ * cartão (financeiro), sobre colega vendo conversa alheia e sobre link direto
+ * que burla permissão (suspeita de vazamento) — enquanto o gabarito pedia
+ * resposta. Uma bateria que pune a instrução não mede o agente.
+ *
+ * As frases são deliberadamente específicas. "conversa de outro colega" é
+ * suspeita de vazamento; "quem vê qual conversa" é dúvida de produto, e a base
+ * responde.
+ */
+const ASSUNTO_DE_PESSOA = new RegExp(
+    [
+        /// financeiro
+        'cobran|pagament|fatura|mensalidade|reembols|comprar|compra de|cart[ãa]o|boleto|pix',
+        /// LGPD e titularidade
+        'lgpd|dados pessoais|titularidade|propriet[^ ]* (saiu|deixou|mudou)',
+        /// fim de contrato
+        'cancelamento|encerrar contrato|somente-leitura',
+        /// suspeita de vazamento ou de permissão burlada
+        'vazament|conversa (de|do|da) outr[oa] (colega|usu[áa]ri|atendente|pessoa)',
+        'dados (de|do|da) outr[oa] (cliente|usu[áa]ri|empresa|loja|unidade)',
+        'sem (eu|a gente|ningu[ée]m) (liberar|autorizar|dar acesso)|burlar|bypass',
+        'link direto',
+        /// pedido explícito de pessoa e indisponibilidade geral
+        'falar com (algu[ée]m|uma pessoa|um humano|atendente humano)',
+        'ningu[ée]m consegue (entrar|acessar)|sistema (todo )?(fora|caiu)',
+    ].join('|'),
+    'i'
+)
 
 export function exigeEscalonamento(artigo: { chave: string; titulo: string; corpo: string }): boolean {
     /// Pelo título e pelo começo do corpo: o assunto do artigo, não uma menção

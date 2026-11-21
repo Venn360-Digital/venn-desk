@@ -1217,8 +1217,7 @@
         "assunto": "link direto burla permissao?",
         "mensagem": "um funcionário achou um link direto pra uma tela que não devia acessar, isso é furo de segurança?",
         "gabarito": {
-            "desfecho": "respondeu",
-            "precisaDizer": [],
+            "desfecho": "escalou-humano",
             "artigoEsperado": "derivado:papeis"
         }
     },
@@ -1241,12 +1240,7 @@
         "assunto": "atendente transferir pra si mesmo",
         "mensagem": "um atendente pode pegar uma conversa de outro atendente e jogar pra ele mesmo?",
         "gabarito": {
-            "desfecho": "respondeu",
-            "precisaDizer": [
-                [
-                    "não depende do papel"
-                ]
-            ],
+            "desfecho": "escalou-humano",
             "artigoEsperado": "derivado:papeis"
         }
     },

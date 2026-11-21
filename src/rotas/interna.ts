@@ -46,6 +46,7 @@ import { leitorGitHub } from '../conhecimento/github.ts'
 import { credencialDoAmbiente } from '../conhecimento/github-app.ts'
 import { urlDaFonte } from '../conhecimento/rotulos.ts'
 import { EXPIRA_MS, pedirSincronizacao } from '../conhecimento/sincronizar.ts'
+import { fontesDesatualizadas } from '../conhecimento/sugerir.ts'
 
 /**
  * A API interna — o que o Console consome, e o que a ponte do Slack vai chamar
@@ -1097,14 +1098,18 @@ rotasInternas.get('/api/console/app/:app/base', async (c) => {
      * agora?" — e separá-las só faria a tela esperar duas vezes.
      */
     const desde = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-    const [artigos, consultas] = await Promise.all([
-        escopo.artigos.listar(
-            status !== undefined && STATUS.includes(status as StatusDoArtigo)
-                ? { status: status as StatusDoArtigo }
-                : undefined
-        ),
+    const filtrado = status !== undefined && STATUS.includes(status as StatusDoArtigo)
+    const [artigos, consultas, todos] = await Promise.all([
+        escopo.artigos.listar(filtrado ? { status: status as StatusDoArtigo } : undefined),
         escopo.artigos.consultas(desde),
+        /**
+         * A lista inteira serve para uma pergunta só: a fonte de um rascunho
+         * SUGERIDO mudou depois de ele ser escrito? Sem filtro de status a
+         * primeira consulta já é a lista inteira, e a segunda não acontece.
+         */
+        filtrado ? escopo.artigos.listar() : Promise.resolve(null),
     ])
+    const atuais = (todos ?? artigos).map((a) => ({ chave: a.chave, sincronizadoEm: a.sincronizadoEm }))
 
     const resumo = resumirConsultas(consultas)
 
@@ -1127,8 +1132,15 @@ rotasInternas.get('/api/console/app/:app/base', async (c) => {
                 leituras: resumo.leiturasPorArtigo[a.id] ?? 0,
                 /// A base viva: de onde veio e quão fresco está.
                 origem: a.origem,
+                chave: a.chave,
                 sincronizadoEm: a.sincronizadoEm?.toISOString() ?? null,
                 statusFixadoPor: a.statusFixadoPor,
+                /**
+                 * As fontes que mudaram desde que este rascunho foi escrito.
+                 * Nada é despublicado por causa disso: quem publicou decide, e
+                 * o Console só mostra que vale reler.
+                 */
+                fontesMudaram: a.origem === 'SUGERIDO' ? fontesDesatualizadas(a.fonte, atuais) : [],
                 fonte:
                     fonte === null
                         ? null

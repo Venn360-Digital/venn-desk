@@ -19,6 +19,7 @@ import { consumirConhecimento } from './conhecimento/fila.ts'
 import { leitorGitHub } from './conhecimento/github.ts'
 import { credencialDoAmbiente } from './conhecimento/github-app.ts'
 import { vigiarConhecimento } from './conhecimento/sincronizar.ts'
+import { varrerCandidatosASugestao } from './conhecimento/varrer.ts'
 import type { CaixaDeSaida } from './correio/enviar.ts'
 
 /**
@@ -178,6 +179,19 @@ export default {
                 })
                 const relevantes = acoes.filter((a) => a.acao !== 'em_dia' && a.acao !== 'aguardando_intervalo')
                 if (relevantes.length > 0) console.log('[conhecimento]', JSON.stringify(relevantes))
+            }
+
+            /**
+             * A biblioteca de casos, uma vez por dia, às 4h UTC.
+             *
+             * Hora fixa e não "a cada N minutos" porque a varredura olha os
+             * últimos trinta dias: rodá-la duas vezes no mesmo dia enfileiraria
+             * os mesmos chamados. O horário é o de menos chamado aberto, para a
+             * fila do atendimento não disputar com a da base.
+             */
+            if (agora.getUTCHours() === 4 && agora.getUTCMinutes() === 0) {
+                const varridos = await varrerCandidatosASugestao(cliente, { agora, fila: env.CONHECIMENTO })
+                if (varridos.length > 0) console.log('[sugestoes]', JSON.stringify(varridos))
             }
         } finally {
             await descartarCliente(cliente)

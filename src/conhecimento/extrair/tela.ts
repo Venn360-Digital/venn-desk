@@ -5,6 +5,7 @@ import { curto, evidencia as campoDeEvidencia, frase, MUITOS } from './limites.t
 import type { Extrator } from './com-modelo.ts'
 import { digerir, digestoEmTexto, LIMITE_PARA_CRU } from './digesto.ts'
 import { ErroDeExtracao, type Extracao } from '../tipos.ts'
+import { detalheInternoEm } from '../interno.ts'
 
 /**
  * A documentação funcional de UMA tela — a camada 1 do documento de referência,
@@ -233,14 +234,6 @@ export function afirmacoesAncoraveis(tela: Tela): string[] {
     ].filter((t) => t !== '')
 }
 
-const PADROES_INTERNOS = [
-    /\b[\w-]+\.tsx?\b/,
-    /\/api\//,
-    /\bprisma\b/i,
-    /\buseState\b|\buseEffect\b/,
-    /\bselect\b.*\bfrom\b/i,
-]
-
 /**
  * Detalhe interno nos campos que descrevem (não na `evidencia`, que É um trecho
  * do código de propósito).
@@ -256,5 +249,5 @@ export function procurarDetalheInterno(tela: Tela): string[] {
         ...tela.porQuePodeNaoAparecer.map((p) => p.situacao),
     ]
 
-    return aVerificar.filter((t) => PADROES_INTERNOS.some((re) => re.test(t)))
+    return detalheInternoEm(aVerificar)
 }
