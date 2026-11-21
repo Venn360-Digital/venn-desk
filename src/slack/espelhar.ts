@@ -1,7 +1,7 @@
 import type { Context } from 'hono'
 
 import type { Ambiente } from '../lib/ambiente.ts'
-import { espelharAbertura } from './ponte.ts'
+import { avisarNaThread, espelharAbertura } from './ponte.ts'
 
 /**
  * Espelha a abertura do chamado no canal do Slack, fora do caminho da resposta.
@@ -63,4 +63,36 @@ export function espelharNoSlack(
     })()
 
     c.executionCtx.waitUntil(trabalho)
+}
+
+/**
+ * Avisa na thread que algo mudou no chamado (Venn Desk → Slack).
+ *
+ * Mesma regra do espelho da abertura: `waitUntil`, nada lança, e o conteúdo não
+ * vai — só que algo aconteceu. A mensagem do cliente é o caso que mais importa,
+ * porque é a única novidade que ninguém no Slack tem como adivinhar.
+ */
+export function avisarNoSlack(
+    c: Context<Ambiente>,
+    chamado: { id: string; numero: number },
+    novidade: string
+): void {
+    const escopo = c.get('escopo')
+    const app = c.get('app')
+
+    c.executionCtx.waitUntil(
+        avisarNaThread({
+            escopo,
+            config: { token: c.env.SLACK_BOT_TOKEN },
+            chamadoId: chamado.id,
+            numero: `${app.prefixo}-${chamado.numero}`,
+            novidade,
+        })
+            .then((r) => {
+                if (!r.postou && r.motivo !== 'sem_thread' && r.motivo !== 'sem_token') {
+                    console.error('[slack] aviso não postado:', r.motivo)
+                }
+            })
+            .catch((erro: unknown) => console.error('[slack] falha ao avisar na thread:', erro))
+    )
 }

@@ -1,7 +1,7 @@
 import type { EscopoDoApp } from '../dados/escopo.ts'
 import type { Autor } from '../dados/escopo.ts'
 import { postar, type ConfigDoSlack } from './cliente.ts'
-import { mensagemDeAbertura, type DadosDaAbertura } from './mensagens.ts'
+import { mensagemDeAbertura, mensagemDeAtualizacao, type DadosDaAbertura } from './mensagens.ts'
 import { neutralizar } from './neutralizar.ts'
 
 /**
@@ -60,6 +60,41 @@ export async function espelharAbertura(p: {
     })
 
     return { espelhou: true }
+}
+
+/**
+ * Posta uma novidade na thread do chamado (Venn Desk → Slack).
+ *
+ * O que vai: que ALGO aconteceu e o convite a ler pela ferramenta. O conteúdo
+ * não vai, nem quando é nosso — quem lê o chamado é quem tem o Console aberto
+ * ou o MCP na mão, e o canal é lido por modelo.
+ *
+ * Silencioso quando não há thread: um chamado aberto antes do Slack existir, ou
+ * num app sem canal, não é um erro a reportar.
+ */
+export async function avisarNaThread(p: {
+    escopo: EscopoDoApp
+    config: ConfigDoSlack
+    chamadoId: string
+    /** Uma linha, escrita por nós. */
+    novidade: string
+    numero: string
+}): Promise<{ postou: boolean; motivo?: string }> {
+    const thread = await p.escopo.threadsDoSlack.porChamado(p.chamadoId)
+    if (thread === null) return { postou: false, motivo: 'sem_thread' }
+
+    const resposta = await postar(p.config, {
+        canal: thread.canal,
+        naThread: thread.threadTs,
+        mensagem: mensagemDeAtualizacao({ numero: p.numero, novidade: p.novidade }),
+    })
+
+    if (!resposta.ok) {
+        if (resposta.erro !== 'sem_token') console.error('[slack] aviso na thread falhou:', resposta.erro)
+        return { postou: false, motivo: resposta.erro }
+    }
+
+    return { postou: true }
 }
 
 export type DestinoDaMensagem = 'nota-interna' | 'ignorada'

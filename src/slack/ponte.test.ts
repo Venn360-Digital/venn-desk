@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest'
 
 import { escopoDoApp } from '../dados/escopo.ts'
 import { conexaoFalsa } from '../dados/testes/conexao-falsa.ts'
-import { aplicarBotao, aplicarReacao, espelharAbertura, notaDaThread, responderPelaThread } from './ponte.ts'
+import {
+    aplicarBotao,
+    aplicarReacao,
+    avisarNaThread,
+    espelharAbertura,
+    notaDaThread,
+    responderPelaThread,
+} from './ponte.ts'
 
 const ABERTURA = {
     numero: 'ODB-1042',
@@ -350,5 +357,52 @@ describe('responderPelaThread', () => {
         expect((await responderPelaThread({ escopo, chamadoId: 'tkt-1', texto: '  ', agente: AGENTE, modoSombra: false })).motivo).toBe('vazia')
         expect((await responderPelaThread({ escopo, chamadoId: 'tkt-1', texto: 'oi', agente: null, modoSombra: false })).motivo).toBe('autor_nao_cadastrado')
         expect(chamadas).toHaveLength(0)
+    })
+})
+
+describe('avisarNaThread', () => {
+    it('posta DENTRO da thread do chamado, sem o conteúdo', async () => {
+        /**
+         * O que vai é que algo aconteceu e o convite a ler pela ferramenta. O
+         * conteúdo não vai nem quando é nosso: o canal é lido por modelo, e
+         * quem precisa do texto tem o Console ou o MCP.
+         */
+        const { conexao } = conexaoFalsa({
+            'slackThread.findFirst': { id: 'th-1', ticketId: 'tkt-1', canal: 'C1', threadTs: '171.1' },
+        })
+        const slack = slackFalso()
+
+        const r = await avisarNaThread({
+            escopo: escopoDoApp(conexao, 'app-1'),
+            config: slack.config,
+            chamadoId: 'tkt-1',
+            numero: 'ODB-1042',
+            novidade: 'o cliente respondeu',
+        })
+
+        expect(r).toEqual({ postou: true })
+        const corpo = slack.chamadas[0]?.corpo as { channel: string; thread_ts: string; text: string }
+        expect(corpo.channel).toBe('C1')
+        expect(corpo.thread_ts).toBe('171.1')
+        expect(corpo.text).toContain('o cliente respondeu')
+        expect(corpo.text).toContain('obter_chamado("ODB-1042")')
+    })
+
+    it('chamado sem thread não é erro', async () => {
+        /// Chamado aberto antes de o Slack existir, ou app sem canal. Nada a
+        /// reportar: o Console segue sendo a verdade.
+        const { conexao } = conexaoFalsa({ 'slackThread.findFirst': null })
+        const slack = slackFalso()
+
+        expect(
+            await avisarNaThread({
+                escopo: escopoDoApp(conexao, 'app-1'),
+                config: slack.config,
+                chamadoId: 'tkt-1',
+                numero: 'ODB-1042',
+                novidade: 'x',
+            })
+        ).toEqual({ postou: false, motivo: 'sem_thread' })
+        expect(slack.chamadas).toHaveLength(0)
     })
 })

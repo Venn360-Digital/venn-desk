@@ -17,9 +17,10 @@ Privados, sem convidados externos (seção 8 da especificação):
 | `#desk-aprovacoes` | pedidos de aprovação, só o Bridge posta |
 | `#desk-alertas` | SLA em risco, cão de guarda, resumo diário |
 
-Os quatro últimos ainda não recebem nada: o que está implementado é a thread por
-chamado no canal de suporte. Criá-los agora evita uma segunda rodada de
-permissões depois.
+`#desk-alertas` já recebe: queda e volta de app, prazo estourado e cão de
+guarda, uma linha com sinal na frente. `#desk-aprovacoes` e os canais `#eng-*`
+ainda não recebem nada — eles entram com a Fase 5, quando houver issue e deploy
+a aprovar. Criá-los agora evita uma segunda rodada de permissões depois.
 
 ## 2. O app
 
@@ -104,7 +105,20 @@ Uma vez, em qualquer canal. Sem isso as ações dele no Slack não têm autoria 
 ponte as ignora: nota interna sem autor, botão que não age, reação que não
 resolve.
 
-## 6. A menção que acorda o Claude (opcional)
+## 6. O canal de alertas
+
+Em `wrangler.jsonc`, em `vars`, nos dois ambientes:
+
+```jsonc
+"SLACK_CANAL_DE_ALERTAS": "C0ALERTAS"
+```
+
+É o id de `#desk-alertas`. Um canal para os três apps: quem olha alerta está de
+plantão sobre a plataforma, não sobre um produto, e o nome do app vai na linha.
+Ausente, nenhum alerta é postado e o e-mail continua sendo o aviso — não é
+defeito, é o estado inicial.
+
+## 7. A menção que acorda o Claude (opcional)
 
 Só para app com atendimento automático ligado. Em `wrangler.jsonc`, em `vars`:
 

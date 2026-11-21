@@ -17,7 +17,7 @@ import { assinar, VALIDADE_DO_LINK_S } from '../lib/assinatura.ts'
 import { ErroDeDominio } from '../lib/erros.ts'
 import type { Ambiente } from '../lib/ambiente.ts'
 import { avisarPorEmail } from '../correio/avisar.ts'
-import { espelharNoSlack } from '../slack/espelhar.ts'
+import { avisarNoSlack, espelharNoSlack } from '../slack/espelhar.ts'
 import { publicarNaSala } from '../tempo-real/publicar.ts'
 import { comApp, comCliente, comTokenDoApp } from '../auth/middleware.ts'
 import { lerTema } from '../dominio/tema.ts'
@@ -461,6 +461,13 @@ rotasDoSolicitante.post('/api/app/:app/chamados/:numero/mensagens', async (c) =>
      * máquina de estados recusando `mensagem_do_usuario` em NOVO.)
      */
     await publicarNaSala(c.env.SALAS, chamado.id, { tipo: 'mensagem', resumo: 'usuario' })
+
+    /**
+     * A thread do Slack precisa saber que o cliente escreveu, e é a única
+     * novidade que ninguém de lá tem como adivinhar: o Console mostra quando
+     * alguém abre, mas quem está no Slack não abre o Console a cada minuto.
+     */
+    avisarNoSlack(c, chamado, 'o cliente respondeu')
 
     return c.json(
         {

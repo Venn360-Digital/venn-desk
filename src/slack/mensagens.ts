@@ -177,6 +177,66 @@ export function modalDeResposta(dados: { chamadoId: string; numero: string }): u
     }
 }
 
+export type GravidadeDoAlerta = 'caiu' | 'voltou' | 'sla' | 'cao-de-guarda' | 'falha'
+
+export interface DadosDoAlerta {
+    gravidade: GravidadeDoAlerta
+    /** O app a que o alerta pertence, pelo nome que as pessoas usam. */
+    app: string
+    /** Uma linha, escrita por NÓS. Nunca texto de cliente. */
+    resumo: string
+    /** `ODB-1042`, quando o alerta é de um chamado. */
+    numero?: string | undefined
+    urlNoConsole?: string | undefined
+}
+
+const SINAL: Record<GravidadeDoAlerta, string> = {
+    caiu: '🔴',
+    voltou: '🟢',
+    sla: '🟠',
+    'cao-de-guarda': '🟠',
+    falha: '🟠',
+}
+
+/**
+ * A mensagem do canal de alertas (`#desk-alertas`).
+ *
+ * Uma linha, com sinal na frente, porque o canal é lido de relance no celular —
+ * se for preciso abrir a mensagem para saber se é grave, ela falhou. O texto é
+ * sempre nosso: nada que venha de cliente entra aqui, nem o assunto do chamado,
+ * porque o canal também é lido por modelo.
+ */
+export function mensagemDeAlerta(dados: DadosDoAlerta): MensagemDoSlack {
+    const partes = [
+        SINAL[dados.gravidade],
+        dados.app,
+        dados.numero === undefined ? null : `· ${dados.numero}`,
+        `· ${dados.resumo}`,
+    ].filter((p): p is string => p !== null)
+
+    const texto = partes.join(' ')
+
+    return {
+        text: texto,
+        blocks: [
+            {
+                type: 'section',
+                text: { type: 'mrkdwn', text: texto },
+                ...(dados.urlNoConsole === undefined
+                    ? {}
+                    : {
+                          accessory: {
+                              type: 'button',
+                              text: { type: 'plain_text', text: 'Abrir no Console' },
+                              url: dados.urlNoConsole,
+                              action_id: 'abrir_no_console',
+                          },
+                      }),
+            },
+        ],
+    }
+}
+
 export interface DadosDaAtualizacao {
     numero: string
     /** O que mudou, em palavras nossas. Nunca texto de fora. */

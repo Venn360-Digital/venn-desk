@@ -49,6 +49,12 @@ export interface Ambiente {
          * a mensagem de abertura sai sem menção e ninguém é acordado.
          */
         SLACK_MENCAO_DO_CLAUDE?: string
+        /**
+         * O canal `#desk-alertas` (id, `C…`). Um para os três apps: quem olha
+         * alerta está de plantão sobre a plataforma, não sobre um produto.
+         * Ausente, nenhum alerta é postado e o e-mail continua sendo o aviso.
+         */
+        SLACK_CANAL_DE_ALERTAS?: string
         /** Chave da API do Claude, para o agente de atendimento. Segredo. */
         ANTHROPIC_API_KEY?: string
         /** O modelo do agente. Em `vars`, para trocar sem publicar código. */

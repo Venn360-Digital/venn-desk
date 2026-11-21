@@ -20,6 +20,8 @@ import { leitorGitHub } from './conhecimento/github.ts'
 import { credencialDoAmbiente } from './conhecimento/github-app.ts'
 import { vigiarConhecimento } from './conhecimento/sincronizar.ts'
 import { varrerCandidatosASugestao } from './conhecimento/varrer.ts'
+import { alertarNoSlack, alertasDaRodada } from './slack/alertar.ts'
+import { numerosDosChamados } from './dados/chamados.ts'
 import type { CaixaDeSaida } from './correio/enviar.ts'
 
 /**
@@ -153,9 +155,38 @@ export default {
                 vigiarPrazos(cliente),
             ])
 
+            /// Os números dos chamados citados, num ida-e-volta só: o alerta
+            /// sem número obrigaria quem está de plantão a procurar qual era.
+            const numeros = await numerosDosChamados(
+                cliente,
+                estouros.map((e) => e.ticketId)
+            )
+
             /// Só o que mudou vira log. 1.440 execuções por dia escrevendo
             /// "tudo bem" é o jeito de ninguém encontrar o dia em que não
             /// estava.
+            /**
+             * O canal de alertas recebe o MESMO filtro do log: só o que mudou.
+             * Em `waitUntil` não dá (o cron não tem contexto de requisição),
+             * mas a postagem é rápida e um Slack lento não pode atrasar a
+             * sondagem do minuto seguinte — por isso ela vem depois de tudo e
+             * nunca lança.
+             */
+            const paraAlertar = alertasDaRodada({
+                saude: vereditos,
+                prazos: estouros.map((e) => ({ ...e, meta: String(e.meta) })),
+                numeroDoChamado: (id) => {
+                    const c = numeros.get(id)
+                    return c === undefined ? undefined : `${c.prefixo}-${c.numero}`
+                },
+                urlBase: env.URL_BASE,
+            })
+            if (paraAlertar.length > 0) {
+                await alertarNoSlack(env, paraAlertar).catch((erro: unknown) =>
+                    console.error('[slack] alertas não postados:', erro)
+                )
+            }
+
             const mudaram = vereditos.filter((v) => v.mudanca !== null)
             if (mudaram.length > 0) {
                 console.log('[saude]', JSON.stringify(mudaram))
