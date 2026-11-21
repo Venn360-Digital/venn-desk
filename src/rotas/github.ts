@@ -8,6 +8,7 @@ import type { Ambiente } from '../lib/ambiente.ts'
 import { comCliente } from '../auth/middleware.ts'
 import { conferirAssinaturaDoGitHub } from '../github/assinatura.ts'
 import { avisarNaThread } from '../slack/ponte.ts'
+import { resumoDaFumaca, rodarFumaca, sondaDeFumacaHttp } from '../fumaca/rodar.ts'
 
 /**
  * Os webhooks do GitHub (Fase 5).
@@ -145,6 +146,51 @@ rotasDoGitHub.post('/github/webhook', comCliente, async (c) => {
         },
     })
 
+    /**
+     * Deploy de staging bem-sucedido: o Desk roda os testes de fumaça.
+     *
+     * De FORA, pela rede, e é essa a diferença que importa. Um teste dentro do
+     * pipeline que publicou prova que o build terminou; este prova que o
+     * ambiente responde — e é o segundo que vale para quem vai dizer ao cliente
+     * que a correção está em homologação.
+     *
+     * A URL vem do cadastro do app (`urlApp`), não do evento: aceitar a URL que
+     * o webhook manda seria sondar o endereço que alguém escolheu.
+     */
+    let fumaca: string | null = null
+    if (movimento?.para === 'EM_STAGING' && app.urlApp !== null && app.urlApp !== '') {
+        const resultado = await rodarFumaca({ urlBase: app.urlApp, sonda: sondaDeFumacaHttp })
+        fumaca = resumoDaFumaca(resultado)
+
+        await escopo.eventos.registrar({
+            ticketId: chamado.id,
+            ator: 'sistema:fumaca',
+            evento: 'engenharia:fumaca',
+            depois: { passou: resultado.passou, linhas: resultado.linhas },
+        })
+
+        /**
+         * Fumaça reprovada NÃO desfaz a etapa.
+         *
+         * A correção está em staging — isso é fato, e desfazê-lo faria a etapa
+         * mentir. O que a falha muda é quem precisa olhar: a linha vai para a
+         * thread e para a trilha, e o portão de produção é humano de qualquer
+         * forma.
+         */
+        if (!resultado.passou) {
+            await escopo.mensagens.adicionar(
+                {
+                    ticketId: chamado.id,
+                    autor: 'SISTEMA',
+                    corpo: `Testes de fumaça depois do deploy de staging:\n${resultado.linhas.join('\n')}`,
+                    visibilidade: 'INTERNA',
+                    origem: 'MCP',
+                },
+                { ator: 'sistema:fumaca' }
+            )
+        }
+    }
+
     /// A thread só recebe o que muda algo: um evento que não move etapa nem
     /// registra link já está na trilha, e repeti-lo no Slack faria a thread
     /// virar log de CI.
@@ -154,7 +200,7 @@ rotasDoGitHub.post('/github/webhook', comCliente, async (c) => {
             config: { token: c.env.SLACK_BOT_TOKEN },
             chamadoId: chamado.id,
             numero: `${app.prefixo}-${chamado.numero}`,
-            novidade: leitura.resumo,
+            novidade: fumaca === null ? leitura.resumo : `${leitura.resumo} · ${fumaca}`,
         })
     }
 

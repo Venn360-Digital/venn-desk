@@ -626,7 +626,7 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 - [ ] `CLAUDE.md` de cada app com as regras de correção via chamado
 
 * [ ] Estender as provas contra o Neon em branch descartável ao Conecta e ao Stagent, ou exigir revisão humana nas correções que toquem banco nesses apps
-* [ ] Testes de fumaça executados pelo Venn Desk após o deploy de staging
+* [x] Testes de fumaça executados pelo Venn Desk após o deploy de staging
 
 - [ ] App GitHub do Venn Desk com leitura por repositório, e agente N2 que lê o código e posta o diagnóstico na thread
 - [ ] Claude Code no Slack instalado, com os três repositórios conectados à sua conta, e registro da menção como Portão 1
@@ -668,6 +668,18 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 > QUEM precisa aprovar, que é o caminho mais curto para desmontar a trava. Sem
 > conseguir medir o tamanho, exige revisão: "não sei o que mudou" tem de levar ao
 > mesmo lugar que "mudou muito".
+>
+> **Os testes de fumaça rodam de FORA, pelo Desk**, quando o webhook anuncia
+> deploy de staging. Um teste dentro do pipeline que publicou prova que o build
+> terminou; este prova que o ambiente responde, e é o segundo que vale para quem
+> vai dizer ao cliente que a correção está em homologação. A URL vem do cadastro
+> do app, nunca do evento — aceitar a que o webhook manda seria sondar o endereço
+> que alguém escolheu. Quatro verificações genéricas, e a que mais importa espera
+> uma RECUSA: a API que responde 200 sem credencial reprova, porque endpoint
+> aberto é pior que endpoint com erro e este é o único lugar em que isso
+> apareceria antes de um cliente achar. Fumaça reprovada não desfaz a etapa: a
+> correção está em staging, e desfazer isso faria a etapa mentir; o que muda é
+> quem precisa olhar.
 >
 > **O que falta é escrever o código da correção**: o agente N2 que lê o
 > repositório e abre o PR. Depende do GitHub App ganhar permissão de ESCRITA
