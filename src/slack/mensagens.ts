@@ -177,6 +177,57 @@ export function modalDeResposta(dados: { chamadoId: string; numero: string }): u
     }
 }
 
+export interface DadosDaEngenharia {
+    numero: string
+    /** O resumo técnico escrito pelo N1 ao escalar. Texto nosso, não do cliente. */
+    resumo: string
+    /** `arquivo:linha` do mapa técnico, quando houver. */
+    ponteiros?: string | undefined
+    urlNoConsole: string
+    chamadoId: string
+}
+
+/**
+ * A mensagem que abre a thread no canal de engenharia (`#eng-*`).
+ *
+ * É a única coisa que atravessa a fronteira entre os dois canais, e ela leva
+ * de propósito o que o N1 escreveu, não o que o cliente escreveu: a separação
+ * entre o canal de suporte e o de engenharia é a principal defesa contra
+ * instrução maliciosa dentro de um chamado (seção 8), e colar o relato original
+ * num canal que tem o repositório ligado desfaria essa defesa.
+ *
+ * Quem precisa do texto do cliente o lê com `obter_chamado`, em campo rotulado.
+ */
+export function mensagemDeEngenharia(dados: DadosDaEngenharia): MensagemDoSlack {
+    const linhas = [
+        `Defeito a investigar · ${dados.numero}`,
+        `Resumo do N1: ${dados.resumo}`,
+        dados.ponteiros === undefined ? null : `Por onde começar: ${dados.ponteiros}`,
+        `Use obter_chamado("${dados.numero}") para ler o chamado e o contexto.`,
+    ].filter((l): l is string => l !== null)
+
+    const corpo = linhas.join('\n')
+
+    return {
+        text: corpo,
+        blocks: [
+            { type: 'section', text: { type: 'mrkdwn', text: corpo } },
+            {
+                type: 'actions',
+                block_id: `chamado:${dados.chamadoId}`,
+                elements: [
+                    {
+                        type: 'button',
+                        text: { type: 'plain_text', text: 'Abrir no Console' },
+                        url: dados.urlNoConsole,
+                        action_id: 'abrir_no_console',
+                    },
+                ],
+            },
+        ],
+    }
+}
+
 export type GravidadeDoAlerta = 'caiu' | 'voltou' | 'sla' | 'cao-de-guarda' | 'falha'
 
 export interface DadosDoAlerta {

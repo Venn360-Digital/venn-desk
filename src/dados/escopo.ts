@@ -1,5 +1,5 @@
 import type { Prisma, PrismaClient } from '#prisma'
-import type { Attachment, CsatResponse, HealthEpisode, HealthState, KbArticle, KbEvento, KbSincronizacao, Problem, SlackThread, SlaTimer, Ticket, TicketEvent, TicketMessage } from '#prisma'
+import type { Attachment, CsatResponse, EngLink, HealthEpisode, HealthState, KbArticle, KbEvento, KbSincronizacao, Problem, SlackThread, SlaTimer, Ticket, TicketEvent, TicketMessage } from '#prisma'
 
 import { ErroDeDominio } from '../lib/erros.ts'
 import { transicionar, type Evento, type Status } from '../dominio/estados.ts'
@@ -16,6 +16,7 @@ import {
 import { fundir, parecidos } from '../dominio/busca.ts'
 import type { ChamadoMedido } from '../dominio/relatorio.ts'
 import type { ConsultaRegistrada } from '../dominio/consultas.ts'
+import { avanca, type Etapa as EtapaDeEngenharia } from '../dominio/engenharia.ts'
 import {
     aoMudarStatus,
     metaEmMinutos,
@@ -330,6 +331,27 @@ export interface EscopoDoApp {
         porId(id: string): Promise<Problem | null>
         abrir(dados: { titulo: string; causa?: string }): Promise<Problem>
         resolver(id: string): Promise<Problem | null>
+        /**
+         * Move a etapa, e só para FRENTE.
+         *
+         * O GitHub entrega fora de ordem e reentrega: o check de um push antigo
+         * chega depois do deploy. Quem compara é `avanca` em
+         * `src/dominio/engenharia.ts`; aqui a etapa anterior volta no resultado
+         * para a trilha dizer de onde para onde.
+         */
+        avancarEtapa(id: string, para: EtapaDeEngenharia): Promise<{ de: EtapaDeEngenharia; para: EtapaDeEngenharia } | null>
+    }
+
+    /** Issues, PRs, execuções de CI e deploys ligados a um defeito (seção 6). */
+    linksDeEngenharia: {
+        registrar(dados: {
+            problemId: string
+            tipo: 'ISSUE' | 'PR' | 'RUN' | 'DEPLOY'
+            url: string
+            estado?: string
+            ambiente?: string
+        }): Promise<void>
+        doProblema(problemId: string): Promise<EngLink[]>
     }
 
     /**
@@ -1378,6 +1400,17 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 })
             },
 
+            async avancarEtapa(id, para) {
+                const atual = await conexao.problem.findFirst({ where: { id, appId } })
+                if (atual === null) return null
+
+                const de = atual.etapa as EtapaDeEngenharia
+                if (!avanca(de, para)) return null
+
+                await conexao.problem.updateMany({ where: { id, appId }, data: { etapa: para } })
+                return { de, para }
+            },
+
             async resolver(id) {
                 const { count } = await conexao.problem.updateMany({
                     where: { id, appId, resolvidoEm: null },
@@ -1972,6 +2005,50 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
             async doArtigo(artigoId) {
                 return conexao.kbEvento.findMany({
                     where: { appId, artigoId },
+                    orderBy: { criadoEm: 'asc' },
+                })
+            },
+        },
+
+        linksDeEngenharia: {
+            async registrar(dados) {
+                /**
+                 * Um link por URL: o GitHub manda vários eventos do mesmo PR
+                 * (aberto, sincronizado, rotulado), e cada um traria a mesma
+                 * URL. Sem isto a lista de um defeito viraria dez linhas
+                 * iguais, e o que muda — o estado — ficaria espalhado entre
+                 * elas.
+                 */
+                const existente = await conexao.engLink.findFirst({
+                    where: { appId, problemId: dados.problemId, url: dados.url },
+                })
+
+                if (existente !== null) {
+                    await conexao.engLink.updateMany({
+                        where: { id: existente.id, appId },
+                        data: {
+                            ...(dados.estado === undefined ? {} : { estado: dados.estado }),
+                            ...(dados.ambiente === undefined ? {} : { ambiente: dados.ambiente }),
+                        },
+                    })
+                    return
+                }
+
+                await conexao.engLink.create({
+                    data: {
+                        appId,
+                        problemId: dados.problemId,
+                        tipo: dados.tipo,
+                        url: dados.url,
+                        ...(dados.estado === undefined ? {} : { estado: dados.estado }),
+                        ...(dados.ambiente === undefined ? {} : { ambiente: dados.ambiente }),
+                    },
+                })
+            },
+
+            async doProblema(problemId) {
+                return conexao.engLink.findMany({
+                    where: { appId, problemId },
                     orderBy: { criadoEm: 'asc' },
                 })
             },

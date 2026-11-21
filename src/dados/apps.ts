@@ -38,6 +38,16 @@ export async function appPorCanal(cliente: PrismaClient, canal: string): Promise
     })
 }
 
+/**
+ * Os apps de um repositório. Plural porque o `venn-saas` é monorepo: um push
+ * nele serve aos três produtos, e quem diz de qual é o chamado é a referência
+ * (`ODB-1042`), não o repositório.
+ */
+export async function appPorRepositorio(cliente: PrismaClient, repositorio: string): Promise<App[]> {
+    if (repositorio === '') return []
+    return cliente.app.findMany({ where: { excluidoEm: null, repositorio } })
+}
+
 export interface DadosDoApp {
     slug: string
     nome: string

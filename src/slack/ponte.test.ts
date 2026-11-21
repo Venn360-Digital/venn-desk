@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { escopoDoApp } from '../dados/escopo.ts'
 import { conexaoFalsa } from '../dados/testes/conexao-falsa.ts'
 import {
+    abrirThreadDeEngenharia,
     aplicarBotao,
     aplicarReacao,
     avisarNaThread,
@@ -403,6 +404,99 @@ describe('avisarNaThread', () => {
                 novidade: 'x',
             })
         ).toEqual({ postou: false, motivo: 'sem_thread' })
+        expect(slack.chamadas).toHaveLength(0)
+    })
+})
+
+describe('abrirThreadDeEngenharia', () => {
+    const DADOS = {
+        chamadoId: 'tkt-1',
+        numero: 'ODB-1042',
+        resumo: 'o salvamento de agendamento recorrente falha quando a data final cai num feriado',
+        ponteiros: 'agenda/recorrencia.ts:88',
+        urlNoConsole: 'https://desk.venn360.com/app/odontobox/chamados/1042',
+    }
+
+    it('posta no canal de ENGENHARIA e guarda o vínculo', async () => {
+        const { conexao, chamadas } = conexaoFalsa({
+            'slackThread.findFirst': { id: 'th-1', ticketId: 'tkt-1', canal: 'C-DESK', threadTs: '171.1', threadTsEngenharia: null },
+        })
+        const slack = slackFalso({ ok: true, ts: '200.1', channel: 'C-ENG' })
+
+        const r = await abrirThreadDeEngenharia({
+            escopo: escopoDoApp(conexao, 'app-1'),
+            config: slack.config,
+            canal: 'C-ENG',
+            dados: DADOS,
+        })
+
+        expect(r).toEqual({ abriu: true })
+        const corpo = slack.chamadas[0]?.corpo as { channel: string; text: string }
+        expect(corpo.channel).toBe('C-ENG')
+        /// O resumo do N1 atravessa; o relato do cliente não. É a separação
+        /// entre os dois canais, que é a defesa principal contra instrução
+        /// maliciosa dentro de um chamado.
+        expect(corpo.text).toContain('o salvamento de agendamento recorrente falha')
+        expect(corpo.text).toContain('agenda/recorrencia.ts:88')
+        const vinculo = chamadas.find((c) => c.delegado === 'slackThread' && c.metodo === 'updateMany')
+        expect(vinculo?.args.data).toMatchObject({ canalEngenharia: 'C-ENG', threadTsEngenharia: '200.1' })
+    })
+
+    it('escalar duas vezes não abre a segunda thread', async () => {
+        /// Duas threads dividiriam o diagnóstico. Acontece quando o N1 insiste
+        /// e quando um humano repete pelo Console.
+        const { conexao } = conexaoFalsa({
+            'slackThread.findFirst': { id: 'th-1', ticketId: 'tkt-1', threadTsEngenharia: '200.1' },
+        })
+        const slack = slackFalso()
+
+        expect(
+            await abrirThreadDeEngenharia({
+                escopo: escopoDoApp(conexao, 'app-1'),
+                config: slack.config,
+                canal: 'C-ENG',
+                dados: DADOS,
+            })
+        ).toEqual({ abriu: false, motivo: 'ja_existia' })
+        expect(slack.chamadas).toHaveLength(0)
+    })
+
+    it('chamado sem thread de suporte ganha as duas de uma vez', async () => {
+        /**
+         * App sem canal de suporte, ou chamado anterior à ponte. O vínculo é
+         * uma linha por chamado, então sem registrar a de suporte o caminho de
+         * volta (reação, nota) não funcionaria na thread de engenharia.
+         */
+        const { conexao, chamadas } = conexaoFalsa({
+            'slackThread.findFirst': null,
+            'slackThread.create': { id: 'th-2' },
+        })
+        const slack = slackFalso({ ok: true, ts: '200.1', channel: 'C-ENG' })
+
+        expect(
+            await abrirThreadDeEngenharia({
+                escopo: escopoDoApp(conexao, 'app-1'),
+                config: slack.config,
+                canal: 'C-ENG',
+                dados: DADOS,
+            })
+        ).toEqual({ abriu: true })
+
+        const criada = chamadas.find((c) => c.delegado === 'slackThread' && c.metodo === 'create')
+        expect(criada?.args.data).toMatchObject({ canal: 'C-ENG', threadTs: '200.1' })
+    })
+
+    it('app sem canal de engenharia não posta nada', async () => {
+        const { conexao } = conexaoFalsa()
+        const slack = slackFalso()
+        expect(
+            await abrirThreadDeEngenharia({
+                escopo: escopoDoApp(conexao, 'app-1'),
+                config: slack.config,
+                canal: null,
+                dados: DADOS,
+            })
+        ).toEqual({ abriu: false, motivo: 'sem_canal' })
         expect(slack.chamadas).toHaveLength(0)
     })
 })

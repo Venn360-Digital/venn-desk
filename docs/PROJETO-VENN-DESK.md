@@ -616,10 +616,10 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 **Objetivo:** defeito confirmado vira issue aprovada, PR e deploy de staging.
 
 - [ ] Canais `#eng-*` com o repositório do app e as ferramentas de engenharia do MCP
-- [ ] `escalar("engenharia")` cria a thread de engenharia com o resumo técnico
-- [ ] Problemas e vínculo de incidentes
+- [x] `escalar("engenharia")` cria a thread de engenharia com o resumo técnico
+- [x] Problemas e vínculo de incidentes
 - [ ] Modelo de issue, `abrir_issue` e o Portão 1 em `#desk-aprovacoes`
-- [ ] Webhooks do GitHub (issue, PR, checks, deploy) atualizando `eng_links` e a etapa no widget
+- [x] Webhooks do GitHub (issue, PR, checks, deploy) atualizando `eng_links` e a etapa no widget
 - [ ] Portão de CI do Workers Builds como check obrigatório nas branches protegidas, builds de branches não produtivas ligados, revisão automática de PR, `CODEOWNERS`
 - [ ] Deploy de staging no merge e testes de fumaça com resultado na thread
 - [ ] Regras de limite: tamanho do diff, caminhos sensíveis, migrações
@@ -631,6 +631,33 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 - [ ] App GitHub do Venn Desk com leitura por repositório, e agente N2 que lê o código e posta o diagnóstico na thread
 - [ ] Claude Code no Slack instalado, com os três repositórios conectados à sua conta, e registro da menção como Portão 1
 - [ ] Endurecimento do build: CODEOWNERS sobre o portão de CI, token do Neon de menor escopo, auditoria de dependências
+
+> **Estado em 21/11/2026 — o caminho de ida existe, falta quem escreve código.**
+> Escalar para engenharia abre a thread no canal `#eng-*` com o resumo do N1 e
+> os ponteiros do mapa técnico. O que cruza a fronteira entre os dois canais é
+> o resumo escrito pelo N1, nunca o relato do cliente: o canal de engenharia tem
+> o repositório ligado, e colar texto de fora ali desfaria a defesa que a seção
+> 8 monta ao separar os canais.
+>
+> Os webhooks do GitHub estão no ar com assinatura HMAC conferida em tempo
+> constante e idempotência por entrega. Um evento acha o chamado pela referência
+> no nome da branch (`desk/ODB-1042`), que é a única que acompanha o PR, o check
+> e o deploy — guardar o número da issue serviria só para a issue. O monorepo
+> obriga a casar o PREFIXO do app: procurar pelo repositório e ficar no primeiro
+> daria o chamado ao app errado dois terços das vezes.
+>
+> Duas regras que o cliente sente: a etapa só anda para FRENTE, porque o GitHub
+> entrega fora de ordem e reentrega (sem isso o chamado regrediria de "em teste"
+> para "em revisão" na frente dele); e verificação que FALHOU registra o link e
+> NÃO avança a etapa, senão o widget diria "em homologação" quando o teste
+> reprovou. O widget passa a mostrar a etapa em palavras de produto, sem issue,
+> PR nem nome de branch.
+>
+> **O que falta é o que escreve código**: `abrir_issue` com o portão de
+> aprovação, o agente N2 que lê o repositório e as regras de limite de diff.
+> Tudo isso precisa do GitHub App com permissão de ESCRITA (hoje é só
+> `contents: read`) e das proteções de branch configuradas — ver
+> `docs/slack-bridge.md` para o padrão do que depende de painel.
 
 **Aceite:** um defeito plantado no staging do Odontobox, reportado pelo widget, chega a um PR em staging com teste, passando pela aprovação do gestor, sem intervenção manual além do clique. O usuário vê cada etapa no widget.
 

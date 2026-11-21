@@ -11,6 +11,7 @@ import { comCliente } from '../auth/middleware.ts'
 import { executarFerramenta } from '../mcp/executar.ts'
 import { embutidorDoWorkersAi } from '../conhecimento/embeddings.ts'
 import { ferramentasDoEscopo, paraOProtocolo, type Escopo } from '../mcp/ferramentas.ts'
+import { saidaDeEngenharia } from '../slack/engenharia.ts'
 
 /**
  * O servidor MCP do Venn Desk (seção 8, Fase 4).
@@ -158,6 +159,7 @@ rotasDoMcp.post('/mcp', comCliente, async (c) => {
                     app,
                     escopo: credencial.escopo,
                     ...(c.env.AI === undefined ? {} : { embutir: embutidorDoWorkersAi(c.env.AI) }),
+                    abrirEngenharia: saidaDeEngenharia(escopoDoApp(cliente, app.id), app, c.env),
                 },
                 nome,
                 argumentos

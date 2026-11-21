@@ -60,6 +60,20 @@ export interface Contexto {
      * Nunca lança — devolve `null` e a busca cai para o que existia.
      */
     embutir?: Embutidor
+    /**
+     * Abre a thread do defeito no canal de engenharia, ao escalar.
+     *
+     * Injetável como `embutir`, e pelo mesmo motivo: o MCP é chamado de fora,
+     * onde não há token do Slack, e a ferramenta tem de funcionar igual nos dois
+     * casos. Sem este ponto de saída o escalonamento acontece do mesmo jeito —
+     * o Slack é superfície de trabalho, não a verdade (ver `src/slack/ponte.ts`).
+     */
+    abrirEngenharia?: (p: {
+        chamadoId: string
+        numero: string
+        resumo: string
+        ponteiros: string | null
+    }) => Promise<void>
 }
 
 export interface Resultado {
@@ -700,6 +714,27 @@ async function escalar(
                 'Registrado o pedido de atendimento humano, com o motivo na linha do tempo. ' +
                 'O status não mudou: o chamado continua na fila da equipe. Não responda mais ' +
                 'ao cliente sobre este assunto.',
+        }
+    }
+
+    /**
+     * A thread de engenharia é aberta ANTES da transição.
+     *
+     * Se a máquina de estados recusar (chamado já fechado, por exemplo), o
+     * diagnóstico técnico já está no canal de quem vai olhar — e é isso que
+     * importa. A ordem inversa perderia o resumo numa recusa.
+     */
+    if (ctx.abrirEngenharia !== undefined) {
+        try {
+            await ctx.abrirEngenharia({
+                chamadoId: chamado.id,
+                numero: `${ctx.app.prefixo}-${chamado.numero}`,
+                resumo: motivo,
+                ponteiros,
+            })
+        } catch (erro) {
+            /// Slack fora do ar não impede escalonamento.
+            console.error('[mcp] thread de engenharia não abriu:', erro)
         }
     }
 

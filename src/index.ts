@@ -11,6 +11,7 @@ import { rotasInternas } from './rotas/interna.ts'
 import { rotasDeStatus } from './rotas/status.ts'
 import { rotasDoPortal } from './rotas/portal.ts'
 import { rotasDoSlack } from './rotas/slack.ts'
+import { rotasDoGitHub } from './rotas/github.ts'
 import { rotasDoMcp } from './rotas/mcp.ts'
 import { verificarSaude } from './saude/verificar.ts'
 import { vigiarPrazos } from './sla/vigiar.ts'
@@ -58,6 +59,7 @@ app.route('/', rotasInternas)
 app.route('/', rotasDeStatus)
 app.route('/', rotasDoPortal)
 app.route('/', rotasDoSlack)
+app.route('/', rotasDoGitHub)
 app.route('/', rotasDoMcp)
 
 /**

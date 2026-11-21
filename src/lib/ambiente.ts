@@ -103,6 +103,11 @@ export interface Ambiente {
          * antes de o App estar instalado. Com o App presente, é ignorado.
          */
         GITHUB_TOKEN_LEITURA?: string
+        /**
+         * O segredo do webhook do GitHub. Entra por `wrangler secret put`.
+         * Ausente, nenhum evento é aceito — falha fechada, como no Slack.
+         */
+        GITHUB_WEBHOOK_SEGREDO?: string
         /** Workers AI, para o embedding da busca semântica (`bge-m3`). */
         AI?: WorkersAi
         /**

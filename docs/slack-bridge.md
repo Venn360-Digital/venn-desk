@@ -144,3 +144,32 @@ sai sem menção e ninguém é acordado — que é o estado seguro.
 Se nada acontecer, o log do Worker diz por quê em uma linha (`wrangler tail`).
 Os motivos possíveis estão todos nomeados: `sem_canal`, `sem_token`,
 `autor_nao_cadastrado`, `thread_sem_chamado`, `nao_e_a_raiz`, `reentrega`.
+
+## Webhook do GitHub (Fase 5)
+
+O endpoint está no ar. Em `github.com/Venn360-Digital/venn-saas/settings/hooks`,
+"Add webhook":
+
+- **Payload URL**: `https://desk.venn360.com/github/webhook`
+- **Content type**: `application/json`
+- **Secret**: gere um valor aleatório e guarde; ele vai para o Worker abaixo
+- **Eventos**: `Issues`, `Pull requests`, `Check suites`, `Workflow runs`,
+  `Deployment statuses`
+
+Depois, nos dois ambientes:
+
+```bash
+npx wrangler secret put GITHUB_WEBHOOK_SEGREDO
+```
+
+```bash
+npx wrangler secret put GITHUB_WEBHOOK_SEGREDO --env producao
+```
+
+Sem o segredo, nenhum evento é aceito — falha fechada, como no Slack.
+
+**A convenção que faz o vínculo funcionar**: a branch da correção precisa citar
+o chamado, como `desk/ODB-1042`. O título ou o corpo da issue também servem. Sem
+a referência o evento é ignorado com uma linha no log, porque não há como saber
+a que chamado ele pertence — e todo evento do GitHub tem números soltos que não
+são chamado nenhum.

@@ -19,6 +19,7 @@ import type { Ambiente } from '../lib/ambiente.ts'
 import { avisarPorEmail } from '../correio/avisar.ts'
 import { avisarNoSlack, espelharNoSlack } from '../slack/espelhar.ts'
 import { duplicadosProvaveis, tipoSugerido, type SinaisDoContexto } from '../dominio/triagem.ts'
+import { etapaParaOCliente, type Etapa } from '../dominio/engenharia.ts'
 import { avisoDeDuplicata } from '../dominio/duplicata-aviso.ts'
 import { publicarNaSala } from '../tempo-real/publicar.ts'
 import { comApp, comCliente, comTokenDoApp } from '../auth/middleware.ts'
@@ -349,8 +350,22 @@ rotasDoSolicitante.get('/api/app/:app/chamados/:numero', async (c) => {
      */
     const avaliacao = await escopo.csat.doChamado(chamado.id)
 
+    /**
+     * A etapa de engenharia, em palavras de produto.
+     *
+     * É o que a Fase 5 promete ao cliente: ele acompanha a correção sem ver
+     * issue, PR nem nome de branch. Só quando há defeito vinculado; e a recusa
+     * do gestor volta a dizer "em análise", porque é decisão interna sobre COMO
+     * resolver (ver `src/dominio/engenharia.ts`).
+     */
+    const problema = chamado.problemId === null ? null : await escopo.problemas.porId(chamado.problemId)
+
     return c.json({
         chamado: paraOWidget(chamado, c.get('app').prefixo),
+        correcao:
+            problema === null
+                ? null
+                : { etapa: etapaParaOCliente(problema.etapa as Etapa), atualizadoEm: problema.atualizadoEm },
         csat: {
             podeAvaliar:
                 podeAvaliar(chamado.status) &&

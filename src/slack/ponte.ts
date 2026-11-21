@@ -1,7 +1,13 @@
 import type { EscopoDoApp } from '../dados/escopo.ts'
 import type { Autor } from '../dados/escopo.ts'
 import { postar, type ConfigDoSlack } from './cliente.ts'
-import { mensagemDeAbertura, mensagemDeAtualizacao, type DadosDaAbertura } from './mensagens.ts'
+import {
+    mensagemDeAbertura,
+    mensagemDeAtualizacao,
+    mensagemDeEngenharia,
+    type DadosDaAbertura,
+    type DadosDaEngenharia,
+} from './mensagens.ts'
 import { neutralizar } from './neutralizar.ts'
 
 /**
@@ -95,6 +101,56 @@ export async function avisarNaThread(p: {
     }
 
     return { postou: true }
+}
+
+/**
+ * Abre a thread do defeito no canal de ENGENHARIA (seção 8).
+ *
+ * Canal separado, e isso é a defesa principal: o canal de engenharia tem o
+ * repositório ligado, e o de suporte tem o texto de quem abriu o chamado. O que
+ * cruza a fronteira é o resumo escrito pelo N1, nunca o relato original.
+ *
+ * Idempotente: um chamado escalado duas vezes (o N1 insiste, um humano repete
+ * pelo Console) continua com uma thread só. Duas dividiriam o diagnóstico.
+ */
+export async function abrirThreadDeEngenharia(p: {
+    escopo: EscopoDoApp
+    config: ConfigDoSlack
+    canal: string | null
+    dados: DadosDaEngenharia
+}): Promise<{ abriu: boolean; motivo?: string }> {
+    if (p.canal === null || p.canal === '') return { abriu: false, motivo: 'sem_canal' }
+
+    const thread = await p.escopo.threadsDoSlack.porChamado(p.dados.chamadoId)
+    if (thread !== null && thread.threadTsEngenharia !== null) return { abriu: false, motivo: 'ja_existia' }
+
+    const resposta = await postar(p.config, { canal: p.canal, mensagem: mensagemDeEngenharia(p.dados) })
+    if (!resposta.ok) {
+        if (resposta.erro !== 'sem_token') console.error('[slack] thread de engenharia não abriu:', resposta.erro)
+        return { abriu: false, motivo: resposta.erro }
+    }
+
+    /**
+     * Se o chamado ainda não tem thread de suporte (app sem canal de suporte,
+     * ou chamado anterior à ponte), o vínculo de engenharia não tem onde morar:
+     * `slack_threads` é uma linha por chamado. Registra a de suporte primeiro,
+     * apontando para a própria mensagem de engenharia — é o que mantém o
+     * caminho de volta funcionando para reação e nota.
+     */
+    if (thread === null) {
+        await p.escopo.threadsDoSlack.registrar({
+            ticketId: p.dados.chamadoId,
+            canal: resposta.canal,
+            threadTs: resposta.ts,
+        })
+    }
+
+    await p.escopo.threadsDoSlack.registrarEngenharia(p.dados.chamadoId, {
+        canal: resposta.canal,
+        threadTs: resposta.ts,
+    })
+
+    return { abriu: true }
 }
 
 export type DestinoDaMensagem = 'nota-interna' | 'ignorada'
