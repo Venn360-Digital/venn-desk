@@ -28,6 +28,25 @@ export async function agentePorSlackId(
  * chamado, não decide sobre pane. E a IA não entra por construção — ela não lê
  * e-mail, age pelo MCP.
  */
+/**
+ * Liga uma conta do Slack a um agente.
+ *
+ * `slackId` é único no schema: uma conta do Slack não pode responder por dois
+ * agentes, e é isso que mantém a autoria da trilha confiável. Trocar de pessoa
+ * exige desvincular primeiro, de propósito.
+ */
+export async function vincularSlackId(
+    cliente: PrismaClient,
+    agenteId: string,
+    slackId: string
+): Promise<{ ok: true } | { ok: false; erro: 'ja_vinculado_a_outro' }> {
+    const deOutro = await cliente.agent.findFirst({ where: { slackId } })
+    if (deOutro !== null && deOutro.id !== agenteId) return { ok: false, erro: 'ja_vinculado_a_outro' }
+
+    await cliente.agent.updateMany({ where: { id: agenteId }, data: { slackId } })
+    return { ok: true }
+}
+
 export async function responsaveisPorAlerta(cliente: PrismaClient): Promise<Agent[]> {
     return cliente.agent.findMany({
         where: { ativo: true, tipo: 'HUMANO', papel: { in: ['GESTOR', 'ADMIN'] } },

@@ -143,6 +143,27 @@ export async function abrirModal(
     return resposta.ok ? { ok: true } : resposta
 }
 
+/**
+ * O e-mail do usuário do Slack (`users.info`), para o vínculo com `agents`.
+ *
+ * O e-mail é verificado pelo Slack na entrada do workspace, e o workspace é
+ * privado e sem convidados externos (seção 8) — são essas duas coisas que fazem
+ * dele identidade suficiente para ligar uma conta do Slack a um agente. Exige o
+ * escopo `users:read.email` no app.
+ */
+export async function emailDoUsuario(
+    config: ConfigDoSlack,
+    usuarioId: string
+): Promise<{ ok: true; email: string } | { ok: false; erro: string }> {
+    const resposta = await chamar(config, 'users.info', { user: usuarioId })
+    if (!resposta.ok) return resposta
+
+    const perfil = ((resposta.dados['user'] ?? {}) as { profile?: { email?: unknown } }).profile ?? {}
+    return typeof perfil.email === 'string' && perfil.email !== ''
+        ? { ok: true, email: perfil.email }
+        : { ok: false, erro: 'sem_email' }
+}
+
 export async function atualizar(
     config: ConfigDoSlack,
     alvo: { canal: string; ts: string; mensagem: MensagemDoSlack }

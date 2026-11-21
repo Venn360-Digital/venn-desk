@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { atualizar, postar, type Buscador } from './cliente.ts'
+import { atualizar, emailDoUsuario, postar, type Buscador } from './cliente.ts'
 import { mensagemDeAbertura } from './mensagens.ts'
 
 const MENSAGEM = mensagemDeAbertura({
@@ -192,5 +192,30 @@ describe('atualizar uma mensagem', () => {
         expect(
             await atualizar(comToken(buscador), { canal: 'C01', ts: '1', mensagem: MENSAGEM })
         ).toEqual({ ok: false, erro: 'message_not_found' })
+    })
+})
+
+describe('emailDoUsuario', () => {
+    it('devolve o e-mail do perfil, que é a identidade do vínculo', async () => {
+        const { buscador } = slackFalso({
+            ok: true,
+            user: { id: 'U1', profile: { email: 'rita@venn360.com', real_name: 'Rita' } },
+        })
+
+        expect(await emailDoUsuario({ token: 'xoxb-t', buscador }, 'U1')).toEqual({
+            ok: true,
+            email: 'rita@venn360.com',
+        })
+    })
+
+    it('perfil sem e-mail recusa em vez de inventar', async () => {
+        /// Acontece quando falta o escopo `users:read.email` no app. Vincular
+        /// sem identidade ligaria uma conta do Slack ao agente errado.
+        const { buscador } = slackFalso({ ok: true, user: { id: 'U1', profile: {} } })
+        expect(await emailDoUsuario({ token: 'xoxb-t', buscador }, 'U1')).toEqual({ ok: false, erro: 'sem_email' })
+    })
+
+    it('sem token não chama o Slack', async () => {
+        expect(await emailDoUsuario({ token: undefined }, 'U1')).toEqual({ ok: false, erro: 'sem_token' })
     })
 })

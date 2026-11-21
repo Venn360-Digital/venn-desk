@@ -6,9 +6,9 @@ import { comCliente } from '../auth/middleware.ts'
 import { conferirAssinatura } from '../slack/assinatura.ts'
 import { appPorCanal } from '../dados/apps.ts'
 import { escopoDoApp } from '../dados/escopo.ts'
-import { agentePorSlackId } from '../dados/agentes.ts'
+import { agentePorEmail, agentePorSlackId, vincularSlackId } from '../dados/agentes.ts'
 import { aplicarBotao, aplicarReacao, notaDaThread, responderPelaThread } from '../slack/ponte.ts'
-import { abrirModal } from '../slack/cliente.ts'
+import { abrirModal, emailDoUsuario } from '../slack/cliente.ts'
 import { modalDeResposta } from '../slack/mensagens.ts'
 import { appsAtivos } from '../dados/apps.ts'
 
@@ -62,13 +62,54 @@ async function conferido(
  * Um 404 aqui apareceria para o atendente como "falha ao enviar", que é a
  * mensagem errada: não houve falha, a função não está no ar.
  */
-rotasDoSlack.post('/slack/comandos', async (c) => {
-    if (!(await conferido(c)).ok) return c.json({ erro: 'não autorizado' }, 401)
+rotasDoSlack.post('/slack/comandos', comCliente, async (c) => {
+    const conferencia = await conferido(c)
+    if (!conferencia.ok) return c.json({ erro: 'não autorizado' }, 401)
 
-    return c.json({
-        response_type: 'ephemeral',
-        text: 'Os comandos do Venn Desk ainda não estão no ar. Use o Console por enquanto.',
-    })
+    const campos = new URLSearchParams(conferencia.corpoCru)
+    const texto = (campos.get('text') ?? '').trim().toLowerCase()
+    const usuario = campos.get('user_id') ?? ''
+
+    /// Efêmero sempre: a resposta de um comando é para quem digitou. No canal,
+    /// ela viraria uma linha que o Claude leria como se fosse do chamado.
+    const resposta = (text: string) => c.json({ response_type: 'ephemeral', text })
+
+    if (texto === 'vincular') {
+        /**
+         * O vínculo entre a conta do Slack e `agents` (seção 8).
+         *
+         * Sem ele, nada que uma pessoa faz no Slack tem autoria: a nota interna
+         * fica sem autor, o botão não age e a reação não resolve. Por isso é
+         * auto-serviço, e não um cadastro que alguém precisa pedir.
+         *
+         * A identidade vem do e-mail verificado pelo Slack num workspace
+         * privado e sem convidados, não de texto digitado.
+         */
+        if (usuario === '') return resposta('Não consegui identificar você no Slack.')
+
+        const email = await emailDoUsuario({ token: c.env.SLACK_BOT_TOKEN }, usuario)
+        if (!email.ok) {
+            console.error('[slack] vínculo sem e-mail:', email.erro)
+            return resposta('Não consegui ler o seu e-mail do Slack. Fale com quem administra o Desk.')
+        }
+
+        const agente = await agentePorEmail(c.get('cliente'), email.email)
+        if (agente === null) {
+            /// Não dizemos se o e-mail existe no Desk: a resposta é a mesma
+            /// para quem não é agente e para quem está inativo.
+            return resposta('Esse e-mail não está cadastrado como agente ativo no Venn Desk.')
+        }
+
+        const vinculo = await vincularSlackId(c.get('cliente'), agente.id, usuario)
+        if (!vinculo.ok) return resposta('Esta conta do Slack já está vinculada a outro agente.')
+
+        return resposta(`Pronto, ${agente.nome}. Suas ações no Slack agora valem no Venn Desk.`)
+    }
+
+    return resposta(
+        'Comandos: `/desk vincular` liga a sua conta do Slack ao seu usuário do Venn Desk. ' +
+            'Para assumir, responder ou resolver, use os botões da mensagem do chamado.'
+    )
 })
 
 /**

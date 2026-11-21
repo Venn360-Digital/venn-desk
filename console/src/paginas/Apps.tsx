@@ -105,7 +105,12 @@ export function Apps({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
                         </div>
                     </dl>
 
-                    {papel !== 'AGENTE' ? <Repositorio app={app} /> : null}
+                    {papel !== 'AGENTE' ? (
+                        <>
+                            <Repositorio app={app} />
+                            <CanaisDoSlack app={app} />
+                        </>
+                    ) : null}
 
                     {papel !== 'AGENTE' && (
                         <div className="mt-3 flex flex-wrap gap-2">
@@ -163,6 +168,57 @@ export function Apps({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
  * (`apps/odontobox360`). Sem os dois preenchidos a sincronização não roda, e a
  * tela da Base diz isso e manda para cá.
  */
+/**
+ * Os canais do Slack do app (seção 8).
+ *
+ * Dois campos, o id do canal e não o nome: o nome muda quando alguém renomeia
+ * o canal, e a ponte perderia o vínculo em silêncio. O id (`C…`) fica em
+ * "Ver detalhes do canal", no fim.
+ *
+ * Sem o canal de suporte preenchido, a abertura de chamado não é espelhada e
+ * ninguém é avisado disso — é o comportamento certo, porque um app pode
+ * deliberadamente não usar Slack.
+ */
+function CanaisDoSlack({ app }: { app: AppCadastrado }) {
+    const fila = useQueryClient()
+    const [suporte, setSuporte] = useState(app.canalSuporte ?? '')
+    const [engenharia, setEngenharia] = useState(app.canalEngenharia ?? '')
+    const mudou = suporte !== (app.canalSuporte ?? '') || engenharia !== (app.canalEngenharia ?? '')
+
+    const salvar = useMutation({
+        mutationFn: () =>
+            api(`/apps/${app.slug}`, {
+                metodo: 'PATCH',
+                corpo: {
+                    canalSuporte: suporte.trim() === '' ? null : suporte.trim(),
+                    canalEngenharia: engenharia.trim() === '' ? null : engenharia.trim(),
+                },
+            }),
+        onSuccess: () => void fila.invalidateQueries({ queryKey: ['apps'] }),
+    })
+
+    return (
+        <form
+            className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+            onSubmit={(e) => {
+                e.preventDefault()
+                salvar.mutate()
+            }}
+        >
+            <Campo rotulo="Canal de suporte (id, C…)" valor={suporte} onChange={setSuporte} />
+            <Campo rotulo="Canal de engenharia (id, C…)" valor={engenharia} onChange={setEngenharia} />
+            <Botao tipo="submit" variante="leve" desabilitado={!mudou || salvar.isPending}>
+                Salvar
+            </Botao>
+            {salvar.isError ? (
+                <div className="sm:col-span-3">
+                    <Aviso>{(salvar.error as Error).message}</Aviso>
+                </div>
+            ) : null}
+        </form>
+    )
+}
+
 function Repositorio({ app }: { app: AppCadastrado }) {
     const fila = useQueryClient()
     const [repositorio, setRepositorio] = useState(app.repositorio ?? '')
