@@ -82,3 +82,23 @@ describe('o teto de gasto', () => {
         })
     })
 })
+
+describe('o teto de tokens é uma decisão de custo, e está amarrado aqui', () => {
+    it('150 mil tokens por chamado: o medido passa, o exagerado para', () => {
+        /**
+         * André baixou de 1 milhão para 150 mil em 21/11/2026, depois de um dia
+         * de US$ 229 em rodadas de bateria. O atendimento real medido (ODB-0122)
+         * usou 49 mil tokens em 6 passos, então há cerca de três vezes de folga.
+         *
+         * Este teste existe para que subir o teto seja uma decisão, e não um
+         * número trocado de passagem: 150 mil são cerca de US$ 0,45 por chamado
+         * no pior caso, e 1 milhão eram US$ 3.
+         */
+        expect(TETO_PADRAO.tokens).toBe(150_000)
+        expect(conferirTeto({ passos: 6, tokensDeEntrada: 46_900, tokensDeSaida: 2_078 })).toEqual({ dentro: true })
+        expect(conferirTeto({ passos: 12, tokensDeEntrada: 150_000, tokensDeSaida: 4_000 })).toEqual({
+            dentro: false,
+            motivo: 'tokens',
+        })
+    })
+})

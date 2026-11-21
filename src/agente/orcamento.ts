@@ -27,20 +27,31 @@ export interface Teto {
 }
 
 /**
- * O padrão: 30 passos e 1 milhão de tokens por chamado.
+ * O padrão: 30 passos e 150 mil tokens por chamado.
  *
- * **Este teto não existe para economizar.** A decisão do produto (18/11/2026) é
- * que o chamado seja respondido com excelência, e token não é a restrição. O
- * que ele existe para impedir é o LAÇO: um agente que relê o mesmo chamado em
- * círculo não melhora a resposta, só não termina — e um chamado que nunca
- * termina é pior para o cliente do que um respondido de forma mediana.
+ * O teto existe por dois motivos, e o segundo foi acrescentado caro.
  *
- * Por isso os números são generosos e ainda assim finitos. Trinta passos é
- * muito mais do que qualquer caminho útil (ler, buscar, classificar, anotar,
- * responder, escalar cabe em sete) e ainda corta quem se perdeu. Um milhão de
- * tokens é ordem de grandeza acima do maior chamado plausível.
+ * O primeiro é o LAÇO: um agente que relê o mesmo chamado em círculo não
+ * melhora a resposta, só não termina — e um chamado que nunca termina é pior
+ * para o cliente do que um respondido de forma mediana. Trinta passos é muito
+ * mais do que qualquer caminho útil (ler, buscar, classificar, anotar,
+ * responder, escalar cabe em sete) e ainda corta quem se perdeu.
+ *
+ * O segundo é o GASTO. A decisão de 18/11/2026 foi que token não é a restrição,
+ * e o teto de tokens ficou em um milhão — até US$ 3 num único chamado. Em
+ * 20/11/2026 um dia de rodadas de bateria custou US$ 229 e mostrou o que um
+ * limite folgado permite quando ninguém está olhando. André baixou para 150 mil
+ * em 21/11/2026, cerca de US$ 0,45 no pior caso.
+ *
+ * **O que isso corta.** O atendimento real medido (ODB-0122) usou 49 mil tokens
+ * em 6 passos. O contexto é reenviado a cada passo, então o consumo cresce
+ * rápido com o número deles: um chamado de mais de dez passos que abra vários
+ * artigos inteiros pode bater em 150 mil e parar. Parar não deixa ninguém sem
+ * resposta — o chamado vai para uma pessoa com nota interna dizendo por quê
+ * (ver `atender.ts`) — mas é meio atendimento jogado fora, e o evento
+ * `agente:teto` na trilha é o lugar de ver se está acontecendo demais.
  */
-export const TETO_PADRAO: Teto = { passos: 30, tokens: 1_000_000 }
+export const TETO_PADRAO: Teto = { passos: 30, tokens: 150_000 }
 
 export interface Consumo {
     passos: number

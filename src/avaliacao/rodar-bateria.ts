@@ -3,7 +3,7 @@ import type { LanguageModel } from 'ai'
 import type { App, KbArticle, PrismaClient } from '#prisma'
 
 import { atender } from '../agente/atender.ts'
-import { custoEstimado, type Tarifa } from '../agente/orcamento.ts'
+import { TETO_PADRAO, custoEstimado, type Tarifa } from '../agente/orcamento.ts'
 import type { EscopoDoApp } from '../dados/escopo.ts'
 import { textoDeBusca, VISIVEL } from '../dominio/artigo.ts'
 import { parecidos } from '../dominio/busca.ts'
@@ -189,8 +189,13 @@ export async function rodarCasoDaBateria(p: PedidoDeCaso): Promise<ResultadoDoCa
          * buscar, ler artigo, classificar, anotar, responder). Doze dá folga e
          * ainda corta quem se perdeu — e cem casos com teto de trinta seria
          * dinheiro gasto em laço.
+         *
+         * Os TOKENS são os da produção, não um número daqui. Enquanto a bateria
+         * permitia 200 mil e a produção 150 mil, ela aprovava atendimento que a
+         * produção corta no meio — um aceite que mede um limite que não existe
+         * não mede nada.
          */
-        teto: { passos: 12, tokens: 200_000 },
+        teto: { passos: 12, tokens: TETO_PADRAO.tokens },
     })
 
     const aoCliente = obs.aoCliente.join('\n')
