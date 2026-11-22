@@ -725,12 +725,12 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 **Objetivo:** paridade funcional com um help desk de mercado.
 
 - [x] SLA por app e prioridade, calendário comercial, pausas, alertas de risco e de violação
-- [ ] Gatilhos e automações, incluindo fechamento automático e lembrete ao usuário
+- [x] Gatilhos e automações, incluindo fechamento automático e lembrete ao usuário
 - [ ] Macros, visões salvas, tags, campos personalizados por app
 - [ ] Mesclar chamados, chamado de acompanhamento
 - [ ] Relatórios e painel (seção 12)
 - [ ] Visão "chamados da empresa" para o administrador do tenant
-- [ ] Resumo diário em `#desk-alertas`
+- [x] Resumo diário em `#desk-alertas`
 
 > **Estado em 22/11/2026 — o prazo passa a respeitar o expediente.** A política
 > por app e prioridade e as pausas já existiam; faltavam o calendário comercial,
@@ -755,6 +755,32 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 > 72 horas. Ele sai UMA vez por relógio, e a coluna `avisado_em` é o que impede
 > o cron de repetir a mesma linha a cada minuto enquanto o prazo corre. O alerta
 > diz quanto FALTA, não quanto passou: é o que leva à ação.
+
+> **As automações de inatividade, 22/11/2026.** Um chamado em "aguardando
+> usuário" que ninguém responde ficava na fila para sempre, e enquanto estava lá
+> ele MENTIA: aparecia como trabalho pendente da equipe quando o pendente era do
+> outro lado.
+>
+> O lembrete vem antes de resolver, sempre. Resolver sem lembrar encerraria o
+> chamado de quem talvez não tenha visto a resposta, e a pessoa descobriria pelo
+> e-mail de encerramento — então o prazo de resolver só conta DEPOIS do lembrete.
+> Três dias para lembrar (dois são pouco, cinco são tarde), sete para resolver,
+> cinco para fechar o resolvido, que é o prazo em que alguém reabre quando a
+> resposta não serviu.
+>
+> A espera é medida pela última MENSAGEM, não por `atualizadoEm`: mudar
+> prioridade ou atribuir responsável atualiza a linha sem ninguém ter falado com
+> o cliente. E o lembrete é por CICLO de espera, não por chamado — quem responde,
+> recebe resposta e para de novo merece outro lembrete. Chamado sem mensagem
+> nenhuma nunca é resolvido por inatividade, porque ninguém o respondeu ainda.
+>
+> **O resumo diário** sai às 8h de São Paulo e responde, sem abrir o Console,
+> quanto entrou, quanto saiu, o que furou prazo, o que ficou e quanto a IA
+> custou. Ele NÃO repete os alertas do dia: queda de app e prazo estourado
+> chegam na hora, e repeti-los de manhã ensinaria a ignorar as duas coisas. Dia
+> sem movimento não gera resumo, porque "0 chamados, US$ 0,00" todas as manhãs é
+> a maneira mais eficiente de ninguém ler o resumo do dia em que houve algo. O
+> custo aparece mesmo zerado: é o número que ninguém olha até doer.
 
 **Aceite:** uma política de SLA violada gera alerta e aparece no relatório. Uma automação criada no Console executa sem código novo. O painel mostra as métricas da seção 12 por app.
 

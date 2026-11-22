@@ -15,6 +15,8 @@ import { rotasDoGitHub } from './rotas/github.ts'
 import { rotasDoMcp } from './rotas/mcp.ts'
 import { verificarSaude } from './saude/verificar.ts'
 import { vigiarPrazos, vigiarRiscos } from './sla/vigiar.ts'
+import { rodarAutomacoes } from './automacoes/rodar.ts'
+import { postarResumoDiario } from './automacoes/resumo.ts'
 import { consumirAtendimentos, type LoteDaFila } from './agente/fila.ts'
 import { consumirConhecimento } from './conhecimento/fila.ts'
 import { leitorGitHub } from './conhecimento/github.ts'
@@ -268,6 +270,32 @@ export default {
                 } catch (erro) {
                     console.error('[custo] cão de guarda falhou:', erro)
                 }
+            }
+
+            /**
+             * O resumo diário, às 11h UTC — 8h em São Paulo.
+             *
+             * Antes do começo do expediente e depois da virada do dia, para a
+             * leitura de quem chega cobrir a noite inteira.
+             */
+            if (agora.getUTCHours() === 11 && agora.getUTCMinutes() === 0) {
+                const r = await postarResumoDiario(cliente, env, agora)
+                if (r.postou) console.log('[resumo] diário postado')
+                else if (r.motivo !== 'sem_canal' && r.motivo !== 'sem_movimento') {
+                    console.error('[resumo] não postado:', r.motivo)
+                }
+            }
+
+            /**
+             * As automações de inatividade, uma vez por hora.
+             *
+             * Os prazos são em DIAS: verificar a cada minuto multiplicaria
+             * consultas para chegar à mesma conclusão 1.440 vezes. No minuto 7
+             * para não disputar com o que roda nos múltiplos de 5.
+             */
+            if (agora.getUTCMinutes() === 7) {
+                const aplicadas = await rodarAutomacoes(cliente, { agora })
+                if (aplicadas.length > 0) console.log('[automacao]', JSON.stringify(aplicadas))
             }
 
             /**

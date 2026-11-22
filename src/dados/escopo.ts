@@ -18,6 +18,7 @@ import { fundir, parecidos } from '../dominio/busca.ts'
 import type { ChamadoMedido } from '../dominio/relatorio.ts'
 import type { ConsultaRegistrada } from '../dominio/consultas.ts'
 import { avanca, type Etapa as EtapaDeEngenharia } from '../dominio/engenharia.ts'
+import type { ChamadoParado } from '../dominio/automacoes.ts'
 import { calendarioDaPolitica, vencimentoComercial, type Calendario } from '../dominio/calendario.ts'
 import {
     aoMudarStatus,
@@ -248,6 +249,15 @@ export interface EscopoDoApp {
         candidatosASugestao(desde: Date, limite: number): Promise<ChamadoParaSugerir[]>
         /** Um chamado só, na mesma forma — o que a fila recebe por id. */
         paraSugestao(id: string): Promise<ChamadoParaSugerir | null>
+        /**
+         * Os chamados que podem estar parados esperando o cliente, ou resolvidos
+         * esperando fechamento (Fase 7).
+         *
+         * Traz a data da última MENSAGEM, não `atualizadoEm`: mudar prioridade
+         * ou atribuir responsável atualiza a linha sem ninguém ter falado com o
+         * cliente, e isso reiniciaria a espera sem motivo.
+         */
+        paradosParaAutomacao(limite: number): Promise<ChamadoParado[]>
         /**
          * Os chamados ABERTOS do mesmo solicitante, para a triagem comparar.
          *
@@ -1013,6 +1023,59 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                     orderBy: { criadoEm: 'desc' },
                     take: 20,
                     select: { id: true, numero: true, assunto: true },
+                })
+            },
+
+            async paradosParaAutomacao(limite) {
+                const linhas = await conexao.ticket.findMany({
+                    where: {
+                        appId,
+                        excluidoEm: null,
+                        status: { in: ['AGUARDANDO_USUARIO', 'RESOLVIDO'] },
+                    },
+                    orderBy: { atualizadoEm: 'asc' },
+                    take: limite,
+                    select: {
+                        id: true,
+                        numero: true,
+                        status: true,
+                        resolvidoEm: true,
+                        messages: {
+                            where: { rascunho: false, descartadoEm: null },
+                            orderBy: { criadoEm: 'desc' },
+                            take: 1,
+                            select: { criadoEm: true },
+                        },
+                        /**
+                         * O lembrete já saiu NESTE ciclo de espera?
+                         *
+                         * A pergunta é por ciclo, e não por chamado: alguém que
+                         * responde, recebe resposta e para de novo merece outro
+                         * lembrete. Por isso o evento só conta se for mais
+                         * recente que a última mensagem.
+                         */
+                        events: {
+                            where: { evento: 'automacao:lembrete' },
+                            orderBy: { criadoEm: 'desc' },
+                            take: 1,
+                            select: { criadoEm: true },
+                        },
+                    },
+                })
+
+                return linhas.map((l) => {
+                    const ultimaMensagemEm = l.messages[0]?.criadoEm ?? null
+                    const lembradoEm = l.events[0]?.criadoEm ?? null
+                    return {
+                        id: l.id,
+                        numero: l.numero,
+                        status: l.status,
+                        ultimaMensagemEm,
+                        resolvidoEm: l.resolvidoEm,
+                        jaLembrado:
+                            lembradoEm !== null &&
+                            (ultimaMensagemEm === null || lembradoEm.getTime() >= ultimaMensagemEm.getTime()),
+                    }
                 })
             },
 
