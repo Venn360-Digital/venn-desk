@@ -131,6 +131,10 @@
         // Tarifa SÓ para estimar custo na trilha. Não decide nada: quem corta
         // o atendimento é o teto de passos e de tokens.
         // Tarifa do Sonnet, só para a estimativa da trilha.
+        // O teto de gasto de IA por DIA, na plataforma inteira. O cão de
+        // guarda avisa em 60% e no estouro; ele não corta nada — desligar o
+        // atendimento automático é decisão de pessoa, no Console.
+        "TETO_DIARIO_DE_IA_USD": "5",
         "TARIFA_ENTRADA_POR_MILHAO": "3",
         "TARIFA_SAIDA_POR_MILHAO": "15"
     },
@@ -162,6 +166,7 @@
                 "ORIGENS_DOS_APPS": "https://odontobox.venn360.com,https://conecta.venn360.com,https://stagent.venn360.com",
                 "MODELO_DO_AGENTE": "claude-sonnet-5",
                 "ESFORCO_DO_AGENTE": "medium",
+                "TETO_DIARIO_DE_IA_USD": "5",
                 "TARIFA_ENTRADA_POR_MILHAO": "3",
                 "TARIFA_SAIDA_POR_MILHAO": "15"
             },
