@@ -887,6 +887,16 @@ model SlaTimer {
     metaMin    Int       @map("meta_min")
     venceEm    DateTime  @map("vence_em")
     pausadoEm  DateTime? @map("pausado_em")
+    /**
+     * Quando o aviso de RISCO saiu.
+     *
+     * Existe porque o alerta não pode repetir: o cron roda a cada minuto e um
+     * relógio fica em risco por minutos ou horas, então sem a marca o canal
+     * receberia a mesma linha centenas de vezes — o mesmo que não receber
+     * nenhuma.
+     */
+    avisadoEm DateTime? @map("avisado_em")
+
     violadoEm  DateTime? @map("violado_em")
     cumpridoEm DateTime? @map("cumprido_em")
 

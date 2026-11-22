@@ -391,6 +391,66 @@ const esquemaDaPolitica = z.object({
     resolucaoMin: z.coerce.number().int().min(1).max(60 * 24 * 90),
 })
 
+/**
+ * O calendário comercial de uma prioridade.
+ *
+ * Esquema frouxo de propósito nos horários (`HH:MM` e nada mais), porque validar
+ * aqui que a janela faz sentido duplicaria a regra do domínio. O que é recusado
+ * é o que a aritmética não sabe tratar: fuso vazio, dia fora de 0–6, horário
+ * fora do formato.
+ */
+const esquemaDoCalendario = z.object({
+    fuso: z.string().trim().min(3).max(64),
+    dias: z.record(
+        z.string().regex(/^[0-6]$/),
+        z.array(z.object({ de: z.string().regex(/^\d{2}:\d{2}$/), ate: z.string().regex(/^\d{2}:\d{2}$/) })).max(4)
+    ),
+    feriados: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(60).optional(),
+})
+
+rotasInternas.put('/api/console/app/:app/sla-calendario/:prioridade', async (c) => {
+    const agente = c.get('agente')
+    if (agente.papel === 'AGENTE') {
+        throw new ErroDeDominio('sem_permissao', 'Agente não altera o calendário de SLA.', 403)
+    }
+
+    const prioridade = c.req.param('prioridade').toUpperCase()
+    if (!['URGENTE', 'ALTA', 'NORMAL', 'BAIXA'].includes(prioridade)) {
+        throw new ErroDeDominio('prioridade_invalida', 'Prioridade desconhecida.', 400)
+    }
+
+    const bruto = await c.req.json().catch(() => null)
+
+    /**
+     * Corpo nulo volta a 24x7, e isso precisa ser alcançável: desligar o
+     * horário comercial é tão legítimo quanto ligá-lo, e sem um caminho de volta
+     * a configuração seria de mão única.
+     */
+    if (bruto === null || (typeof bruto === 'object' && Object.keys(bruto as object).length === 0)) {
+        await c.get('escopo').sla.definirCalendario(prioridade as Prioridade, null)
+        return c.json({ prioridade, calendario: null })
+    }
+
+    const corpo = esquemaDoCalendario.safeParse(bruto)
+    if (!corpo.success) {
+        throw new ErroDeDominio(
+            'calendario_invalido',
+            'Informe fuso (`America/Sao_Paulo`), dias de 0 a 6 e horários em HH:MM.',
+            400
+        )
+    }
+
+    /// Nenhuma janela em nenhum dia faria todo prazo cair para corrido, em
+    /// silêncio. Recusar é melhor que aceitar uma configuração que não atende.
+    const temJanela = Object.values(corpo.data.dias).some((janelas) => (janelas ?? []).length > 0)
+    if (!temJanela) {
+        throw new ErroDeDominio('calendario_sem_janela', 'Informe ao menos um dia com horário.', 400)
+    }
+
+    await c.get('escopo').sla.definirCalendario(prioridade as Prioridade, corpo.data as never)
+    return c.json({ prioridade, calendario: corpo.data })
+})
+
 /** As metas do app, com o padrão aparecendo onde não há política própria. */
 rotasInternas.get('/api/console/app/:app/sla', async (c) => {
     const cadastradas = await c.get('escopo').sla.politicas()
@@ -402,7 +462,7 @@ rotasInternas.get('/api/console/app/:app/sla', async (c) => {
                 /// `propria: false` é informação, não detalhe: o atendente
                 /// precisa saber se está vendo a política do app ou o padrão.
                 propria: cadastradas[prioridade] !== undefined,
-                ...(cadastradas[prioridade] ?? METAS_PADRAO[prioridade]),
+                ...(cadastradas[prioridade] ?? { ...METAS_PADRAO[prioridade], calendario: null }),
             })
         ),
     })

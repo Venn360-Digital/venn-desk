@@ -42,6 +42,8 @@ export async function alertarNoSlack(
 export function alertasDaRodada(p: {
     saude: { slug: string; mudanca: 'caiu' | 'voltou' | null; detalhe: string }[]
     prazos: { slug: string; ticketId: string; meta: string; caoDeGuarda: boolean }[]
+    /** Prazos que ainda dá para salvar. */
+    riscos?: { slug: string; ticketId: string; meta: string; faltamMin: number }[]
     numeroDoChamado?: (ticketId: string) => string | undefined
     urlBase?: string | undefined
 }): DadosDoAlerta[] {
@@ -68,6 +70,22 @@ export function alertasDaRodada(p: {
             ...(p.urlBase === undefined || numero === undefined
                 ? {}
                 : { urlNoConsole: `${p.urlBase}/app/${e.slug}/chamados/${numero.split('-').pop() ?? ''}` }),
+        })
+    }
+
+    for (const r of p.riscos ?? []) {
+        const numero = p.numeroDoChamado?.(r.ticketId)
+        alertas.push({
+            gravidade: 'sla',
+            app: r.slug,
+            /// Quanto FALTA, não quanto já passou: o alerta de risco existe
+            /// para alguém agir, e "faltam 6 minutos" é a informação que leva
+            /// à ação.
+            resumo: `prazo de ${r.meta.replace(/_/g, ' ')} vence em ${r.faltamMin} min`,
+            ...(numero === undefined ? {} : { numero }),
+            ...(p.urlBase === undefined || numero === undefined
+                ? {}
+                : { urlNoConsole: `${p.urlBase}/app/${r.slug}/chamados/${numero.split('-').pop() ?? ''}` }),
         })
     }
 

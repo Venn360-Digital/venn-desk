@@ -14,7 +14,7 @@ import { rotasDoSlack } from './rotas/slack.ts'
 import { rotasDoGitHub } from './rotas/github.ts'
 import { rotasDoMcp } from './rotas/mcp.ts'
 import { verificarSaude } from './saude/verificar.ts'
-import { vigiarPrazos } from './sla/vigiar.ts'
+import { vigiarPrazos, vigiarRiscos } from './sla/vigiar.ts'
 import { consumirAtendimentos, type LoteDaFila } from './agente/fila.ts'
 import { consumirConhecimento } from './conhecimento/fila.ts'
 import { leitorGitHub } from './conhecimento/github.ts'
@@ -159,12 +159,21 @@ export default {
                 vigiarPrazos(cliente),
             ])
 
+            /**
+             * O aviso de RISCO vem depois da violação, e não junto.
+             *
+             * Um relógio que acabou de ser marcado como violado não deve
+             * também gerar aviso de risco no mesmo minuto — seriam duas linhas
+             * sobre o mesmo prazo, uma dizendo "falta pouco" e outra "passou".
+             */
+            const riscos = await vigiarRiscos(cliente, { agora })
+
             /// Os números dos chamados citados, num ida-e-volta só: o alerta
             /// sem número obrigaria quem está de plantão a procurar qual era.
-            const numeros = await numerosDosChamados(
-                cliente,
-                estouros.map((e) => e.ticketId)
-            )
+            const numeros = await numerosDosChamados(cliente, [
+                ...estouros.map((e) => e.ticketId),
+                ...riscos.map((r) => r.ticketId),
+            ])
 
             /// Só o que mudou vira log. 1.440 execuções por dia escrevendo
             /// "tudo bem" é o jeito de ninguém encontrar o dia em que não
@@ -179,6 +188,7 @@ export default {
             const paraAlertar = alertasDaRodada({
                 saude: vereditos,
                 prazos: estouros.map((e) => ({ ...e, meta: String(e.meta) })),
+                riscos: riscos.map((r) => ({ ...r, meta: String(r.meta) })),
                 numeroDoChamado: (id) => {
                     const c = numeros.get(id)
                     return c === undefined ? undefined : `${c.prefixo}-${c.numero}`

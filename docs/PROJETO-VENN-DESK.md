@@ -724,13 +724,37 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 
 **Objetivo:** paridade funcional com um help desk de mercado.
 
-- [ ] SLA por app e prioridade, calendário comercial, pausas, alertas de risco e de violação
+- [x] SLA por app e prioridade, calendário comercial, pausas, alertas de risco e de violação
 - [ ] Gatilhos e automações, incluindo fechamento automático e lembrete ao usuário
 - [ ] Macros, visões salvas, tags, campos personalizados por app
 - [ ] Mesclar chamados, chamado de acompanhamento
 - [ ] Relatórios e painel (seção 12)
 - [ ] Visão "chamados da empresa" para o administrador do tenant
 - [ ] Resumo diário em `#desk-alertas`
+
+> **Estado em 22/11/2026 — o prazo passa a respeitar o expediente.** A política
+> por app e prioridade e as pausas já existiam; faltavam o calendário comercial,
+> que a coluna previa e ninguém usava, e o aviso de RISCO.
+>
+> O caso que motivou o calendário: um prazo de resolução de 8 horas, num chamado
+> aberto às 17h de uma sexta, vencia à 1h de sábado e aparecia como violado na
+> segunda sem que ninguém tivesse deixado de trabalhar. Agora o prazo corre em
+> minutos ÚTEIS, pelo fuso e pelas janelas de cada prioridade, com feriados. O
+> fuso sai do `Intl`, que é a única fonte de verdade sobre horário de verão que
+> não exige empacotar um banco de fusos — e há teste atravessando a virada de
+> Nova York.
+>
+> **URGENTE sem calendário continua 24x7**, de propósito: a seção 12 promete
+> quinze minutos a qualquer hora, e um prazo que só corre em horário comercial
+> não cumpre isso. Quem quiser janela no urgente cadastra uma, e aí a decisão é
+> explícita. Calendário sem nenhuma janela é RECUSADO na rota, porque aceitá-lo
+> faria todo prazo cair para corrido em silêncio.
+>
+> O aviso de risco chega na fatia final do prazo, proporcional à meta — dez
+> minutos antes do fim é aviso útil numa meta de quinze minutos e ruído numa de
+> 72 horas. Ele sai UMA vez por relógio, e a coluna `avisado_em` é o que impede
+> o cron de repetir a mesma linha a cada minuto enquanto o prazo corre. O alerta
+> diz quanto FALTA, não quanto passou: é o que leva à ação.
 
 **Aceite:** uma política de SLA violada gera alerta e aparece no relatório. Uma automação criada no Console executa sem código novo. O painel mostra as métricas da seção 12 por app.
 

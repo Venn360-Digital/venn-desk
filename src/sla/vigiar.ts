@@ -34,6 +34,62 @@ export interface Estouro {
     caoDeGuarda: boolean
 }
 
+export interface Risco {
+    slug: string
+    ticketId: string
+    meta: Meta
+    /** Minutos até vencer, para o alerta dizer quanto resta. */
+    faltamMin: number
+}
+
+/**
+ * Os relógios que estão perto de vencer e ainda não foram avisados.
+ *
+ * Separado de `vigiarPrazos` porque responde outra pergunta: aquele diz o que
+ * já falhou, este diz o que ainda dá para salvar. E porque o aviso de risco é
+ * UMA vez por relógio — a marca no banco é o que impede o cron de repetir a
+ * mesma linha a cada minuto enquanto o prazo corre.
+ */
+export async function vigiarRiscos(
+    cliente: PrismaClient,
+    opcoes: { agora?: Date } = {}
+): Promise<Risco[]> {
+    const agora = opcoes.agora ?? new Date()
+    const apps = await appsAtivos(cliente)
+
+    const resultados = await Promise.allSettled(
+        apps.map(async (app) => {
+            const escopo = escopoDoApp(cliente, app.id)
+            const riscos: Risco[] = []
+
+            for (const linha of await escopo.sla.emRisco(agora, TETO_POR_APP)) {
+                if (!(await escopo.sla.marcarAvisado(linha.id, agora))) continue
+
+                await escopo.eventos.registrar({
+                    ticketId: linha.ticketId,
+                    ator: 'sistema',
+                    evento: `sla:risco:${linha.meta}`,
+                    depois: {
+                        metaMin: linha.metaMin,
+                        venceEm: linha.venceEm.toISOString(),
+                    },
+                })
+
+                riscos.push({
+                    slug: app.slug,
+                    ticketId: linha.ticketId,
+                    meta: linha.meta as Meta,
+                    faltamMin: Math.max(0, Math.round((linha.venceEm.getTime() - agora.getTime()) / 60_000)),
+                })
+            }
+
+            return riscos
+        })
+    )
+
+    return resultados.flatMap((r) => (r.status === 'fulfilled' ? r.value : []))
+}
+
 export async function vigiarPrazos(
     cliente: PrismaClient,
     opcoes: { agora?: Date } = {}

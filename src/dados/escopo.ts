@@ -1,4 +1,5 @@
-import type { Prisma, PrismaClient } from '#prisma'
+import { Prisma } from '#prisma'
+import type { PrismaClient } from '#prisma'
 import type { Attachment, CsatResponse, EngLink, HealthEpisode, HealthState, KbArticle, KbEvento, KbSincronizacao, Problem, SlackThread, SlaTimer, Ticket, TicketEvent, TicketMessage } from '#prisma'
 
 import { ErroDeDominio } from '../lib/erros.ts'
@@ -17,8 +18,10 @@ import { fundir, parecidos } from '../dominio/busca.ts'
 import type { ChamadoMedido } from '../dominio/relatorio.ts'
 import type { ConsultaRegistrada } from '../dominio/consultas.ts'
 import { avanca, type Etapa as EtapaDeEngenharia } from '../dominio/engenharia.ts'
+import { calendarioDaPolitica, vencimentoComercial, type Calendario } from '../dominio/calendario.ts'
 import {
     aoMudarStatus,
+    FRACAO_DE_RISCO,
     metaEmMinutos,
     METAS_PADRAO,
     vencimentoDe,
@@ -605,6 +608,19 @@ export interface EscopoDoApp {
      * `src/dominio/sla.ts`, pura e provada; aqui só se lê e se grava.
      */
     sla: {
+        /**
+         * Os relógios na fatia final do prazo que ainda não foram avisados.
+         *
+         * Separado de `vencidos` porque responde outra pergunta: aquele diz o
+         * que já falhou, este diz o que ainda dá para salvar.
+         */
+        emRisco(agora: Date, limite?: number): Promise<SlaTimer[]>
+        /** Marca o aviso de risco. Falso quando outra execução chegou antes. */
+        marcarAvisado(id: string, agora: Date): Promise<boolean>
+        /** O calendário comercial daquela prioridade, ou `null` para 24x7. */
+        calendarioDe(prioridade: Prioridade): Promise<Calendario | null>
+        /** Liga ou desliga o horário comercial daquela prioridade. */
+        definirCalendario(prioridade: Prioridade, calendario: Calendario | null): Promise<void>
         /** As metas do app para uma prioridade: a política, ou o padrão. */
         metasDe(prioridade: Prioridade): Promise<MetasEmMinutos>
         /** Abre os relógios de um chamado recém-criado. */
@@ -641,7 +657,7 @@ export interface EscopoDoApp {
         vencidos(agora: Date, limite?: number): Promise<SlaTimer[]>
         violar(id: string, agora: Date): Promise<boolean>
         /** As políticas cadastradas do app, por prioridade. */
-        politicas(): Promise<Record<string, MetasEmMinutos>>
+        politicas(): Promise<Record<string, MetasEmMinutos & { calendario: Calendario | null }>>
         /** Grava a política de uma prioridade. Vale do próximo chamado em diante. */
         definirPolitica(prioridade: Prioridade, metas: MetasEmMinutos): Promise<void>
     }
@@ -2222,8 +2238,22 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 }
             },
 
+            /**
+             * O calendário comercial daquela prioridade, quando houver.
+             *
+             * URGENTE sem calendário é 24x7 de propósito: a seção 12 promete
+             * quinze minutos a qualquer hora, e um prazo que só corre em horário
+             * comercial não cumpre isso. Quem quiser janela no urgente cadastra
+             * uma, e aí a decisão é explícita.
+             */
+            async calendarioDe(prioridade) {
+                const politica = await conexao.slaPolicy.findFirst({ where: { appId, prioridade } })
+                return calendarioDaPolitica(politica?.calendario ?? null)
+            },
+
             async abrir(ticketId, prioridade, agora) {
                 const metas = await this.metasDe(prioridade)
+                const calendario = await this.calendarioDe(prioridade)
 
                 /**
                  * Dois relógios, não três. `proxima_resposta` nasce a cada
@@ -2242,7 +2272,10 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                                 ticketId,
                                 meta,
                                 metaMin,
-                                venceEm: vencimentoDe(agora, metaMin),
+                                venceEm:
+                                    calendario === null
+                                        ? vencimentoDe(agora, metaMin)
+                                        : vencimentoComercial(agora, metaMin, calendario),
                             },
                         })
                     )
@@ -2260,6 +2293,7 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 if (correndo !== null) return null
 
                 const metas = await this.metasDe(prioridade)
+                const calendario = await this.calendarioDe(prioridade)
                 const metaMin = metaEmMinutos(metas, meta)
 
                 return conexao.slaTimer.create({
@@ -2268,7 +2302,10 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                         ticketId,
                         meta,
                         metaMin,
-                        venceEm: vencimentoDe(agora, metaMin),
+                        venceEm:
+                            calendario === null
+                                ? vencimentoDe(agora, metaMin)
+                                : vencimentoComercial(agora, metaMin, calendario),
                     },
                 })
             },
@@ -2331,6 +2368,43 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 })
             },
 
+            async emRisco(agora, limite) {
+                /**
+                 * Em risco é a fatia FINAL do prazo, e ela é proporcional à
+                 * meta (`FRACAO_DE_RISCO`): 10 minutos antes do fim é aviso
+                 * útil numa meta de 15 minutos e ruído numa de 72 horas. Como o
+                 * limite depende de `metaMin` linha a linha, o SQL traz os que
+                 * vencem nas próximas 24 horas e a fração é aplicada aqui.
+                 */
+                const proximos = await conexao.slaTimer.findMany({
+                    where: {
+                        appId,
+                        cumpridoEm: null,
+                        violadoEm: null,
+                        pausadoEm: null,
+                        avisadoEm: null,
+                        venceEm: { gt: agora, lte: new Date(agora.getTime() + 24 * 60 * 60 * 1000) },
+                    },
+                    orderBy: { venceEm: 'asc' },
+                    take: limite ?? 50,
+                })
+
+                return proximos.filter(
+                    (r) => r.venceEm.getTime() - agora.getTime() <= r.metaMin * 60_000 * FRACAO_DE_RISCO
+                )
+            },
+
+            async marcarAvisado(id, agora) {
+                /// Devolve falso quando outra execução chegou antes: o cron da
+                /// Cloudflare não garante exclusão, e sem isto o mesmo risco
+                /// geraria dois alertas.
+                const { count } = await conexao.slaTimer.updateMany({
+                    where: { id, appId, avisadoEm: null },
+                    data: { avisadoEm: agora },
+                })
+                return count === 1
+            },
+
             async violar(id, agora) {
                 const { count } = await conexao.slaTimer.updateMany({
                     where: { id, appId, violadoEm: null, cumpridoEm: null },
@@ -2341,17 +2415,41 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
 
             async politicas() {
                 const linhas = await conexao.slaPolicy.findMany({ where: { appId } })
-                const porPrioridade: Record<string, MetasEmMinutos> = {}
+                const porPrioridade: Record<string, MetasEmMinutos & { calendario: Calendario | null }> = {}
 
                 for (const linha of linhas) {
                     porPrioridade[linha.prioridade] = {
                         primeiraRespostaMin: linha.primeiraRespostaMin,
                         proximaRespostaMin: linha.proximaRespostaMin,
                         resolucaoMin: linha.resolucaoMin,
+                        calendario: calendarioDaPolitica(linha.calendario),
                     }
                 }
 
                 return porPrioridade
+            },
+
+            async definirCalendario(prioridade, calendario) {
+                /**
+                 * Separado de `definirPolitica` porque muda outra coisa.
+                 *
+                 * Metas são números que o gestor ajusta com frequência; o
+                 * calendário é a decisão de atender ou não fora do horário, e
+                 * misturar as duas na mesma chamada faria um ajuste de minutos
+                 * ligar ou desligar o fim de semana sem ninguém pedir.
+                 *
+                 * `null` volta a 24x7 — é o padrão, e tem de ser alcançável.
+                 */
+                const metas = await this.metasDe(prioridade)
+                /// O JSON do Prisma distingue "nulo no banco" de "não mexer", e
+                /// o literal `null` significa o segundo. Para voltar a 24x7 o
+                /// valor tem de ser o nulo do BANCO.
+                const valor = calendario === null ? Prisma.DbNull : (calendario as unknown as Prisma.InputJsonValue)
+                await conexao.slaPolicy.upsert({
+                    where: { appId_prioridade: { appId, prioridade } },
+                    create: { appId, prioridade, ...metas, calendario: valor },
+                    update: { calendario: valor },
+                })
             },
 
             async definirPolitica(prioridade, metas) {

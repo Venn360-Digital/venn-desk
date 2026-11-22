@@ -106,3 +106,38 @@ describe('alertarNoSlack', () => {
         expect(r).toEqual({ postados: 1 })
     })
 })
+
+describe('alertasDaRodada com riscos', () => {
+    it('o alerta de risco diz quanto FALTA, não quanto passou', () => {
+        /**
+         * O aviso de risco existe para alguém agir, e "faltam 6 minutos" é a
+         * informação que leva à ação. "Vence às 14h32" obrigaria quem lê a
+         * fazer a conta.
+         */
+        const alertas = alertasDaRodada({
+            saude: [],
+            prazos: [],
+            riscos: [{ slug: 'odontobox', ticketId: 'tkt-1', meta: 'primeira_resposta', faltamMin: 6 }],
+            numeroDoChamado: () => 'ODB-1042',
+            urlBase: 'https://desk.venn360.com',
+        })
+
+        expect(alertas).toHaveLength(1)
+        expect(alertas[0]).toMatchObject({ gravidade: 'sla', numero: 'ODB-1042' })
+        expect(alertas[0]?.resumo).toBe('prazo de primeira resposta vence em 6 min')
+        expect(alertas[0]?.urlNoConsole).toContain('/chamados/1042')
+    })
+
+    it('risco e violação do mesmo app convivem, com textos diferentes', () => {
+        const alertas = alertasDaRodada({
+            saude: [],
+            prazos: [{ slug: 'conecta', ticketId: 'a', meta: 'resolucao', caoDeGuarda: false }],
+            riscos: [{ slug: 'conecta', ticketId: 'b', meta: 'resolucao', faltamMin: 20 }],
+        })
+
+        expect(alertas.map((a) => a.resumo)).toEqual([
+            'prazo de resolucao estourado',
+            'prazo de resolucao vence em 20 min',
+        ])
+    })
+})
