@@ -88,6 +88,12 @@ export interface Ambiente {
          * decide nada: quem corta o atendimento é o teto de passos e de tokens
          * (ver `src/agente/orcamento.ts`).
          */
+        /**
+         * O teto de gasto de IA por DIA, em dólares, para a plataforma inteira.
+         * O cão de guarda avisa em 60% e no estouro; ele não corta nada —
+         * desligar o atendimento automático é decisão de pessoa, no Console.
+         */
+        TETO_DIARIO_DE_IA_USD?: string
         TARIFA_ENTRADA_POR_MILHAO?: string
         TARIFA_SAIDA_POR_MILHAO?: string
         ABERTURA_RATE_LIMITER: RateLimit

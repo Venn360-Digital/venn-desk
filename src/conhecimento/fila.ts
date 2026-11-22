@@ -7,6 +7,8 @@ import { escopoDoApp } from '../dados/escopo.ts'
 import type { Ambiente } from '../lib/ambiente.ts'
 import type { LoteDaFila } from '../agente/fila.ts'
 import { embutirVarios } from './embeddings.ts'
+import { registrarGasto } from '../dados/gastos.ts'
+import { custoEstimado } from '../agente/orcamento.ts'
 import { extratorDaAnthropic } from './extrair/com-modelo.ts'
 import { ErroDeLeitura, leitorGitHub } from './github.ts'
 import { credencialDoAmbiente } from './github-app.ts'
@@ -113,6 +115,14 @@ export const MODELO_DO_SUGERIDOR = 'claude-haiku-4-5-20251001'
  */
 export const MODELO_DO_DIAGNOSTICO = 'claude-sonnet-5'
 
+/** A tarifa só estima para a trilha; quem corta é o teto (ver `orcamento.ts`). */
+function tarifaDoAmbiente(env: Ambiente['Bindings']): { entradaPorMilhao: number; saidaPorMilhao: number } {
+    return {
+        entradaPorMilhao: Number(env.TARIFA_ENTRADA_POR_MILHAO ?? '3'),
+        saidaPorMilhao: Number(env.TARIFA_SAIDA_POR_MILHAO ?? '15'),
+    }
+}
+
 export async function consumirConhecimento(lote: LoteDaFila, env: Ambiente['Bindings']): Promise<void> {
     const cliente = criarCliente(env.DATABASE_URL)
 
@@ -212,6 +222,14 @@ export async function consumirConhecimento(lote: LoteDaFila, env: Ambiente['Bind
                         },
                     })
 
+                    await registrarGasto(cliente, {
+                        appId: app.id,
+                        origem: 'diagnostico',
+                        referencia: pedido.data.chamadoId,
+                        modelo: env.MODELO_DO_DIAGNOSTICO ?? MODELO_DO_DIAGNOSTICO,
+                        custoUsd: custoEstimado(resultado.consumo, tarifaDoAmbiente(env)),
+                    })
+
                     console.log('[n2] diagnóstico', JSON.stringify({ app: app.slug, arquivos: resultado.arquivosLidos, confianca: resultado.diagnostico?.confianca ?? null, motivo: resultado.motivo }))
                 } catch (erro) {
                     /// `ack`: um diagnóstico não melhora repetindo, e o chamado
@@ -251,6 +269,16 @@ export async function consumirConhecimento(lote: LoteDaFila, env: Ambiente['Bind
                                   extrator: extratorDaAnthropic(modelo),
                                   agora: new Date(),
                               })
+
+                    if (resultado !== null) {
+                        await registrarGasto(cliente, {
+                            appId: pedido.data.appId,
+                            origem: 'sugestao',
+                            referencia: resultado.chave,
+                            modelo: env.MODELO_DO_SUGERIDOR ?? MODELO_DO_SUGERIDOR,
+                            custoUsd: custoEstimado(resultado.consumo, tarifaDoAmbiente(env)),
+                        })
+                    }
 
                     if (resultado !== null && (resultado.criou || resultado.recusa !== null)) {
                         console.log('[conhecimento] sugestão', JSON.stringify({ tipo: pedido.data.tipo, chave: resultado.chave, criou: resultado.criou, recusa: resultado.recusa }))
@@ -317,6 +345,21 @@ export async function consumirConhecimento(lote: LoteDaFila, env: Ambiente['Bind
                             saidaPorMilhao: Number(env.TARIFA_SAIDA_POR_MILHAO ?? '15'),
                         },
                     })
+                    /**
+                     * O custo da tela entra na contabilidade AQUI, e é a lacuna
+                     * que o incidente de 20/11/2026 revelou: cada tela é uma
+                     * mensagem de fila à parte, então o valor nunca chegava ao
+                     * resultado da sincronização e vivia só no log do Worker,
+                     * que expira.
+                     */
+                    await registrarGasto(cliente, {
+                        appId: apps[0]?.id ?? null,
+                        origem: 'tela',
+                        referencia: pedido.data.rota,
+                        modelo: env.MODELO_DO_EXTRATOR ?? MODELO_PADRAO_DO_EXTRATOR,
+                        custoUsd: resultado.custoEstimadoUsd,
+                    })
+
                     if (resultado.artigos > 0 || resultado.custoEstimadoUsd > 0) {
                         console.log('[conhecimento] tela documentada', JSON.stringify(resultado))
                     }
@@ -391,6 +434,14 @@ export async function consumirConhecimento(lote: LoteDaFila, env: Ambiente['Bind
                         entradaPorMilhao: Number(env.TARIFA_ENTRADA_POR_MILHAO ?? '3'),
                         saidaPorMilhao: Number(env.TARIFA_SAIDA_POR_MILHAO ?? '15'),
                     },
+                })
+
+                await registrarGasto(cliente, {
+                    appId: app.id,
+                    origem: 'sincronizacao',
+                    referencia: resultado.commit.slice(0, 7),
+                    modelo: env.MODELO_DO_EXTRATOR ?? MODELO_PADRAO_DO_EXTRATOR,
+                    custoUsd: resultado.custoEstimadoUsd,
                 })
 
                 await escopo.sincronizacoes.concluir(sincronizacao.id, resultado as never, new Date())

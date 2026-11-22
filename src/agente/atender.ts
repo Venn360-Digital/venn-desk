@@ -4,8 +4,10 @@ import { formatarNumero } from '../dominio/numero.ts'
 import { executarFerramenta, type Contexto } from '../mcp/executar.ts'
 import { ferramentasDoEscopo } from '../mcp/ferramentas.ts'
 import { montarInstrucoes } from './instrucoes.ts'
+import { registrarGasto } from '../dados/gastos.ts'
 import {
     conferirTeto,
+    custoEstimado,
     paraATrilha,
     somar,
     TETO_PADRAO,
@@ -191,6 +193,25 @@ export async function atender(pedido: PedidoDeAtendimento): Promise<Atendimento>
                 ...paraATrilha(consumo, pedido.tarifa),
                 ferramentas: chamadas.join(', '),
             },
+        })
+
+        /**
+         * O mesmo custo vai para a contabilidade de IA.
+         *
+         * Duplicação deliberada: o evento responde "quanto custou ESTE
+         * chamado", lendo a trilha dele; a tabela de gastos responde "quanto
+         * gastamos ontem, e com o quê", somando as origens. A segunda pergunta
+         * não tem resposta pela trilha — atendimento, telas, sugestões e
+         * diagnósticos vivem em lugares diferentes, e foi essa dispersão que
+         * deixou um dia custar US$ 229 sem ninguém ver.
+         */
+        await registrarGasto(contexto.cliente, {
+            appId: contexto.app.id,
+            origem: 'atendimento',
+            referencia: chamado.id,
+            tokensDeEntrada: consumo.tokensDeEntrada,
+            tokensDeSaida: consumo.tokensDeSaida,
+            custoUsd: custoEstimado(consumo, pedido.tarifa),
         })
 
         /**

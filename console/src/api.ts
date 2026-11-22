@@ -115,6 +115,16 @@ export interface PainelDoApp {
         daIa: { respostas: number; media: number | null }
         deHumano: { respostas: number; media: number | null }
     }
+    /**
+     * O gasto de IA por ORIGEM. "Quanto gastamos" sem "com o quê" foi a
+     * pergunta que ficou sem resposta no dia de US$ 229.
+     */
+    gastoDeIa: {
+        doApp: { origem: string; usd: number; chamadas: number }[]
+        /** O que não pertence a app nenhum, como uma rodada de avaliação. */
+        semApp: { origem: string; usd: number; chamadas: number }[]
+        totalDoApp: number
+    }
 }
 
 export type StatusDoArtigo = 'RASCUNHO' | 'PUBLICADO' | 'ARQUIVADO'

@@ -23,6 +23,8 @@ import { vigiarConhecimento } from './conhecimento/sincronizar.ts'
 import { varrerCandidatosASugestao } from './conhecimento/varrer.ts'
 import { alertarNoSlack, alertasDaRodada } from './slack/alertar.ts'
 import { numerosDosChamados } from './dados/chamados.ts'
+import { nivelJaAvisado, registrarAvisoDeCusto, totalDesde } from './dados/gastos.ts'
+import { comecoDoDia, conferirCustoDoDia } from './dominio/teto-de-custo.ts'
 import type { CaixaDeSaida } from './correio/enviar.ts'
 
 /**
@@ -212,6 +214,50 @@ export default {
                 })
                 const relevantes = acoes.filter((a) => a.acao !== 'em_dia' && a.acao !== 'aguardando_intervalo')
                 if (relevantes.length > 0) console.log('[conhecimento]', JSON.stringify(relevantes))
+            }
+
+            /**
+             * O cão de guarda de CUSTO, a cada cinco minutos.
+             *
+             * Não a cada minuto: a soma varre o dia inteiro de gastos, e ler
+             * isso 1.440 vezes por dia para avisar duas é desperdício. Cinco
+             * minutos é mais rápido do que qualquer reação humana ao alerta.
+             *
+             * O nível já avisado mora no PRÓPRIO alerta do dia: a consulta
+             * conta quantas vezes cada nível foi registrado hoje, e assim o
+             * aviso não se repete sem precisar de uma coluna de estado que
+             * discordaria da realidade depois de um deploy.
+             */
+            if (agora.getUTCMinutes() % 5 === 0) {
+                try {
+                    const desde = comecoDoDia(agora)
+                    const gastoUsd = await totalDesde(cliente, desde)
+                    const jaAvisado = await nivelJaAvisado(cliente, desde)
+                    const veredito = conferirCustoDoDia({
+                        gastoUsd,
+                        ...(env.TETO_DIARIO_DE_IA_USD === undefined
+                            ? {}
+                            : { tetoUsd: Number(env.TETO_DIARIO_DE_IA_USD) }),
+                        jaAvisado,
+                    })
+
+                    /// `resumo` só é preenchido quando o nível subiu, e nível
+                    /// que sobe nunca é `normal` — o tipo não sabe disso, e a
+                    /// guarda explícita é mais honesta que uma asserção.
+                    if (veredito.resumo !== '' && veredito.nivel !== 'normal') {
+                        await registrarAvisoDeCusto(cliente, veredito.nivel, gastoUsd)
+                        await alertarNoSlack(env, [
+                            {
+                                gravidade: veredito.nivel === 'estouro' ? 'caiu' : 'falha',
+                                app: 'plataforma',
+                                resumo: veredito.resumo,
+                            },
+                        ])
+                        console.log('[custo]', JSON.stringify({ nivel: veredito.nivel, gastoUsd }))
+                    }
+                } catch (erro) {
+                    console.error('[custo] cão de guarda falhou:', erro)
+                }
             }
 
             /**

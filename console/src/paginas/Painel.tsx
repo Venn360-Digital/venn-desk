@@ -104,6 +104,8 @@ export function Painel() {
                         />
                     </section>
 
+                    <GastoDeIa gasto={data.gastoDeIa} dias={dias} />
+
                     <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         <Proporcao
                             titulo="Resolvido só pela IA"
@@ -120,7 +122,7 @@ export function Painel() {
                             invertido
                         />
                         <Numero
-                            titulo="Custo da IA"
+                            titulo="Custo da IA no atendimento"
                             valor={`US$ ${r.custo.total.toFixed(2)}`}
                             nota={
                                 r.custo.porChamado === null
@@ -308,5 +310,64 @@ function Distribuicao({
                 ))}
             </ul>
         </Cartao>
+    )
+}
+
+const ROTULO_DA_ORIGEM: Record<string, string> = {
+    atendimento: 'atendimento de chamado',
+    tela: 'documentação de tela',
+    sincronizacao: 'sincronização da base',
+    sugestao: 'rascunho de artigo',
+    diagnostico: 'diagnóstico do N2',
+    bateria: 'bateria de avaliação',
+}
+
+/**
+ * O gasto de IA por ORIGEM.
+ *
+ * Existe por um dia datado: 20/11/2026, US$ 229, e nenhuma tela que respondesse
+ * "com o quê". O número do atendimento já estava no painel; o das telas vivia só
+ * no log do Worker e o da bateria apenas no terminal de quem a rodou.
+ */
+function GastoDeIa({
+    gasto,
+    dias,
+}: {
+    gasto: PainelDoApp['gastoDeIa']
+    dias: number
+}) {
+    if (gasto.doApp.length === 0 && gasto.semApp.length === 0) {
+        return (
+            <section className="rounded-sm border border-borda bg-superficie p-4 text-xs text-tinta-fraca">
+                Nenhum gasto de IA registrado nos últimos {dias} dias.
+            </section>
+        )
+    }
+
+    const linha = (g: { origem: string; usd: number; chamadas: number }) => (
+        <li key={g.origem} className="flex items-baseline justify-between gap-3 text-xs">
+            <span className="text-tinta">{ROTULO_DA_ORIGEM[g.origem] ?? g.origem}</span>
+            <span className="tabular-nums text-tinta-fraca">
+                US$ {g.usd.toFixed(2)} <span className="text-tinta-sutil">· {g.chamadas} chamada(s)</span>
+            </span>
+        </li>
+    )
+
+    return (
+        <section className="space-y-2 rounded-sm border border-borda bg-superficie p-4">
+            <h2 className="flex items-baseline justify-between gap-3 text-xs font-medium text-tinta">
+                <span>Gasto de IA por origem · {dias} dias</span>
+                <span className="tabular-nums text-tinta-fraca">US$ {gasto.totalDoApp.toFixed(2)}</span>
+            </h2>
+            <ul className="space-y-1">{gasto.doApp.map(linha)}</ul>
+            {gasto.semApp.length > 0 ? (
+                <>
+                    <p className="pt-1 text-[11px] text-tinta-sutil">
+                        Sem app: trabalho da plataforma, que não entra no custo deste produto.
+                    </p>
+                    <ul className="space-y-1">{gasto.semApp.map(linha)}</ul>
+                </>
+            ) : null}
+        </section>
     )
 }

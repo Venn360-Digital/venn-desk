@@ -515,6 +515,40 @@ model TicketEvent {
 /**
  * Espelho no Slack. O chamado vive no Venn Desk; isto é só o endereço da thread.
  */
+/**
+ * Uma linha por chamada ao modelo, com a origem e o custo.
+ *
+ * Existe por um incidente datado: em 20/11/2026 as rodadas da bateria somaram
+ * US$ 229 num dia e o relato ao fim do dia disse US$ 60, porque o custo de cada
+ * chamada existia só no terminal ou no log do Worker, que expira. Gasto que não
+ * é registrado é gasto que cresce sem ninguém ver.
+ *
+ * `appId` é anulável porque há gasto que não é de app nenhum (uma rodada de
+ * avaliação, por exemplo). Sem relação declarada de propósito: esta tabela é
+ * contabilidade, e uma exclusão lógica de app não pode apagar a conta do mês
+ * passado.
+ */
+model IaGasto {
+    id    String  @id @default(cuid())
+    appId String? @map("app_id")
+
+    /// `atendimento`, `tela`, `sincronizacao`, `sugestao`, `diagnostico`, `bateria`.
+    origem String
+    /// A rota da tela, o id do chamado, a chave do artigo. Livre por origem.
+    referencia String?
+    modelo     String?
+
+    tokensDeEntrada Int     @default(0) @map("tokens_de_entrada")
+    tokensDeSaida   Int     @default(0) @map("tokens_de_saida")
+    custoUsd        Decimal @default(0) @map("custo_usd") @db.Decimal(10, 4)
+
+    criadoEm DateTime @default(now()) @map("criado_em")
+
+    @@index([appId, criadoEm])
+    @@index([origem, criadoEm])
+    @@map("ia_gastos")
+}
+
 model SlackThread {
     id       String @id @default(cuid())
     appId    String @map("app_id")

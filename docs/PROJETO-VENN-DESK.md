@@ -740,10 +740,30 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 
 - [ ] Roteiro e script de inclusão de app: cadastro, chaves, canais, instruções, proteções, instalação do widget
 - [ ] Aviso de incidente geral dentro do widget e histórico de incidentes na página de status
-- [ ] Painel de custo de IA por app e por chamado, com teto e alerta
+- [x] Painel de custo de IA por app e por chamado, com teto e alerta
 - [ ] Teste de carga e revisão de segurança
 - [ ] Rotinas de retenção e exclusão de dados
 - [ ] Manual de operação: o que fazer quando a IA erra, quando o Slack cai, quando o GitHub cai
+
+> **Estado em 21/11/2026 — a contabilidade de IA existe, por causa de um dia.**
+> Em 20/11/2026 as rodadas da bateria somaram US$ 229 e o relato ao fim do dia
+> disse US$ 60. Não houve laço nem vazamento: o custo de cada chamada ao modelo
+> existia só no terminal de quem rodou ou no log do Worker, que expira, e o das
+> telas documentadas não entrava nem no resultado da sincronização, porque cada
+> tela é uma mensagem de fila à parte.
+>
+> Agora toda chamada ao modelo grava uma linha em `ia_gastos` com a ORIGEM —
+> atendimento, tela, sincronização, sugestão, diagnóstico. O painel mostra o
+> gasto por origem, que é a pergunta que ficou sem resposta naquele dia: "quanto
+> gastamos" sem "com o quê" não leva a decisão nenhuma. O gasto que não pertence
+> a app aparece à parte, para não inflar o custo de um produto.
+>
+> O cão de guarda roda a cada cinco minutos e avisa em dois níveis: 60% do teto
+> do dia e o estouro. Ele NÃO corta nada — cortar deixaria cliente sem resposta
+> por causa de uma conta, e desligar o atendimento automático já é um botão no
+> Console, onde uma pessoa decide sabendo o que perde. O nível já avisado mora na
+> própria tabela, e não em memória: o cron é outro processo a cada minuto, e
+> estado em memória morreria antes do segundo aviso.
 
 **Aceite:** um quarto app fictício é incluído seguindo só o roteiro. Com o Slack indisponível, os chamados continuam sendo registrados e atendidos pelo Console.
 

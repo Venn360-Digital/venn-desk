@@ -48,6 +48,7 @@ import { urlDaFonte } from '../conhecimento/rotulos.ts'
 import { EXPIRA_MS, pedirSincronizacao } from '../conhecimento/sincronizar.ts'
 import { fontesDesatualizadas } from '../conhecimento/sugerir.ts'
 import { levantarDivergencias } from '../conhecimento/comparar-apps.ts'
+import { gastoDesde } from '../dados/gastos.ts'
 
 /**
  * A API interna — o que o Console consome, e o que a ponte do Slack vai chamar
@@ -1374,15 +1375,34 @@ rotasInternas.get('/api/console/app/:app/painel', async (c) => {
     const desde = new Date(Date.now() - dias * 24 * 60 * 60 * 1000)
     const escopo = escopoDoApp(c.get('cliente'), c.get('app').id)
 
-    const [chamados, relogios, notas] = await Promise.all([
+    const [chamados, relogios, notas, gastos] = await Promise.all([
         escopo.painel.chamadosMedidos(desde),
         escopo.painel.relogiosEncerrados(desde),
         escopo.csat.todas(),
+        gastoDesde(c.get('cliente'), desde),
     ])
+
+    /**
+     * O gasto de IA vem por ORIGEM, e não só o total.
+     *
+     * "Quanto gastamos" sem "com o quê" foi exatamente a pergunta que ficou sem
+     * resposta no dia de US$ 229: o custo do atendimento estava na trilha de
+     * cada chamado, o das telas só no log do Worker, e o da bateria apenas no
+     * terminal. Somar por origem é o que transforma a conta em decisão.
+     */
+    const daPlataforma = gastos.filter((g) => g.appId === null)
+    const desteApp = gastos.filter((g) => g.appId === c.get('app').id)
 
     return c.json({
         janela: { dias, desde: desde.toISOString() },
         relatorio: montarRelatorio(chamados, relogios),
+        gastoDeIa: {
+            doApp: desteApp.map((g) => ({ origem: g.origem, usd: Number(g.usd.toFixed(4)), chamadas: g.chamadas })),
+            /// O que não pertence a app nenhum (uma rodada de avaliação, por
+            /// exemplo) aparece à parte, para não inflar o custo do produto.
+            semApp: daPlataforma.map((g) => ({ origem: g.origem, usd: Number(g.usd.toFixed(4)), chamadas: g.chamadas })),
+            totalDoApp: Number(desteApp.reduce((soma, g) => soma + g.usd, 0).toFixed(4)),
+        },
         /**
          * O CSAT vem SEM recorte de período, e a resposta diz isso pelo nome do
          * campo. São poucas respostas por natureza — filtrar trinta dias as
