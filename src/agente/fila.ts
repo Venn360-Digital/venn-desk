@@ -7,7 +7,7 @@ import { escopoDoApp } from '../dados/escopo.ts'
 import type { Ambiente } from '../lib/ambiente.ts'
 import { atender } from './atender.ts'
 import { embutidorDoWorkersAi } from '../conhecimento/embeddings.ts'
-import { saidaDeAprovacao, saidaDeEngenharia } from '../slack/engenharia.ts'
+import { saidaDeAprovacao, saidaDeEngenharia } from '../engenharia/ao-escalar.ts'
 
 /**
  * A fila do atendimento automático (Fase 4).

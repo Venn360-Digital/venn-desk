@@ -13,6 +13,9 @@ import { credencialDoAmbiente } from './github-app.ts'
 import { documentarTela } from './documentar.ts'
 import { sincronizarApp, type ResultadoDaSincronizacao } from './sincronizar.ts'
 import { sugerirDeChamado, sugerirDeLacuna, type ResultadoDaSugestao } from './sugerir.ts'
+import { diagnosticar, diagnosticoEmTexto } from '../engenharia/diagnosticar.ts'
+import { arquivosDaTela } from '../engenharia/candidatos.ts'
+import { postar } from '../slack/cliente.ts'
 import type { LanguageModel } from 'ai'
 
 /**
@@ -72,6 +75,21 @@ export const esquemaDoPedidoDeConhecimento = z.discriminatedUnion('tipo', [
             .max(20),
         appIds: z.array(z.string().min(1)).min(1).max(10),
     }),
+    /**
+     * O diagnóstico do N2 (Fase 5).
+     *
+     * Nesta fila, e não numa própria, porque é a fila de trabalho longo que
+     * existe: ler doze arquivos do GitHub e chamar o modelo leva dezenas de
+     * segundos, e criar outra fila exige provisionamento que não se faz num
+     * deploy. O `resumo` viaja na mensagem porque é o texto que o N1 escreveu
+     * ao escalar, e ele não está em lugar nenhum além do evento.
+     */
+    z.object({
+        tipo: z.literal('diagnosticar-chamado'),
+        appId: z.string().min(1),
+        chamadoId: z.string().min(1),
+        resumo: z.string().min(3).max(4_000),
+    }),
     z.object({ tipo: z.literal('sugerir-de-chamado'), appId: z.string().min(1), ticketId: z.string().min(1) }),
     z.object({ tipo: z.literal('sugerir-de-lacuna'), appId: z.string().min(1), exemplo: z.string().min(1), vezes: z.number().int() }),
 ])
@@ -88,6 +106,12 @@ export const MODELO_PADRAO_DO_EXTRATOR = 'claude-sonnet-5'
 export const MODELO_INCREMENTAL = 'claude-haiku-4-5-20251001'
 /** O modelo da biblioteca de casos. Reescrever texto que existe é de Haiku. */
 export const MODELO_DO_SUGERIDOR = 'claude-haiku-4-5-20251001'
+/**
+ * O modelo do diagnóstico do N2. Sonnet, e não Haiku: aqui a tarefa é raciocinar
+ * sobre código que ninguém resumiu, e um palpite errado manda uma pessoa
+ * procurar no lugar errado.
+ */
+export const MODELO_DO_DIAGNOSTICO = 'claude-sonnet-5'
 
 export async function consumirConhecimento(lote: LoteDaFila, env: Ambiente['Bindings']): Promise<void> {
     const cliente = criarCliente(env.DATABASE_URL)
@@ -97,6 +121,103 @@ export async function consumirConhecimento(lote: LoteDaFila, env: Ambiente['Bind
             const pedido = esquemaDoPedidoDeConhecimento.safeParse(mensagem.body)
             if (!pedido.success) {
                 console.error('[conhecimento] pedido inválido, descartando:', mensagem.body)
+                mensagem.ack()
+                continue
+            }
+
+            if (pedido.data.tipo === 'diagnosticar-chamado') {
+                const chaveDoModelo = env.ANTHROPIC_API_KEY
+                const credencialDoGitHub = credencialDoAmbiente(env)
+                if (chaveDoModelo === undefined || chaveDoModelo === '' || credencialDoGitHub === undefined) {
+                    console.error('[n2] sem chave do modelo ou do GitHub: o chamado fica sem diagnóstico')
+                    mensagem.ack()
+                    continue
+                }
+
+                try {
+                    const app = await appPorId(cliente, pedido.data.appId)
+                    if (app === null || app.repositorio === null) {
+                        mensagem.ack()
+                        continue
+                    }
+
+                    const escopo = escopoDoApp(cliente, app.id)
+                    const chamado = await escopo.chamados.porId(pedido.data.chamadoId)
+                    if (chamado === null) {
+                        mensagem.ack()
+                        continue
+                    }
+
+                    const leitor = leitorGitHub(credencialDoGitHub)
+                    const rota = (chamado.contexto as { rota?: unknown } | null)?.rota
+                    const candidatos = typeof rota === 'string' ? await arquivosDaTela(escopo, rota) : []
+
+                    const resultado = await diagnosticar({
+                        resumo: pedido.data.resumo,
+                        candidatos,
+                        repositorio: app.repositorio,
+                        commitSha: await leitor.shaDoRamo(app.repositorio, 'main'),
+                        leitor,
+                        extrator: extratorDaAnthropic(
+                            createAnthropic({ apiKey: chaveDoModelo })(env.MODELO_DO_DIAGNOSTICO ?? MODELO_DO_DIAGNOSTICO)
+                        ),
+                    })
+
+                    /**
+                     * O diagnóstico é NOTA INTERNA, sempre.
+                     *
+                     * Ele cita caminho de arquivo e nome de função — exatamente
+                     * o que nunca chega ao cliente (ADR 0012). Quem lê é quem
+                     * vai corrigir, no Console ou na thread de engenharia.
+                     */
+                    if (resultado.diagnostico !== null) {
+                        await escopo.mensagens.adicionar(
+                            {
+                                ticketId: chamado.id,
+                                autor: 'IA',
+                                corpo: diagnosticoEmTexto(resultado),
+                                visibilidade: 'INTERNA',
+                                origem: 'MCP',
+                            },
+                            { ator: 'ia:n2' }
+                        )
+
+                        const thread = await escopo.threadsDoSlack.porChamado(chamado.id)
+                        if (thread?.canalEngenharia != null && thread.threadTsEngenharia != null) {
+                            await postar(
+                                { token: env.SLACK_BOT_TOKEN },
+                                {
+                                    canal: thread.canalEngenharia,
+                                    naThread: thread.threadTsEngenharia,
+                                    mensagem: {
+                                        text: diagnosticoEmTexto(resultado),
+                                        blocks: [
+                                            { type: 'section', text: { type: 'mrkdwn', text: diagnosticoEmTexto(resultado) } },
+                                        ],
+                                    },
+                                }
+                            )
+                        }
+                    }
+
+                    await escopo.eventos.registrar({
+                        ticketId: chamado.id,
+                        ator: 'ia:n2',
+                        evento: 'n2:diagnostico',
+                        depois: {
+                            arquivosLidos: resultado.arquivosLidos,
+                            confianca: resultado.diagnostico?.confianca ?? null,
+                            descartados: resultado.descartados,
+                            ...(resultado.motivo === undefined ? {} : { motivo: resultado.motivo }),
+                        },
+                    })
+
+                    console.log('[n2] diagnóstico', JSON.stringify({ app: app.slug, arquivos: resultado.arquivosLidos, confianca: resultado.diagnostico?.confianca ?? null, motivo: resultado.motivo }))
+                } catch (erro) {
+                    /// `ack`: um diagnóstico não melhora repetindo, e o chamado
+                    /// está com uma pessoa de qualquer forma.
+                    console.error('[n2] diagnóstico falhou:', erro instanceof Error ? erro.message : erro)
+                }
                 mensagem.ack()
                 continue
             }

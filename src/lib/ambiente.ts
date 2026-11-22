@@ -72,6 +72,8 @@ export interface Ambiente {
         MODELO_DO_EXTRATOR_INCREMENTAL?: string
         /** O modelo da biblioteca de casos. Haiku 4.5 por padrão. */
         MODELO_DO_SUGERIDOR?: string
+        /** O modelo do diagnóstico do N2. Sonnet 5 por padrão. */
+        MODELO_DO_DIAGNOSTICO?: string
         /**
          * `sim` liga a varredura diária que gera rascunhos de artigo a partir
          * dos chamados. DESLIGADA por padrão: é o único job que chama modelo

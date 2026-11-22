@@ -628,7 +628,7 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 * [ ] Estender as provas contra o Neon em branch descartável ao Conecta e ao Stagent, ou exigir revisão humana nas correções que toquem banco nesses apps
 * [x] Testes de fumaça executados pelo Venn Desk após o deploy de staging
 
-- [ ] App GitHub do Venn Desk com leitura por repositório, e agente N2 que lê o código e posta o diagnóstico na thread
+- [x] App GitHub do Venn Desk com leitura por repositório, e agente N2 que lê o código e posta o diagnóstico na thread
 - [ ] Claude Code no Slack instalado, com os três repositórios conectados à sua conta, e registro da menção como Portão 1
 - [ ] Endurecimento do build: CODEOWNERS sobre o portão de CI, token do Neon de menor escopo, auditoria de dependências
 
@@ -681,10 +681,28 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 > correção está em staging, e desfazer isso faria a etapa mentir; o que muda é
 > quem precisa olhar.
 >
-> **O que falta é escrever o código da correção**: o agente N2 que lê o
-> repositório e abre o PR. Depende do GitHub App ganhar permissão de ESCRITA
-> (hoje é só `contents: read`) e das proteções de branch — ver
-> `docs/slack-bridge.md` para o padrão do que depende de painel.
+> **O N2 lê o código e diagnostica.** Ao escalar, o chamado entra na fila e um
+> agente lê os arquivos que o MAPA TÉCNICO aponta para a tela em que o cliente
+> estava — é o mapa que transforma "a agenda está errada" em doze arquivos para
+> ler, e sem ele o diagnóstico começaria procurando no produto inteiro. A
+> hipótese sai com arquivos suspeitos e passos para confirmar, e é NOTA INTERNA
+> sempre: ela cita caminho de arquivo e nome de função, exatamente o que nunca
+> chega ao cliente (ADR 0012).
+>
+> Arquivo que o modelo cita e não foi LIDO é descartado item a item. Não basta
+> existir no repositório: o modelo não viu os outros, então apontá-los é palpite
+> com cara de leitura, e um diagnóstico que manda procurar onde não há custa mais
+> que diagnóstico nenhum. Caminho que sumiu do commit também não é erro — o mapa
+> é derivado e pode estar um commit atrás, e um arquivo que não está mais lá é
+> refatoração.
+>
+> Sonnet, não Haiku: aqui a tarefa é raciocinar sobre código que ninguém
+> resumiu. Teto de doze arquivos e 180 KB por diagnóstico, porque um chamado não
+> justifica ler o produto inteiro.
+>
+> **O que falta é escrever a correção**: o PR. Depende do GitHub App ganhar
+> permissão de ESCRITA (hoje é só `contents: read`) e das proteções de branch —
+> ver `docs/slack-bridge.md` para o padrão do que depende de painel.
 
 **Aceite:** um defeito plantado no staging do Odontobox, reportado pelo widget, chega a um PR em staging com teste, passando pela aprovação do gestor, sem intervenção manual além do clique. O usuário vê cada etapa no widget.
 

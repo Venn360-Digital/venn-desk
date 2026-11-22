@@ -1,9 +1,9 @@
 import type { App } from '#prisma'
 
 import type { EscopoDoApp } from '../dados/escopo.ts'
-import { abrirThreadDeEngenharia } from './ponte.ts'
-import { postar } from './cliente.ts'
-import { mensagemDePedidoDeAprovacao } from './mensagens.ts'
+import { abrirThreadDeEngenharia } from '../slack/ponte.ts'
+import { postar } from '../slack/cliente.ts'
+import { mensagemDePedidoDeAprovacao } from '../slack/mensagens.ts'
 
 /**
  * O ponto de saída que o MCP recebe para abrir a thread de engenharia.
@@ -15,10 +15,37 @@ import { mensagemDePedidoDeAprovacao } from './mensagens.ts'
  */
 export function saidaDeEngenharia(
     escopo: EscopoDoApp,
-    app: Pick<App, 'canalEngenharia' | 'slug'>,
-    env: { SLACK_BOT_TOKEN?: string | undefined; URL_BASE?: string | undefined }
+    app: Pick<App, 'id' | 'canalEngenharia' | 'slug'>,
+    env: {
+        SLACK_BOT_TOKEN?: string | undefined
+        URL_BASE?: string | undefined
+        CONHECIMENTO?: { send(mensagem: unknown): Promise<void> } | undefined
+    }
 ): (p: { chamadoId: string; numero: string; resumo: string; ponteiros: string | null }) => Promise<void> {
     return async (p) => {
+        /**
+         * O diagnóstico vai para a FILA, não para esta requisição.
+         *
+         * Ler doze arquivos do GitHub e chamar o modelo leva dezenas de
+         * segundos; fazer isso dentro da ferramenta `escalar` faria o agente de
+         * atendimento esperar pelo trabalho do N2 — e o cliente esperar pelos
+         * dois. A fila é a mesma do conhecimento porque é a fila de trabalho
+         * longo que existe, e criar outra exige provisionamento que não se faz
+         * num deploy.
+         */
+        if (env.CONHECIMENTO !== undefined) {
+            try {
+                await env.CONHECIMENTO.send({
+                    tipo: 'diagnosticar-chamado',
+                    appId: app.id,
+                    chamadoId: p.chamadoId,
+                    resumo: p.resumo,
+                })
+            } catch (erro) {
+                console.error('[n2] não consegui enfileirar o diagnóstico:', erro)
+            }
+        }
+
         await abrirThreadDeEngenharia({
             escopo,
             config: { token: env.SLACK_BOT_TOKEN },

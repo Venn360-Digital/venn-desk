@@ -11,7 +11,7 @@ import { comCliente } from '../auth/middleware.ts'
 import { executarFerramenta } from '../mcp/executar.ts'
 import { embutidorDoWorkersAi } from '../conhecimento/embeddings.ts'
 import { ferramentasDoEscopo, paraOProtocolo, type Escopo } from '../mcp/ferramentas.ts'
-import { saidaDeAprovacao, saidaDeEngenharia } from '../slack/engenharia.ts'
+import { saidaDeAprovacao, saidaDeEngenharia } from '../engenharia/ao-escalar.ts'
 
 /**
  * O servidor MCP do Venn Desk (seção 8, Fase 4).
