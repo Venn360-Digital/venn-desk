@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 
-import { api, type Atendimento, type ChamadoCompleto } from '../api.ts'
+import { api, type Atendimento, type ChamadoCompleto, type Macro } from '../api.ts'
 import { Aviso, Botao, Quando, Selo, Vazio } from '../componentes/ui.tsx'
 import { SeloDeSla } from '../componentes/sla.tsx'
 import { Sparkles } from 'lucide-react'
@@ -229,6 +229,14 @@ export function Chamado({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
                         )}
                     </div>
                 </div>
+
+                <Macros
+                    app={app ?? ''}
+                    numero={chamado.numero}
+                    tags={data.tags}
+                    aoAplicar={setTexto}
+                    aoMudar={() => void fila.invalidateQueries({ queryKey: chave })}
+                />
 
                 <Mesclar
                     app={app ?? ''}
@@ -502,6 +510,106 @@ function Mesclar({
             {erro !== null ? (
                 <div className="mt-2">
                     <Aviso>{erro}</Aviso>
+                </div>
+            ) : null}
+        </div>
+    )
+}
+
+/**
+ * As macros do chamado (Fase 7).
+ *
+ * Aplicar PREENCHE: o texto vai para o campo de resposta e as tags são
+ * gravadas. O envio continua sendo um ato separado, com o texto na frente de
+ * quem assina — uma macro que enviasse seria um botão de resposta automática com
+ * outro nome.
+ *
+ * A transição que a macro propõe fica de fora de propósito: ela aparece como
+ * aviso, e quem clica em "Resolver" é a pessoa, no botão que já existe. Mover o
+ * chamado junto com o texto esconderia metade do efeito do clique.
+ */
+function Macros({
+    app,
+    numero,
+    tags,
+    aoAplicar,
+    aoMudar,
+}: {
+    app: string
+    numero: string
+    tags: string[]
+    aoAplicar: (texto: string) => void
+    aoMudar: () => void
+}) {
+    const { data } = useQuery({
+        queryKey: ['macros', app],
+        queryFn: () => api<{ macros: Macro[] }>(`/app/${app}/macros`),
+        staleTime: 5 * 60_000,
+    })
+
+    const marcar = useMutation({
+        mutationFn: (nomes: string[]) =>
+            api(`/app/${app}/chamados/${numero.split('-').pop() ?? ''}/tags`, {
+                metodo: 'POST',
+                corpo: { tags: nomes },
+            }),
+        onSuccess: aoMudar,
+    })
+
+    const macros = data?.macros ?? []
+
+    return (
+        <div className="space-y-2">
+            <h2 className="text-xs font-medium text-tinta-fraca">Respostas prontas</h2>
+
+            {macros.length === 0 ? (
+                <p className="text-[11px] text-tinta-sutil">
+                    Nenhuma macro cadastrada neste app.
+                </p>
+            ) : (
+                <div className="flex flex-wrap gap-2">
+                    {macros.map((m) => (
+                        <button
+                            key={m.id}
+                            type="button"
+                            title={[
+                                m.nome,
+                                m.definicao.visibilidade === 'INTERNA' ? 'escrita para nota interna' : null,
+                                m.definicao.status === undefined ? null : `propõe ${m.definicao.status}`,
+                            ]
+                                .filter((p) => p !== null)
+                                .join(' · ')}
+                            onClick={() => {
+                                /**
+                                 * A macro preenche o campo e nada mais.
+                                 *
+                                 * Quem escolhe entre "responder ao usuário" e
+                                 * "nota interna" são os dois botões que já
+                                 * existem, e isso é melhor que a macro decidir:
+                                 * a diferença entre as duas é irreversível, e
+                                 * ela fica na frente de quem assina.
+                                 */
+                                if (m.definicao.texto !== undefined) aoAplicar(m.definicao.texto)
+                                if (m.definicao.tags !== undefined && m.definicao.tags.length > 0) {
+                                    marcar.mutate(m.definicao.tags)
+                                }
+                            }}
+                            className="rounded-sm border border-borda px-2 py-1 text-[11px] text-tinta-fraca transition hover:text-tinta"
+                        >
+                            {m.nome}
+                            {m.doApp ? '' : ' ·'}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {tags.length > 0 ? (
+                <div className="flex flex-wrap gap-1 pt-1">
+                    {tags.map((t) => (
+                        <span key={t} className="rounded-xs bg-superficie px-1.5 py-0.5 text-[10px] text-tinta-fraca">
+                            {t}
+                        </span>
+                    ))}
                 </div>
             ) : null}
         </div>

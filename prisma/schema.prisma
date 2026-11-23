@@ -918,6 +918,17 @@ model SlaTimer {
     @@map("sla_timers")
 }
 
+/**
+ * Uma resposta pronta, com as ações que a acompanham (Fase 7).
+ *
+ * `definicao` guarda o que aplicar: o texto, a visibilidade, as tags e a
+ * transição de status. JSON porque o conjunto cresce com o uso — e porque uma
+ * coluna por ação transformaria cada ideia nova em migração.
+ *
+ * `donoId` nulo é macro do app, visível a todos; preenchido, é rascunho pessoal
+ * de um agente. Exclusão é LÓGICA: uma macro removida precisa continuar
+ * explicando as respostas que gerou no passado.
+ */
 model Macro {
     id    String @id @default(cuid())
     appId String @map("app_id")
@@ -927,6 +938,10 @@ model Macro {
     definicao Json
     donoId    String? @map("dono_id")
 
+    criadoEm   DateTime  @default(now()) @map("criado_em")
+    excluidoEm DateTime? @map("excluido_em")
+
+    @@index([appId, excluidoEm])
     @@map("macros")
 }
 

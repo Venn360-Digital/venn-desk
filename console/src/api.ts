@@ -361,7 +361,23 @@ export interface ChamadoCompleto {
     sla: ResumoDeSla | null
     /** O chamado em que este foi mesclado, quando houver. */
     mescladoEm: { numero: string } | null
+    /** As tags do chamado, em ordem alfabética. */
+    tags: string[]
     mensagens: Mensagem[]
     eventos: Evento[]
     anexos: { chave: string; nome: string; tipo: string; tamanho: number }[]
+}
+
+/** Uma resposta pronta, com as ações que a acompanham. */
+export interface Macro {
+    id: string
+    nome: string
+    /** `true` quando é do app (todos veem); `false` quando é pessoal. */
+    doApp: boolean
+    definicao: {
+        texto?: string
+        visibilidade?: 'PUBLICA' | 'INTERNA'
+        tags?: string[]
+        status?: 'assumir' | 'responder_usuario' | 'resolver' | 'fechar'
+    }
 }

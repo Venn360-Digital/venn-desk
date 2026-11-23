@@ -21,6 +21,7 @@ import type { ConsultaRegistrada } from '../dominio/consultas.ts'
 import { avanca, type Etapa as EtapaDeEngenharia } from '../dominio/engenharia.ts'
 import type { ChamadoParado } from '../dominio/automacoes.ts'
 import { podeMesclar, textoDaMesclagem, type MotivoDaRecusa as MotivoDaRecusaDeMesclagem } from '../dominio/mesclar.ts'
+import { tagsNormalizadas } from '../dominio/macros.ts'
 import { formatarNumero } from '../dominio/numero.ts'
 import { calendarioDaPolitica, vencimentoComercial, type Calendario } from '../dominio/calendario.ts'
 import {
@@ -587,6 +588,39 @@ export interface EscopoDoApp {
             depois?: Prisma.InputJsonValue
         }): Promise<void>
         doArtigo(artigoId: string): Promise<KbEvento[]>
+    }
+
+    /**
+     * Macros e tags do app (Fase 7).
+     *
+     * As duas juntas porque é assim que são usadas: a macro que responde
+     * "pedimos os dados" é a mesma que marca o chamado com `aguardando dados`,
+     * e separá-las em duas famílias faria toda aplicação de macro atravessar as
+     * duas.
+     */
+    macros: {
+        /** As do app e as do agente que pede. Macro de outro agente não aparece. */
+        listar(donoId: string): Promise<{ id: string; nome: string; definicao: unknown; doApp: boolean }[]>
+        criar(dados: { nome: string; definicao: Prisma.InputJsonValue; donoId: string | null }): Promise<{ id: string }>
+        /** Exclusão lógica: a macro removida segue explicando o que gerou. */
+        excluir(id: string, agora: Date): Promise<boolean>
+    }
+
+    tags: {
+        /** As tags do app, em ordem alfabética. */
+        listar(): Promise<{ id: string; nome: string }[]>
+        /**
+         * Garante que as tags existem e devolve os ids.
+         *
+         * Cria a que falta: exigir cadastro antes de usar transformaria
+         * classificar um chamado em duas tarefas, e a segunda não acontece no
+         * meio de um atendimento.
+         */
+        garantir(nomes: string[]): Promise<{ id: string; nome: string }[]>
+        /** As tags de um chamado. */
+        doChamado(ticketId: string): Promise<string[]>
+        /** Define as tags do chamado, acrescentando as que faltam. */
+        acrescentarNoChamado(ticketId: string, nomes: string[], autor: Autor): Promise<string[]>
     }
 
     /**
@@ -2345,6 +2379,124 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                     where: { appId, problemId },
                     orderBy: { criadoEm: 'asc' },
                 })
+            },
+        },
+
+        macros: {
+            async listar(donoId) {
+                const linhas = await conexao.macro.findMany({
+                    where: { appId, excluidoEm: null, OR: [{ donoId: null }, { donoId }] },
+                    orderBy: [{ donoId: 'asc' }, { criadoEm: 'asc' }],
+                })
+
+                return linhas.map((l) => ({
+                    id: l.id,
+                    nome: l.nome,
+                    definicao: l.definicao,
+                    doApp: l.donoId === null,
+                }))
+            },
+
+            async criar(dados) {
+                return conexao.macro.create({
+                    data: {
+                        appId,
+                        nome: dados.nome,
+                        definicao: dados.definicao,
+                        ...(dados.donoId === null ? {} : { donoId: dados.donoId }),
+                    },
+                    select: { id: true },
+                })
+            },
+
+            async excluir(id, agora) {
+                const { count } = await conexao.macro.updateMany({
+                    where: { id, appId, excluidoEm: null },
+                    data: { excluidoEm: agora },
+                })
+                return count === 1
+            },
+        },
+
+        tags: {
+            async listar() {
+                return conexao.tag.findMany({ where: { appId }, orderBy: { nome: 'asc' }, select: { id: true, nome: true } })
+            },
+
+            async garantir(nomes) {
+                const limpas = tagsNormalizadas(nomes)
+                if (limpas.length === 0) return []
+
+                const existentes = await conexao.tag.findMany({
+                    where: { appId, nome: { in: limpas } },
+                    select: { id: true, nome: true },
+                })
+
+                const faltando = limpas.filter((n) => !existentes.some((e) => e.nome === n))
+                const criadas: { id: string; nome: string }[] = []
+
+                for (const nome of faltando) {
+                    /**
+                     * Uma por vez e tolerando colisão: dois atendentes podem
+                     * criar a mesma tag no mesmo segundo, e o único índice
+                     * `(appId, nome)` recusa a segunda. A recusa é sucesso — a
+                     * tag existe, que é o que se queria.
+                     */
+                    try {
+                        criadas.push(await conexao.tag.create({ data: { appId, nome }, select: { id: true, nome: true } }))
+                    } catch {
+                        const achada = await conexao.tag.findFirst({ where: { appId, nome }, select: { id: true, nome: true } })
+                        if (achada !== null) criadas.push(achada)
+                    }
+                }
+
+                return [...existentes, ...criadas]
+            },
+
+            async doChamado(ticketId) {
+                const linhas = await conexao.ticketTag.findMany({
+                    where: { ticketId, tag: { appId } },
+                    select: { tag: { select: { nome: true } } },
+                })
+                return linhas.map((l) => l.tag.nome).sort()
+            },
+
+            async acrescentarNoChamado(ticketId, nomes, autor) {
+                const chamado = await conexao.ticket.findFirst({ where: { id: ticketId, appId } })
+                if (chamado === null) {
+                    throw new ErroDeDominio('chamado_nao_encontrado', 'Chamado não encontrado.', 404)
+                }
+
+                const esteEscopo = escopoDoApp(conexao, appId)
+                const tags = await esteEscopo.tags.garantir(nomes)
+                const antes = await esteEscopo.tags.doChamado(ticketId)
+
+                for (const tag of tags) {
+                    if (antes.includes(tag.nome)) continue
+                    /// `ticket_tags` tem chave composta: a colisão só acontece
+                    /// em corrida, e o resultado desejado é o mesmo.
+                    try {
+                        await conexao.ticketTag.create({ data: { ticketId, tagId: tag.id } })
+                    } catch {
+                        /// Já estava lá.
+                    }
+                }
+
+                const depois = await esteEscopo.tags.doChamado(ticketId)
+
+                /// Só registra se mudou: aplicar a mesma macro duas vezes não
+                /// deve encher a trilha.
+                if (depois.join(',') !== antes.join(',')) {
+                    await esteEscopo.eventos.registrar({
+                        ticketId,
+                        ator: autor.ator,
+                        evento: 'tags:definidas',
+                        antes: { tags: antes },
+                        depois: { tags: depois },
+                    })
+                }
+
+                return depois
             },
         },
 

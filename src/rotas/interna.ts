@@ -51,6 +51,7 @@ import { levantarDivergencias } from '../conhecimento/comparar-apps.ts'
 import { gastoDesde } from '../dados/gastos.ts'
 import { explicarRecusa } from '../dominio/mesclar.ts'
 import { medirEngenharia } from '../dominio/engenharia-metricas.ts'
+import { definicaoDaMacro, esquemaDaDefinicao } from '../dominio/macros.ts'
 
 /**
  * A API interna — o que o Console consome, e o que a ponte do Slack vai chamar
@@ -560,6 +561,8 @@ rotasInternas.get('/api/console/app/:app/chamados/:numero', async (c) => {
         }
     )
 
+    const tagsDoChamado = await escopo.tags.doChamado(chamado.id)
+
     const mescladoEm =
         chamado.mescladoEmId === null ? null : await escopo.chamados.porId(chamado.mescladoEmId)
 
@@ -577,6 +580,7 @@ rotasInternas.get('/api/console/app/:app/chamados/:numero', async (c) => {
          * Sem isto o Console mostraria um chamado fechado com uma mensagem
          * citando outro, e sem caminho até ele.
          */
+        tags: tagsDoChamado,
         mescladoEm:
             mescladoEm === null ? null : { numero: formatarNumero(c.get('app').prefixo, mescladoEm.numero) },
         sla: resumoDoChamado(
@@ -1530,6 +1534,92 @@ rotasInternas.post('/api/console/app/:app/chamados/:numero/mesclar', async (c) =
     }
 
     return c.json({ mesclado: numero, em: corpo.data.destino })
+})
+
+/**
+ * As macros do app e do agente (Fase 7).
+ *
+ * A macro NÃO é aplicada aqui: a rota devolve o que ela propõe, e o Console
+ * preenche o campo de resposta. Aplicar no servidor faria um clique virar
+ * mensagem enviada — e o que existe para isso é o botão de responder, com o
+ * texto na frente de quem assina.
+ */
+rotasInternas.get('/api/console/app/:app/macros', async (c) => {
+    const macros = await c.get('escopo').macros.listar(c.get('agente').id)
+
+    return c.json({
+        macros: macros
+            .map((m) => ({ id: m.id, nome: m.nome, doApp: m.doApp, definicao: definicaoDaMacro(m.definicao) }))
+            /// Macro com definição inválida (schema mudou, alguém editou no
+            /// banco) é omitida em vez de quebrar a lista inteira.
+            .filter((m) => m.definicao !== null),
+    })
+})
+
+rotasInternas.post('/api/console/app/:app/macros', async (c) => {
+    const agente = c.get('agente')
+
+    const corpo = z
+        .object({
+            nome: z.string().trim().min(2).max(60),
+            definicao: esquemaDaDefinicao,
+            /// `doApp` só para quem decide pelo time: uma macro do app aparece
+            /// para todos, e isso é decisão de gestor.
+            doApp: z.boolean().optional(),
+        })
+        .safeParse(await c.req.json().catch(() => null))
+
+    if (!corpo.success) {
+        throw new ErroDeDominio(
+            'macro_invalida',
+            'A macro precisa de nome e de fazer alguma coisa: texto, tags ou status.',
+            400
+        )
+    }
+
+    const doApp = corpo.data.doApp === true
+    if (doApp && agente.papel === 'AGENTE') {
+        throw new ErroDeDominio('sem_permissao', 'Agente cria macro pessoal, não macro do app.', 403)
+    }
+
+    const criada = await c.get('escopo').macros.criar({
+        nome: corpo.data.nome,
+        definicao: corpo.data.definicao as never,
+        donoId: doApp ? null : agente.id,
+    })
+
+    return c.json({ id: criada.id, nome: corpo.data.nome, doApp }, 201)
+})
+
+rotasInternas.delete('/api/console/app/:app/macros/:id', async (c) => {
+    const removida = await c.get('escopo').macros.excluir(c.req.param('id'), new Date())
+    if (!removida) throw new ErroDeDominio('macro_nao_encontrada', 'Macro não encontrada.', 404)
+    return c.json({ removida: true })
+})
+
+/** As tags do app, para o Console sugerir em vez de deixar digitar de novo. */
+rotasInternas.get('/api/console/app/:app/tags', async (c) => {
+    return c.json({ tags: (await c.get('escopo').tags.listar()).map((t) => t.nome) })
+})
+
+rotasInternas.post('/api/console/app/:app/chamados/:numero/tags', async (c) => {
+    const escopo = c.get('escopo')
+
+    const corpo = z
+        .object({ tags: z.array(z.string().trim().min(1).max(40)).min(1).max(8) })
+        .safeParse(await c.req.json().catch(() => null))
+    if (!corpo.success) {
+        throw new ErroDeDominio('tags_invalidas', 'Informe de uma a oito tags.', 400)
+    }
+
+    const chamado = await escopo.chamados.porNumero(Number(c.req.param('numero')))
+    if (chamado === null) throw new ErroDeDominio('chamado_nao_encontrado', 'Chamado não encontrado.', 404)
+
+    const tags = await escopo.tags.acrescentarNoChamado(chamado.id, corpo.data.tags, {
+        ator: `agent:${c.get('agente').id}`,
+    })
+
+    return c.json({ tags })
 })
 
 /** Quem está logado. É como a SPA do Console sabe se há sessão. */

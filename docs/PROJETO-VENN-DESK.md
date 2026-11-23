@@ -726,7 +726,7 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 
 - [x] SLA por app e prioridade, calendário comercial, pausas, alertas de risco e de violação
 - [x] Gatilhos e automações, incluindo fechamento automático e lembrete ao usuário
-- [ ] Macros, visões salvas, tags, campos personalizados por app
+- [x] Macros e tags por app (visões salvas e campos personalizados: ver nota)
 - [x] Mesclar chamados, chamado de acompanhamento
 - [x] Relatórios e painel (seção 12)
 - [ ] Visão "chamados da empresa" para o administrador do tenant
@@ -824,6 +824,32 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 >
 > Os marcos saem da TRILHA, não da etapa atual: a etapa diz onde o defeito está,
 > e o indicador quer saber quando ele passou por cada ponto.
+
+> **Macros e tags, 23/11/2026.** As tabelas `tags`, `ticket_tags` e `macros`
+> existiam desde a Fase 1 e nunca tinham sido usadas; agora têm código.
+>
+> **A macro não envia nada.** Ela PREENCHE: o texto vai para o campo de resposta
+> e as tags são gravadas. Quem escolhe entre "responder ao usuário" e "nota
+> interna" são os dois botões que já existem — a diferença entre as duas é
+> irreversível, e ela fica na frente de quem assina. A transição que a macro
+> propõe aparece como dica e não é aplicada: mover o chamado junto com o texto
+> esconderia metade do efeito do clique.
+>
+> `escalar_engenharia` e `mensagem_do_usuario` são recusadas como ação de macro,
+> porque têm efeitos próprios (abrir thread no canal de engenharia, reabrir o
+> chamado) e esconder isso atrás de um atalho de texto faria o atendente
+> disparar o efeito sem saber. A definição é `strict`: um campo com erro de
+> digitação viraria ação silenciosamente ignorada.
+>
+> Tag é criada no uso, sem cadastro prévio — exigir cadastro antes transformaria
+> classificar um chamado em duas tarefas, e a segunda não acontece no meio de um
+> atendimento. A normalização baixa a caixa e colapsa espaço, mas PRESERVA o
+> acento: dobrá-lo criaria "cobranca" na lista, que ninguém reconhece. Macro do
+> app é decisão de gestor; agente cria a sua, e não vê a de ninguém.
+>
+> **Fora desta rodada:** visões salvas (filtro nomeado na fila) e campos
+> personalizados por app. O segundo depende do widget, que mora no venn-saas:
+> um campo novo no formulário de abertura é tela de lá, não daqui.
 
 **Aceite:** uma política de SLA violada gera alerta e aparece no relatório. Uma automação criada no Console executa sem código novo. O painel mostra as métricas da seção 12 por app.
 
