@@ -17,8 +17,21 @@ describe('senha do Console', () => {
         await expect(conferirSenha('senha-bem-longa-de-teste', hash)).resolves.toBe(true)
         await expect(conferirSenha('senha-bem-longa-de-test', hash)).resolves.toBe(false)
         await expect(conferirSenha('', hash)).resolves.toBe(false)
-    })
+    }, 20_000)
 
+    /**
+     * Timeout explícito, e ele é a correção de um teste INTERMITENTE.
+     *
+     * Este caso faz quatro derivações PBKDF2 de 100 mil iterações cada — duas
+     * para gerar, duas para conferir. Isso é lento de propósito: o custo é a
+     * defesa contra quebra de senha por força bruta, e reduzi-lo no teste seria
+     * testar outra coisa.
+     *
+     * Com a suíte inteira em paralelo (78 arquivos), as quatro derivações
+     * passavam dos 5 s padrão do vitest em 23/11/2026 e o portão reprovou sem
+     * haver defeito. Teste que falha sem bug ensina a ignorar o portão, que é
+     * pior que não ter portão.
+     */
     it('gera sal novo a cada hash, então dois hashes da mesma senha diferem', async () => {
         const a = await hashDeSenha('mesma-senha')
         const b = await hashDeSenha('mesma-senha')
@@ -26,7 +39,7 @@ describe('senha do Console', () => {
         expect(a).not.toBe(b)
         await expect(conferirSenha('mesma-senha', a)).resolves.toBe(true)
         await expect(conferirSenha('mesma-senha', b)).resolves.toBe(true)
-    })
+    }, 20_000)
 
     it('recusa hash em formato desconhecido sem explodir', async () => {
         for (const hash of ['', 'senha-em-texto-puro', 'bcrypt$10$abc$def', 'pbkdf2$1$a$b']) {

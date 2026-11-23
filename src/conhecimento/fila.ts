@@ -17,6 +17,7 @@ import { sincronizarApp, type ResultadoDaSincronizacao } from './sincronizar.ts'
 import { sugerirDeChamado, sugerirDeLacuna, type ResultadoDaSugestao } from './sugerir.ts'
 import { diagnosticar, diagnosticoEmTexto } from '../engenharia/diagnosticar.ts'
 import { arquivosDaTela } from '../engenharia/candidatos.ts'
+import { espelharNosIrmaos } from '../engenharia/irmaos.ts'
 import { anonimizar } from './privacidade.ts'
 import { postar } from '../slack/cliente.ts'
 import type { LanguageModel } from 'ai'
@@ -213,6 +214,27 @@ export async function consumirConhecimento(lote: LoteDaFila, env: Ambiente['Bind
                                 }
                             )
                         }
+                    }
+
+                    /**
+                     * Diagnóstico que aponta o core: os irmãos têm o mesmo
+                     * defeito e só não têm chamado ainda.
+                     *
+                     * Aqui, e não no escalonamento, porque é o diagnóstico que
+                     * sabe QUAIS arquivos estão envolvidos — antes dele só há o
+                     * sintoma, e espelhar por sintoma criaria defeito em três
+                     * apps a cada chamado escalado.
+                     */
+                    const suspeitos = resultado.diagnostico?.arquivosSuspeitos.map((a) => a.caminho) ?? []
+                    if (suspeitos.length > 0 && chamado.problemId !== null) {
+                        const espelhos = await espelharNosIrmaos({
+                            cliente,
+                            appDeOrigem: { id: app.id, slug: app.slug, repositorio: app.repositorio },
+                            numeroDeOrigem: `${app.prefixo}-${chamado.numero}`,
+                            titulo: chamado.assunto,
+                            caminhos: suspeitos,
+                        })
+                        if (espelhos.length > 0) console.log('[irmaos]', JSON.stringify(espelhos))
                     }
 
                     await escopo.eventos.registrar({

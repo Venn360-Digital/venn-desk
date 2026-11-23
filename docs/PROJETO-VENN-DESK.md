@@ -753,7 +753,7 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 - [ ] Promoção por merge feito pelo Bridge e reversão pelo rollback de versão da Cloudflare
 - [x] Aviso aos usuários afetados, confirmação, resolução em lote dos incidentes do problema
 - [x] Verificação pós-deploy e etapa "verificado"
-- [ ] Rotina de correção nos apps irmãos
+- [x] Rotina de correção nos apps irmãos
 - [x] Sugestão automática de artigo para a base
 - [ ] Ativar o pipeline no Conecta e no Stagent
 
@@ -777,6 +777,25 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 > receberia "seu chamado foi resolvido" sem saber o que foi feito. Chamado que o
 > cliente reabriu entre a consulta e a escrita é recusado pela máquina de estados
 > e aparece na lista de recusados, sem impedir os outros.
+
+> **A rotina dos apps irmãos, 23/11/2026.** Os três produtos são cascas sobre o
+> mesmo `packages/core`: um defeito num arquivo do core não é "o defeito do
+> Odontobox", é o defeito dos três — e os outros dois só não têm chamado porque
+> ninguém tropeçou nele ainda.
+>
+> Quando o diagnóstico do N2 aponta arquivo em `packages/core/`, o Desk registra
+> o defeito espelho nos irmãos, com a causa dizendo de onde veio. É
+> VISIBILIDADE, não ação: quem decide corrigir e quando é gente, e o espelho
+> nasce na etapa inicial como qualquer outro defeito.
+>
+> **Não abre chamado em nome de ninguém.** Chamado é algo que uma pessoa relata;
+> criar um "em nome de todos" encheria a fila de trabalho que ninguém pediu e
+> estragaria todo indicador de volume.
+>
+> O gatilho é o DIAGNÓSTICO e não o escalonamento, porque é ele que sabe quais
+> arquivos estão envolvidos — antes dele só há o sintoma, e espelhar por sintoma
+> criaria defeito em três apps a cada chamado escalado. O segundo diagnóstico do
+> mesmo defeito não cria segundo espelho.
 
 **Aceite:** o defeito da Fase 5 chega à produção somente após o clique de um aprovador cadastrado. Tentativa de merge em `main` com a credencial da IA é recusada pelo GitHub. A reversão restaura a versão anterior. Os três apps completam um ciclo inteiro.
 

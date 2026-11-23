@@ -383,6 +383,14 @@ export interface EscopoDoApp {
     problemas: {
         porId(id: string): Promise<Problem | null>
         abrir(dados: { titulo: string; causa?: string }): Promise<Problem>
+        /**
+         * O defeito com aquele título exato, se existir.
+         *
+         * Serve ao espelho nos apps irmãos: é o que impede o mesmo defeito do
+         * core de virar um defeito novo a cada diagnóstico. Título exato, e não
+         * parecido — adivinhar semelhança aqui agruparia defeitos diferentes.
+         */
+        porTitulo(titulo: string): Promise<Problem | null>
         resolver(id: string): Promise<Problem | null>
         /**
          * Recusa do gestor: estado final, e o único caminho que NÃO é para
@@ -1726,6 +1734,10 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
         problemas: {
             async porId(id) {
                 return conexao.problem.findFirst({ where: { id, appId } })
+            },
+
+            async porTitulo(titulo) {
+                return conexao.problem.findFirst({ where: { appId, titulo } })
             },
 
             async abrir(dados) {
