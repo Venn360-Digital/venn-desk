@@ -726,7 +726,7 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 
 - [x] SLA por app e prioridade, calendário comercial, pausas, alertas de risco e de violação
 - [x] Gatilhos e automações, incluindo fechamento automático e lembrete ao usuário
-- [x] Macros e tags por app (visões salvas e campos personalizados: ver nota)
+- [x] Macros, visões salvas e tags (campos personalizados: dependem do widget)
 - [x] Mesclar chamados, chamado de acompanhamento
 - [x] Relatórios e painel (seção 12)
 - [ ] Visão "chamados da empresa" para o administrador do tenant
@@ -847,9 +847,19 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 > acento: dobrá-lo criaria "cobranca" na lista, que ninguém reconhece. Macro do
 > app é decisão de gestor; agente cria a sua, e não vê a de ninguém.
 >
-> **Fora desta rodada:** visões salvas (filtro nomeado na fila) e campos
-> personalizados por app. O segundo depende do widget, que mora no venn-saas:
-> um campo novo no formulário de abertura é tela de lá, não daqui.
+> **As visões salvas** chegaram na mesma fase, e sem `appId`: a fila do Console é
+> ÚNICA e cruza os três produtos, então "urgentes sem responsável, em qualquer
+> app" é exatamente o tipo de visão que se quer salvar — amarrá-la a um app faria
+> cada pessoa salvá-la três vezes. Aplicar uma visão SUBSTITUI os filtros em vez
+> de somar, senão o resíduo do recorte anterior faria a visão mostrar outra coisa
+> a cada clique. Filtro vazio é recusado: salvar "a fila inteira" com um nome
+> enganaria quem clicasse depois. Visão do time é decisão de gestor; a pessoal só
+> aparece para quem a criou, e a exclusão confere o dono no servidor — sem isso
+> qualquer agente apagaria a visão de outro sabendo o id.
+>
+> **Fora desta rodada:** campos personalizados por app. Dependem do widget, que
+> mora no venn-saas: um campo novo no formulário de abertura é tela de lá, não
+> daqui.
 
 **Aceite:** uma política de SLA violada gera alerta e aparece no relatório. Uma automação criada no Console executa sem código novo. O painel mostra as métricas da seção 12 por app.
 

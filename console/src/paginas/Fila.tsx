@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { ChevronDown, ChevronUp, ChevronsUp, Minus, Search, X } from 'lucide-react'
 
-import { api, type ChamadoNaFila, type OpcoesDeFiltro, type Prioridade } from '../api.ts'
+import { api, type ChamadoNaFila, type OpcoesDeFiltro, type Prioridade, type VisaoSalva } from '../api.ts'
 import { Quando, Selo, Vazio } from '../componentes/ui.tsx'
 import { SeloDeSla } from '../componentes/sla.tsx'
 
@@ -71,6 +71,36 @@ export function Fila() {
     const mudar = (campo: keyof Filtros, valor: string) =>
         setFiltros((atual) => ({ ...atual, [campo]: valor }))
 
+    const fila = useQueryClient()
+    const visoes = useQuery({
+        queryKey: ['visoes'],
+        queryFn: () => api<{ visoes: VisaoSalva[] }>('/visoes'),
+        staleTime: 5 * 60_000,
+    })
+
+    const salvarVisao = useMutation({
+        mutationFn: (nome: string) =>
+            api('/visoes', {
+                metodo: 'POST',
+                corpo: {
+                    nome,
+                    /// Só os filtros preenchidos: salvar os vazios gravaria
+                    /// `status: ""`, que o servidor recusaria como desconhecido.
+                    filtros: Object.fromEntries(Object.entries(filtros).filter(([, v]) => v !== '')),
+                },
+            }),
+        onSuccess: () => void fila.invalidateQueries({ queryKey: ['visoes'] }),
+    })
+
+    /**
+     * Aplicar uma visão SUBSTITUI os filtros, não os soma.
+     *
+     * Somar deixaria resíduo do recorte anterior e a visão mostraria outra
+     * coisa a cada clique — o contrário do que um filtro salvo promete.
+     */
+    const aplicarVisao = (v: VisaoSalva) =>
+        setFiltros({ ...VAZIO, ...(v.filtros as Partial<Filtros>) })
+
     /// As empresas e as contas são por app: com um app escolhido, só as dele
     /// aparecem. Sem app, aparecem todas — e é aí que a lista pode ficar longa.
     const empresas = (opcoes.data?.empresas ?? []).filter(
@@ -85,6 +115,14 @@ export function Fila() {
 
     return (
         <div className="flex flex-col gap-4">
+            <BarraDeVisoes
+                visoes={visoes.data?.visoes ?? []}
+                temFiltro={busca !== ''}
+                aoAplicar={aplicarVisao}
+                aoLimpar={() => setFiltros(VAZIO)}
+                aoSalvar={(nome) => salvarVisao.mutate(nome)}
+            />
+
             <div className="flex flex-wrap items-center gap-1">
                 {RECORTES.map(({ chave, rotulo }) => (
                     <button
@@ -336,5 +374,92 @@ function Seletor({
                 ))}
             </select>
         </label>
+    )
+}
+
+/**
+ * As visões salvas da fila (Fase 7).
+ *
+ * Uma linha de botões, porque é assim que são usadas: a pessoa chega, clica na
+ * sua visão e começa a trabalhar. "Salvar esta" só aparece quando há filtro —
+ * salvar a fila inteira com um nome enganaria quem clicasse depois.
+ */
+function BarraDeVisoes({
+    visoes,
+    temFiltro,
+    aoAplicar,
+    aoLimpar,
+    aoSalvar,
+}: {
+    visoes: VisaoSalva[]
+    temFiltro: boolean
+    aoAplicar: (v: VisaoSalva) => void
+    aoLimpar: () => void
+    aoSalvar: (nome: string) => void
+}) {
+    const [nome, setNome] = useState('')
+    const [salvando, setSalvando] = useState(false)
+
+    if (visoes.length === 0 && !temFiltro) return null
+
+    return (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+            {visoes.map((v) => (
+                <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => aoAplicar(v)}
+                    title={v.doTime ? `${v.nome} · do time` : v.nome}
+                    className="rounded-sm border border-borda px-2 py-1 text-[11px] text-tinta-fraca transition hover:text-tinta"
+                >
+                    {v.nome}
+                </button>
+            ))}
+
+            {temFiltro ? (
+                <>
+                    <button
+                        type="button"
+                        onClick={aoLimpar}
+                        className="rounded-sm px-2 py-1 text-[11px] text-tinta-sutil transition hover:text-tinta"
+                    >
+                        limpar filtros
+                    </button>
+
+                    {salvando ? (
+                        <form
+                            className="flex items-center gap-1"
+                            onSubmit={(e) => {
+                                e.preventDefault()
+                                if (nome.trim().length >= 2) {
+                                    aoSalvar(nome.trim())
+                                    setNome('')
+                                    setSalvando(false)
+                                }
+                            }}
+                        >
+                            <input
+                                value={nome}
+                                onChange={(e) => setNome(e.target.value)}
+                                placeholder="nome da visão"
+                                autoFocus
+                                className="w-36 rounded-sm border border-borda bg-fundo px-2 py-1 text-[11px] text-tinta"
+                            />
+                            <button type="submit" className="rounded-sm border border-borda px-2 py-1 text-[11px] text-tinta-fraca">
+                                salvar
+                            </button>
+                        </form>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => setSalvando(true)}
+                            className="rounded-sm px-2 py-1 text-[11px] text-destaque transition hover:underline"
+                        >
+                            salvar esta visão
+                        </button>
+                    )}
+                </>
+            ) : null}
+        </div>
     )
 }

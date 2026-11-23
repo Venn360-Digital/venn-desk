@@ -381,3 +381,11 @@ export interface Macro {
         status?: 'assumir' | 'responder_usuario' | 'resolver' | 'fechar'
     }
 }
+
+/** Um filtro nomeado da fila. `doTime` aparece para todos. */
+export interface VisaoSalva {
+    id: string
+    nome: string
+    doTime: boolean
+    filtros: Record<string, string | number>
+}

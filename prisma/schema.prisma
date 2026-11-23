@@ -563,6 +563,31 @@ model IaGasto {
     @@map("ia_gastos")
 }
 
+/**
+ * Um filtro nomeado da fila (Fase 7).
+ *
+ * Sem `appId`, e essa é a diferença em relação às macros: a fila do Console é
+ * única e cruza os três produtos — "urgentes sem responsável, em qualquer app" é
+ * exatamente o tipo de visão que se quer salvar, e amarrá-la a um app faria cada
+ * pessoa salvá-la três vezes.
+ *
+ * `agenteId` nulo é visão do time; preenchido, é pessoal.
+ */
+model VisaoSalva {
+    id      String @id @default(cuid())
+    nome    String
+    /// Os mesmos filtros que a fila aceita na query.
+    filtros Json
+
+    agenteId String? @map("agente_id")
+
+    criadoEm   DateTime  @default(now()) @map("criado_em")
+    excluidoEm DateTime? @map("excluido_em")
+
+    @@index([agenteId, excluidoEm])
+    @@map("visoes_salvas")
+}
+
 model SlackThread {
     id       String @id @default(cuid())
     appId    String @map("app_id")

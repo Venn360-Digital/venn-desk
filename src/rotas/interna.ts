@@ -52,6 +52,7 @@ import { gastoDesde } from '../dados/gastos.ts'
 import { explicarRecusa } from '../dominio/mesclar.ts'
 import { medirEngenharia } from '../dominio/engenharia-metricas.ts'
 import { definicaoDaMacro, esquemaDaDefinicao } from '../dominio/macros.ts'
+import { criarVisao, esquemaDosFiltros, excluirVisao, listarVisoes } from '../dados/visoes.ts'
 
 /**
  * A API interna — o que o Console consome, e o que a ponte do Slack vai chamar
@@ -282,6 +283,67 @@ rotasInternas.get('/api/console/divergencias', comCliente, comSessaoDeAgente, as
             palavraDeOutroNicho: achados.filter((d) => d.tipo === 'palavra-de-outro-nicho').length,
         },
     })
+})
+
+/**
+ * As visões salvas da fila (Fase 7).
+ *
+ * Rota GLOBAL, como `/api/console/fila`: a visão cruza apps, e pedi-la dentro de
+ * `/app/:app/` sugeriria que ela pertence a um produto.
+ */
+rotasInternas.get('/api/console/visoes', comCliente, comSessaoDeAgente, async (c) => {
+    return c.json({ visoes: await listarVisoes(c.get('cliente'), c.get('agente').id) })
+})
+
+rotasInternas.post('/api/console/visoes', comCliente, comSessaoDeAgente, async (c) => {
+    const agente = c.get('agente')
+
+    const corpo = z
+        .object({
+            nome: z.string().trim().min(2).max(60),
+            filtros: esquemaDosFiltros,
+            /// Visão do time aparece para todos, e isso é decisão de gestor.
+            doTime: z.boolean().optional(),
+        })
+        .safeParse(await c.req.json().catch(() => null))
+
+    if (!corpo.success) {
+        throw new ErroDeDominio('visao_invalida', 'Informe um nome e filtros conhecidos da fila.', 400)
+    }
+
+    const doTime = corpo.data.doTime === true
+    if (doTime && agente.papel === 'AGENTE') {
+        throw new ErroDeDominio('sem_permissao', 'Agente salva visão pessoal, não visão do time.', 403)
+    }
+
+    /// Filtro vazio salvaria "a fila inteira" com um nome, e um dia alguém
+    /// clicaria nela esperando um recorte.
+    if (Object.keys(corpo.data.filtros).length === 0) {
+        throw new ErroDeDominio('visao_sem_filtro', 'Escolha ao menos um filtro antes de salvar.', 400)
+    }
+
+    const criada = await criarVisao(c.get('cliente'), {
+        nome: corpo.data.nome,
+        filtros: corpo.data.filtros,
+        agenteId: doTime ? null : agente.id,
+    })
+
+    return c.json({ id: criada.id, nome: corpo.data.nome, doTime }, 201)
+})
+
+rotasInternas.delete('/api/console/visoes/:id', comCliente, comSessaoDeAgente, async (c) => {
+    const agente = c.get('agente')
+    const removida = await excluirVisao(
+        c.get('cliente'),
+        c.req.param('id'),
+        { agenteId: agente.id, podeMexerNoTime: agente.papel !== 'AGENTE' },
+        new Date()
+    )
+
+    /// A mesma resposta para "não existe" e "não é sua": dizer qual dos dois
+    /// contaria que a visão de outra pessoa existe.
+    if (!removida) throw new ErroDeDominio('visao_nao_encontrada', 'Visão não encontrada.', 404)
+    return c.json({ removida: true })
 })
 
 rotasInternas.get('/api/console/filtros', comCliente, comSessaoDeAgente, async (c) => {

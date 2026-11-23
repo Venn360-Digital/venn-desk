@@ -90,6 +90,7 @@ export function conexaoFalsa(respostas: Record<string, unknown> = {}) {
         engLink: delegado('engLink'),
         approval: delegado('approval'),
         macro: delegado('macro'),
+        visaoSalva: delegado('visaoSalva'),
         tag: delegado('tag'),
         ticketTag: delegado('ticketTag'),
         $queryRaw: cru('queryRaw'),
