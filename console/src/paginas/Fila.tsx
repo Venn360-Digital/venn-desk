@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { ChevronDown, ChevronUp, ChevronsUp, Minus, Search, X } from 'lucide-react'
 
 import { api, type ChamadoNaFila, type OpcoesDeFiltro, type Prioridade, type VisaoSalva } from '../api.ts'
-import { Quando, Selo, Vazio } from '../componentes/ui.tsx'
+import { Aviso, Quando, Selo, Vazio } from '../componentes/ui.tsx'
 import { SeloDeSla } from '../componentes/sla.tsx'
 
 /**
@@ -115,6 +115,8 @@ export function Fila() {
 
     return (
         <div className="flex flex-col gap-4">
+            <AbrirEmNomeDoCliente aoAbrir={() => void fila.invalidateQueries({ queryKey: ['fila'] })} />
+
             <BarraDeVisoes
                 visoes={visoes.data?.visoes ?? []}
                 temFiltro={busca !== ''}
@@ -461,5 +463,161 @@ function BarraDeVisoes({
                 </>
             ) : null}
         </div>
+    )
+}
+
+/**
+ * Abrir chamado em nome do cliente (seção 7, último recurso).
+ *
+ * O cliente ligou, ou mandou e-mail, ou o widget está fora do ar. O formulário
+ * pede o que quem atendeu uma ligação REALMENTE tem: o e-mail. Se ele já é
+ * conhecido, a empresa vem do cadastro; se não, o servidor responde pedindo nome
+ * e empresa, e o formulário mostra os dois campos.
+ *
+ * Fechado por padrão. A fila é o trabalho do dia; abrir chamado à mão é o
+ * eventual, e um formulário aberto empurraria a lista para fora da primeira
+ * tela.
+ */
+function AbrirEmNomeDoCliente({ aoAbrir }: { aoAbrir: () => void }) {
+    const [aberto, setAberto] = useState(false)
+    const [app, setApp] = useState('')
+    const [email, setEmail] = useState('')
+    const [assunto, setAssunto] = useState('')
+    const [descricao, setDescricao] = useState('')
+    const [nome, setNome] = useState('')
+    const [empresa, setEmpresa] = useState('')
+    const [erro, setErro] = useState<string | null>(null)
+    const [precisaDeDados, setPrecisa] = useState(false)
+
+    const apps = useQuery({
+        queryKey: ['apps'],
+        queryFn: () => api<{ apps: { slug: string; nome: string }[] }>('/apps'),
+        staleTime: 5 * 60_000,
+    })
+
+    const abrir = useMutation({
+        mutationFn: () =>
+            api<{ chamado: { numero: string } }>(`/app/${app}/chamados`, {
+                metodo: 'POST',
+                corpo: {
+                    email,
+                    assunto,
+                    descricao,
+                    ...(nome === '' ? {} : { nome }),
+                    ...(empresa === '' ? {} : { empresa }),
+                },
+            }),
+        onSuccess: () => {
+            setEmail('')
+            setAssunto('')
+            setDescricao('')
+            setNome('')
+            setEmpresa('')
+            setPrecisa(false)
+            setErro(null)
+            setAberto(false)
+            aoAbrir()
+        },
+        onError: (e: unknown) => {
+            const mensagem = (e as Error).message
+            setErro(mensagem)
+            /// O servidor é quem sabe se o e-mail é conhecido. Perguntar antes
+            /// exigiria uma consulta por tecla digitada.
+            if (mensagem.includes('nome e a empresa')) setPrecisa(true)
+        },
+    })
+
+    if (!aberto) {
+        return (
+            <button
+                type="button"
+                onClick={() => setAberto(true)}
+                className="mb-3 self-start rounded-sm border border-borda px-2 py-1 text-[11px] text-tinta-fraca transition hover:text-tinta"
+            >
+                abrir chamado em nome do cliente
+            </button>
+        )
+    }
+
+    return (
+        <form
+            className="mb-3 space-y-2 rounded-sm border border-borda bg-superficie p-3"
+            onSubmit={(e) => {
+                e.preventDefault()
+                if (app !== '' && email !== '' && assunto !== '' && descricao !== '') abrir.mutate()
+            }}
+        >
+            <div className="grid gap-2 sm:grid-cols-2">
+                <select
+                    value={app}
+                    onChange={(e) => setApp(e.target.value)}
+                    className="rounded-sm border border-borda bg-fundo px-2 py-1 text-xs text-tinta"
+                >
+                    <option value="">app…</option>
+                    {(apps.data?.apps ?? []).map((a) => (
+                        <option key={a.slug} value={a.slug}>
+                            {a.nome}
+                        </option>
+                    ))}
+                </select>
+                <input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="e-mail do cliente"
+                    type="email"
+                    className="rounded-sm border border-borda bg-fundo px-2 py-1 text-xs text-tinta"
+                />
+            </div>
+
+            {precisaDeDados ? (
+                <div className="grid gap-2 sm:grid-cols-2">
+                    <input
+                        value={nome}
+                        onChange={(e) => setNome(e.target.value)}
+                        placeholder="nome do cliente"
+                        className="rounded-sm border border-borda bg-fundo px-2 py-1 text-xs text-tinta"
+                    />
+                    <input
+                        value={empresa}
+                        onChange={(e) => setEmpresa(e.target.value)}
+                        placeholder="empresa"
+                        className="rounded-sm border border-borda bg-fundo px-2 py-1 text-xs text-tinta"
+                    />
+                </div>
+            ) : null}
+
+            <input
+                value={assunto}
+                onChange={(e) => setAssunto(e.target.value)}
+                placeholder="assunto"
+                className="w-full rounded-sm border border-borda bg-fundo px-2 py-1 text-xs text-tinta"
+            />
+            <textarea
+                value={descricao}
+                onChange={(e) => setDescricao(e.target.value)}
+                placeholder="o que o cliente relatou, nas palavras dele"
+                rows={3}
+                className="w-full rounded-sm border border-borda bg-fundo px-2 py-1 text-xs text-tinta"
+            />
+
+            <div className="flex items-center gap-2">
+                <button
+                    type="submit"
+                    disabled={abrir.isPending}
+                    className="rounded-sm bg-tinta px-3 py-1 text-xs font-medium text-fundo disabled:opacity-50"
+                >
+                    Abrir chamado
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setAberto(false)}
+                    className="px-2 py-1 text-[11px] text-tinta-sutil transition hover:text-tinta"
+                >
+                    cancelar
+                </button>
+            </div>
+
+            {erro !== null ? <Aviso>{erro}</Aviso> : null}
+        </form>
     )
 }

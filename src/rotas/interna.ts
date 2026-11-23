@@ -903,13 +903,25 @@ rotasInternas.patch('/api/console/app/:app/chamados/:numero', async (c) => {
     })
 })
 
+/**
+ * Abrir em nome do cliente, pelo que o atendente SABE.
+ *
+ * A primeira versão exigia `tenantExternalId` e `requesterExternalId` — ids do
+ * app. Quem acabou de atender uma ligação não tem nenhum dos dois: tem o e-mail
+ * e, com sorte, o nome da clínica. Exigir id interno de outro sistema fazia da
+ * rota um caminho que ninguém conseguia usar.
+ *
+ * Agora o e-mail é a chave. Se ele já é conhecido, o solicitante e a empresa
+ * vêm do cadastro; se não é, o atendente informa nome e empresa, e o registro
+ * nasce marcado como criado pelo Console.
+ */
 const esquemaEmNomeDoCliente = z.object({
-    tenantExternalId: z.string().min(1),
-    requesterExternalId: z.string().min(1),
-    nome: z.string().min(1),
-    email: z.string().email(),
+    email: z.string().trim().toLowerCase().email().max(254),
     assunto: z.string().trim().min(3).max(140),
     descricao: z.string().trim().min(5).max(10_000),
+    /// Só quando o e-mail é novo: aí os dois são obrigatórios.
+    nome: z.string().trim().min(2).max(120).optional(),
+    empresa: z.string().trim().min(2).max(120).optional(),
 })
 
 /**
@@ -925,14 +937,43 @@ rotasInternas.post('/api/console/app/:app/chamados', async (c) => {
         throw new ErroDeDominio('dados_invalidos', 'Faltam dados do cliente.', 400)
     }
 
-    const solicitante = await c.get('escopo').solicitantes.garantir({
-        tenantExternalId: corpo.data.tenantExternalId,
-        tenantNome: corpo.data.tenantExternalId,
-        requesterExternalId: corpo.data.requesterExternalId,
-        nome: corpo.data.nome,
-        email: corpo.data.email,
-        papelNoTenant: 'member',
-    })
+    const escopo = c.get('escopo')
+    const conhecido = await escopo.solicitantes.porEmail(corpo.data.email)
+
+    if (conhecido === null && (corpo.data.nome === undefined || corpo.data.empresa === undefined)) {
+        /**
+         * E-mail novo exige nome e empresa, e a mensagem diz isso.
+         *
+         * Criar um solicitante sem nome deixaria a fila com "—" no lugar de
+         * gente, e sem empresa o chamado não teria a quem pertencer — o
+         * isolamento por tenant é a base de tudo aqui.
+         */
+        throw new ErroDeDominio(
+            'cliente_desconhecido',
+            'Esse e-mail não está cadastrado neste app. Informe também o nome e a empresa.',
+            400
+        )
+    }
+
+    const solicitante =
+        conhecido !== null
+            ? { tenantId: conhecido.tenantId, requesterId: conhecido.id }
+            : await escopo.solicitantes.garantir({
+                  /**
+                   * O prefixo `console:` no id externo marca o que nasceu aqui.
+                   *
+                   * Sem ele, o mesmo cliente entrando depois pelo widget — com
+                   * o id real do app — viraria um segundo solicitante sem que
+                   * ninguém notasse. Com ele, a origem fica explícita e a
+                   * duplicata é visível em vez de silenciosa.
+                   */
+                  tenantExternalId: `console:${corpo.data.empresa as string}`,
+                  tenantNome: corpo.data.empresa as string,
+                  requesterExternalId: `console:${corpo.data.email}`,
+                  nome: corpo.data.nome as string,
+                  email: corpo.data.email,
+                  papelNoTenant: 'member',
+              })
 
     const chamado = await abrirChamado(c.get('cliente'), c.get('app').id, {
         tenantId: solicitante.tenantId,

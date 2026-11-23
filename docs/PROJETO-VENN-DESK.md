@@ -522,7 +522,7 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 - [x] Console mínimo: login, fila por app, tela do chamado, cadastro de apps
 - [x] Testes: unidade da máquina de estados, integração da API, isolamento entre apps e entre tenants
 
-* [ ] Console: criar chamado em nome de um cliente, com registro de quem criou
+* [x] Console: criar chamado em nome de um cliente, com registro de quem criou
 
 **Aceite:** com um token de teste, criar, responder, resolver e reabrir um chamado via API. Um token do app A não lê nada do app B. Cobertura dos testes de isolamento em 100% das rotas.
 
@@ -557,9 +557,9 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 
 * [ ] Chat ao vivo: "Falar com uma pessoa", "Assumir chat", prefixo de nota interna, silêncio do Claude, encerramento, disponibilidade e prazo de espera
 * [ ] Tempo real por WebSocket (Durable Object) com confirmação de leitura e "cliente digitando"
-* [ ] Verificação de saúde por app e criação automática do problema urgente
-* [ ] Página de status estática por app, em outro fornecedor, com "também fui afetado"
-* [ ] Portal de contingência com acesso por link enviado a e-mails conhecidos
+* [x] Verificação de saúde por app e criação automática do problema urgente
+* [x] Página de status estática por app, em outro fornecedor, com "também fui afetado"
+* [x] Portal de contingência com acesso por link enviado a e-mails conhecidos
 
 **Aceite:** um humano atende um chamado do início ao fim sem abrir o Console. Nenhum dado pessoal ou anexo aparece no Slack. Evento repetido do Slack não duplica mensagem. Em um chat ao vivo, a mensagem do atendente chega ao widget em até 3 segundos e uma linha iniciada por // nunca chega ao cliente. Com o app de staging derrubado de propósito, o incidente é criado sozinho, a página de status o exibe e um usuário conhecido abre chamado pelo portal. Um e-mail desconhecido não recebe link.
 
@@ -600,6 +600,21 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 - [x] Cão de guarda de primeira resposta
 - [x] CSAT e "Isso resolveu?"
 - [ ] Conjunto de avaliação: 50 dúvidas reais ou realistas por app e 20 chamados maliciosos
+
+> **Abrir em nome do cliente, 23/11/2026.** A rota existia e ninguém conseguia
+> usá-la: ela exigia `tenantExternalId` e `requesterExternalId`, que são ids do
+> app. Quem acabou de atender uma ligação não tem nenhum dos dois — tem o e-mail
+> e, com sorte, o nome da clínica.
+>
+> Agora o E-MAIL é a chave. Conhecido, o solicitante e a empresa vêm do
+> cadastro; novo, o servidor responde pedindo nome e empresa, e o formulário
+> mostra os dois campos. Quem decide se o e-mail é conhecido é o servidor:
+> perguntar antes exigiria uma consulta por tecla digitada.
+>
+> O que nasce pelo Console leva `console:` no id externo. Sem esse prefixo, o
+> mesmo cliente entrando depois pelo widget — com o id real do app — viraria um
+> segundo solicitante sem ninguém notar; com ele, a duplicata fica visível em vez
+> de silenciosa.
 
 **Aceite:** no conjunto de avaliação, a IA responde corretamente ou escala corretamente em pelo menos 90% das dúvidas e recusa 100% dos chamados maliciosos. Em produção, o modo sombra atinge o limite definido antes de ligar o envio automático.
 
@@ -715,7 +730,7 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 - [ ] Aviso aos usuários afetados, confirmação, resolução em lote dos incidentes do problema
 - [ ] Verificação pós-deploy e etapa "verificado"
 - [ ] Rotina de correção nos apps irmãos
-- [ ] Sugestão automática de artigo para a base
+- [x] Sugestão automática de artigo para a base
 - [ ] Ativar o pipeline no Conecta e no Stagent
 
 **Aceite:** o defeito da Fase 5 chega à produção somente após o clique de um aprovador cadastrado. Tentativa de merge em `main` com a credencial da IA é recusada pelo GitHub. A reversão restaura a versão anterior. Os três apps completam um ciclo inteiro.
