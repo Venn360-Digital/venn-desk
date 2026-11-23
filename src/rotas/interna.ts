@@ -8,6 +8,7 @@ import { alterarApp, appsAtivos, cadastrarApp } from '../dados/apps.ts'
 import { escopoDoApp } from '../dados/escopo.ts'
 import { avisarPorEmail } from '../correio/avisar.ts'
 import { publicarNaSala } from '../tempo-real/publicar.ts'
+import { resolverIncidentesDoDefeito } from '../engenharia/em-lote.ts'
 import { formatarNumero } from '../dominio/numero.ts'
 import type { Status } from '../dominio/estados.ts'
 import {
@@ -1790,6 +1791,53 @@ rotasInternas.post('/api/console/app/:app/chamados/:numero/digitando', async (c)
 
     await publicarNaSala(c.env.SALAS, chamado.id, { tipo: 'digitando', lado: 'atendente' })
     return c.body(null, 204)
+})
+
+/**
+ * Resolver em lote os chamados de um defeito (Fase 6).
+ *
+ * Só GESTOR ou ADMIN: isto escreve ao cliente em dezenas de chamados de uma vez,
+ * e o estrago de um texto errado é proporcional.
+ *
+ * O caminho leva `defeitos` no literal antes do id para não disputar com as
+ * rotas de chamado (ADR 0009).
+ */
+rotasInternas.post('/api/console/app/:app/defeitos/:id/resolver-em-lote', async (c) => {
+    const agente = c.get('agente')
+    if (agente.papel === 'AGENTE') {
+        throw new ErroDeDominio('sem_permissao', 'Agente não resolve em lote.', 403)
+    }
+
+    const corpo = z
+        .object({ texto: z.string().trim().min(20).max(3_000) })
+        .safeParse(await c.req.json().catch(() => null))
+    if (!corpo.success) {
+        /**
+         * Mínimo de vinte caracteres, e a mensagem diz por quê.
+         *
+         * Um aviso genérico chega igual para quem relatou coisas diferentes
+         * agrupadas no mesmo defeito, e é o tipo de mensagem que faz o cliente
+         * responder "não era isso" — transformando um lote resolvido em dezenas
+         * de chamados reabertos.
+         */
+        throw new ErroDeDominio(
+            'texto_necessario',
+            'Escreva o que foi corrigido: este texto vai para todos os clientes do defeito.',
+            400
+        )
+    }
+
+    const r = await resolverIncidentesDoDefeito({
+        escopo: c.get('escopo'),
+        problemaId: c.req.param('id'),
+        texto: corpo.data.texto,
+        autor: { ator: `agent:${agente.id}` },
+    })
+
+    if (r === null) throw new ErroDeDominio('defeito_nao_encontrado', 'Defeito não encontrado.', 404)
+
+    console.log('[lote] resolvido:', JSON.stringify({ app: c.get('app').slug, por: agente.id, ...r }))
+    return c.json(r)
 })
 
 /** Quem está logado. É como a SPA do Console sabe se há sessão. */

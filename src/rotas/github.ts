@@ -158,6 +158,36 @@ rotasDoGitHub.post('/github/webhook', comCliente, async (c) => {
      * o webhook manda seria sondar o endereço que alguém escolheu.
      */
     let fumaca: string | null = null
+
+    /**
+     * Deploy de PRODUÇÃO com fumaça passando: a etapa vira VERIFICADO.
+     *
+     * É o fim do caminho da Fase 6, e ele é automático de propósito — a
+     * verificação é objetiva (as portas respondem depois de publicar), e
+     * esperar alguém clicar em "verificado" deixaria todo defeito corrigido
+     * parado numa etapa anterior para sempre.
+     *
+     * O que NÃO é automático: avisar os clientes e resolver os chamados. Isso
+     * continua sendo um clique, porque o texto que vai a dezenas de pessoas
+     * precisa ser escrito por uma.
+     */
+    if (movimento?.para === 'EM_PRODUCAO' && app.urlApp !== null && app.urlApp !== '') {
+        const resultado = await rodarFumaca({ urlBase: app.urlApp, sonda: sondaDeFumacaHttp })
+        fumaca = resumoDaFumaca(resultado)
+
+        await escopo.eventos.registrar({
+            ticketId: chamado.id,
+            ator: 'sistema:fumaca',
+            evento: 'engenharia:fumaca',
+            depois: { ambiente: 'producao', passou: resultado.passou, linhas: resultado.linhas },
+        })
+
+        if (resultado.passou) {
+            const verificou = await escopo.problemas.avancarEtapa(problemId, 'VERIFICADO')
+            if (verificou !== null) fumaca = `${fumaca} · defeito verificado`
+        }
+    }
+
     if (movimento?.para === 'EM_STAGING' && app.urlApp !== null && app.urlApp !== '') {
         const resultado = await rodarFumaca({ urlBase: app.urlApp, sonda: sondaDeFumacaHttp })
         fumaca = resumoDaFumaca(resultado)

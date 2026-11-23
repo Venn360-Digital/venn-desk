@@ -751,11 +751,32 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 
 - [ ] Proteção de `main` restrita ao app do Bridge, Portão 2 com resumo do diff e testes
 - [ ] Promoção por merge feito pelo Bridge e reversão pelo rollback de versão da Cloudflare
-- [ ] Aviso aos usuários afetados, confirmação, resolução em lote dos incidentes do problema
-- [ ] Verificação pós-deploy e etapa "verificado"
+- [x] Aviso aos usuários afetados, confirmação, resolução em lote dos incidentes do problema
+- [x] Verificação pós-deploy e etapa "verificado"
 - [ ] Rotina de correção nos apps irmãos
 - [x] Sugestão automática de artigo para a base
 - [ ] Ativar o pipeline no Conecta e no Stagent
+
+> **Verificação pós-deploy e resolução em lote, 23/11/2026.** As duas pontas do
+> fim do ciclo, e a divisão entre o que é automático e o que não é.
+>
+> **A etapa VERIFICADO é automática.** Deploy de produção com fumaça passando
+> move o defeito para verificado, porque a verificação é objetiva — as portas
+> respondem depois de publicar — e esperar alguém clicar deixaria todo defeito
+> corrigido parado na etapa anterior para sempre.
+>
+> **Avisar os clientes NÃO é automático.** A resolução em lote é um clique de
+> GESTOR com texto obrigatório de vinte caracteres, e a mensagem de erro diz por
+> quê: um aviso genérico chega igual para quem relatou coisas diferentes
+> agrupadas no mesmo defeito, e é o tipo de mensagem que faz o cliente responder
+> "não era isso" — transformando um lote resolvido em dezenas de chamados
+> reabertos.
+>
+> A mensagem vai ANTES da transição em cada chamado, porque resolver é o que
+> dispara o e-mail de encerramento e o pedido de nota: sem ela antes, o cliente
+> receberia "seu chamado foi resolvido" sem saber o que foi feito. Chamado que o
+> cliente reabriu entre a consulta e a escrita é recusado pela máquina de estados
+> e aparece na lista de recusados, sem impedir os outros.
 
 **Aceite:** o defeito da Fase 5 chega à produção somente após o clique de um aprovador cadastrado. Tentativa de merge em `main` com a credencial da IA é recusada pelo GitHub. A reversão restaura a versão anterior. Os três apps completam um ciclo inteiro.
 
