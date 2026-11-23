@@ -867,12 +867,12 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 
 **Objetivo:** incluir um app novo em menos de um dia e operar com custo previsível.
 
-- [ ] Roteiro e script de inclusão de app: cadastro, chaves, canais, instruções, proteções, instalação do widget
-- [ ] Aviso de incidente geral dentro do widget e histórico de incidentes na página de status
+- [x] Roteiro e script de inclusão de app: cadastro, chaves, canais, instruções, proteções, instalação do widget
+- [x] Aviso de incidente geral dentro do widget e histórico de incidentes na página de status
 - [x] Painel de custo de IA por app e por chamado, com teto e alerta
 - [ ] Teste de carga e revisão de segurança
 - [x] Rotinas de retenção e exclusão de dados
-- [ ] Manual de operação: o que fazer quando a IA erra, quando o Slack cai, quando o GitHub cai
+- [x] Manual de operação: o que fazer quando a IA erra, quando o Slack cai, quando o GitHub cai
 
 > **Estado em 21/11/2026 — a contabilidade de IA existe, por causa de um dia.**
 > Em 20/11/2026 as rodadas da bateria somaram US$ 229 e o relato ao fim do dia
@@ -920,6 +920,32 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 > **Não implementado de propósito:** encerrar chamado com mais de cinco anos. O
 > produto tem meses, e escrever hoje a regra que roda em 2031 seria escrever sem
 > poder testá-la contra nada real.
+
+> **Inclusão de app, aviso de incidente e manual, 23/11/2026.**
+>
+> `scripts/incluir-app.mjs` cadastra o app e imprime os SEIS passos que faltam,
+> cada um de um painel diferente. Três coisas ele não faz de propósito: não gera
+> o par de chaves (a privada mora no app, e gerá-la aqui a faria passar por esta
+> máquina), não liga o atendimento automático (todo app nasce em modo sombra) e
+> não cria canal no Slack nem webhook no GitHub. Ele recusa JWK privada pelo
+> campo `d` — uma chave privada no nosso banco desfaria o desenho inteiro.
+>
+> **O aviso de incidente** é endpoint próprio e leve porque o widget o consulta
+> ao ABRIR, antes de o cliente escrever: é aí que a faixa evita o chamado.
+> Pendurá-lo na listagem faria o aviso aparecer só para quem já tem chamado,
+> exatamente quem menos precisa. O texto é nosso e genérico — o detalhe do
+> episódio diz "HTTP 502", que é verdade e não é informação para quem quer marcar
+> uma consulta. E a frase "não é preciso abrir chamado" é o que transforma trinta
+> chamados do mesmo incidente em zero.
+>
+> Estado `desconhecido` NÃO mostra faixa: ele significa "não verificamos há tempo
+> demais", que é problema nosso. A página de status ganhou a duração de cada
+> episódio, porque quem a lê quer saber quanto tempo ficou fora e não subtrair
+> dois carimbos ISO de cabeça.
+>
+> **O manual** (`docs/manual-de-operacao.md`) começa por SINTOMA, porque é o que
+> se tem às duas da manhã, e a primeira linha dele é a regra que resolve metade
+> das dúvidas: o Console é a verdade, e Slack, e-mail e status são superfícies.
 
 **Aceite:** um quarto app fictício é incluído seguindo só o roteiro. Com o Slack indisponível, os chamados continuam sendo registrados e atendidos pelo Console.
 

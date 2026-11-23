@@ -10,6 +10,7 @@ import type { Ambiente } from '../lib/ambiente.ts'
 import { avisarPorEmail } from '../correio/avisar.ts'
 import { comApp, comCliente } from '../auth/middleware.ts'
 import { estadoPublico } from '../dominio/transicao-publica.ts'
+import { duracaoEmMinutos } from '../dominio/aviso-de-incidente.ts'
 
 /**
  * A API pública da página de status (seção 7, itens 1 e 2).
@@ -139,6 +140,13 @@ rotasDeStatus.get('/api/status/:app', async (c) => {
                 iniciadoEm: e.iniciadoEm,
                 terminadoEm: e.terminadoEm,
                 detalhe: e.detalhe,
+                /**
+                 * A duração vem calculada, e não é conveniência: quem lê uma
+                 * página de status quer saber "quanto tempo ficou fora", e
+                 * fazer essa subtração de cabeça entre dois carimbos ISO é o
+                 * tipo de trabalho que a página existe para poupar.
+                 */
+                duracaoMin: duracaoEmMinutos(e.iniciadoEm, e.terminadoEm),
             })),
         },
         200,

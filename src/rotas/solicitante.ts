@@ -20,6 +20,8 @@ import { avisarPorEmail } from '../correio/avisar.ts'
 import { avisarNoSlack, espelharNoSlack } from '../slack/espelhar.ts'
 import { duplicadosProvaveis, tipoSugerido, type SinaisDoContexto } from '../dominio/triagem.ts'
 import { etapaParaOCliente, type Etapa } from '../dominio/engenharia.ts'
+import { avisoDeIncidente } from '../dominio/aviso-de-incidente.ts'
+import { estadoPublico } from '../dominio/transicao-publica.ts'
 import { avisoDeDuplicata } from '../dominio/duplicata-aviso.ts'
 import { publicarNaSala } from '../tempo-real/publicar.ts'
 import { comApp, comCliente, comTokenDoApp } from '../auth/middleware.ts'
@@ -277,6 +279,27 @@ rotasDoSolicitante.post('/api/app/:app/chamados', async (c) => {
     }
 
     return c.json({ chamado: paraOWidget(chamado, c.get('app').prefixo) }, 201)
+})
+
+/**
+ * O aviso de incidente para o widget (Fase 8).
+ *
+ * Endpoint próprio e leve porque o widget o consulta ao ABRIR, antes de o
+ * cliente escrever qualquer coisa: é aí que a faixa evita o chamado. Pendurá-lo
+ * na listagem de chamados faria o aviso aparecer só para quem já tem chamado —
+ * exatamente quem menos precisa dele.
+ *
+ * O texto é NOSSO e genérico. O detalhe do episódio diz "HTTP 502", que é
+ * verdade e não é informação para quem só quer marcar uma consulta.
+ */
+rotasDoSolicitante.get('/api/app/:app/aviso', async (c) => {
+    const estado = await c.get('escopo').saude.estado()
+    const aviso = avisoDeIncidente({
+        estado: estadoPublico(estado, new Date()),
+        desdeEm: estado?.desdeEm ?? null,
+    })
+
+    return c.json({ aviso })
 })
 
 rotasDoSolicitante.get('/api/app/:app/chamados', async (c) => {
