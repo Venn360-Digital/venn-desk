@@ -347,6 +347,8 @@ export interface ChamadoCompleto {
         conta: { id: string; nome: string } | null
     } | null
     sla: ResumoDeSla | null
+    /** O chamado em que este foi mesclado, quando houver. */
+    mescladoEm: { numero: string } | null
     mensagens: Mensagem[]
     eventos: Evento[]
     anexos: { chave: string; nome: string; tipo: string; tamanho: number }[]

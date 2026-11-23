@@ -360,8 +360,22 @@ rotasDoSolicitante.get('/api/app/:app/chamados/:numero', async (c) => {
      */
     const problema = chamado.problemId === null ? null : await escopo.problemas.porId(chamado.problemId)
 
+    /**
+     * O chamado foi mesclado? O widget precisa levar a pessoa ao outro.
+     *
+     * Sem isto ela veria um chamado fechado com uma mensagem citando um número
+     * que ela não consegue abrir dali — e a mesclagem, que existe para juntar a
+     * conversa, teria dividido a navegação.
+     */
+    const mescladoEm =
+        chamado.mescladoEmId === null ? null : await escopo.chamados.porId(chamado.mescladoEmId)
+
     return c.json({
         chamado: paraOWidget(chamado, c.get('app').prefixo),
+        mescladoEm:
+            mescladoEm === null
+                ? null
+                : { numero: formatarNumero(c.get('app').prefixo, mescladoEm.numero) },
         correcao:
             problema === null
                 ? null

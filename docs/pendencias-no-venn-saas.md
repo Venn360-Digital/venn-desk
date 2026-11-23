@@ -130,6 +130,16 @@ diálogo na linha 449 também é fixa: "Produto ou serviço do catálogo".
 Isto não impede o Desk de documentar a tela (ele copia o que está lá, e é o que
 deve fazer), mas o artigo herda a ambiguidade da interface.
 
+## 11. O widget não mostra os "chamados da empresa"
+
+A API está pronta desde a Fase 2: `GET /api/app/:app/chamados?escopo=empresa`
+devolve os chamados de toda a empresa, e recusa com 403 quem não é
+administrador da conta (a permissão vem do JWT do app, em
+`veOsChamadosDaEmpresa`).
+
+Falta o widget oferecer a alternância "meus chamados / da empresa" para quem
+tem a permissão. É o último item da Fase 7 que não depende de código no Desk.
+
 ## Era meu, e está corrigido
 
 Na primeira versão desta lista eu atribuí a mim o artigo do Odontobox360 que diz

@@ -322,6 +322,19 @@ model Ticket {
     fechadoEm      DateTime? @map("fechado_em")
     excluidoEm     DateTime? @map("excluido_em")
 
+    /**
+     * O chamado em que este foi mesclado (Fase 7).
+     *
+     * Nulo no caso normal. Preenchido, este chamado está encerrado como
+     * duplicata e a conversa seguiu no outro — ele continua existindo, com as
+     * mensagens que teve, porque quem o abriu precisa encontrá-lo e ser levado
+     * ao lugar certo.
+     *
+     * Sem relação declarada: a FK tornaria possível declarar um ciclo no banco,
+     * e quem impede cadeia e autorreferência é `src/dominio/mesclar.ts`.
+     */
+    mescladoEmId String? @map("mesclado_em_id")
+
     messages    TicketMessage[]
     attachments Attachment[]
     events      TicketEvent[]
@@ -335,6 +348,7 @@ model Ticket {
     @@index([appId, status])
     @@index([appId, tenantId, status])
     @@index([appId, requesterId])
+    @@index([appId, mescladoEmId])
     @@map("tickets")
 }
 

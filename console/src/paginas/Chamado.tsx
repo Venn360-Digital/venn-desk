@@ -230,6 +230,13 @@ export function Chamado({ papel }: { papel: 'AGENTE' | 'GESTOR' | 'ADMIN' }) {
                     </div>
                 </div>
 
+                <Mesclar
+                    app={app ?? ''}
+                    numero={chamado.numero}
+                    mescladoEm={data.mescladoEm}
+                    aoMesclar={() => void fila.invalidateQueries({ queryKey: chave })}
+                />
+
                 {papel !== 'AGENTE' ? (
                     <div>
                         <h2 className="mb-2 text-xs font-medium text-tinta-fraca">
@@ -420,5 +427,83 @@ function RascunhoPendente({
                 ) : null}
             </div>
         </li>
+    )
+}
+
+/**
+ * Mesclar este chamado em outro (Fase 7).
+ *
+ * Pede o NÚMERO do chamado que continua, que é o que o atendente tem na tela. A
+ * recusa vem do servidor com a explicação do domínio — a mesma frase no Console,
+ * no Slack e no log —, porque as regras de quem pode ser mesclado em quem não
+ * cabem num campo de texto.
+ */
+function Mesclar({
+    app,
+    numero,
+    mescladoEm,
+    aoMesclar,
+}: {
+    app: string
+    numero: string
+    mescladoEm: { numero: string } | null
+    aoMesclar: () => void
+}) {
+    const [destino, setDestino] = useState('')
+    const [erro, setErro] = useState<string | null>(null)
+
+    const mesclar = useMutation({
+        mutationFn: () =>
+            api(`/app/${app}/chamados/${numero.split('-').pop() ?? ''}/mesclar`, {
+                metodo: 'POST',
+                corpo: { destino: Number(destino) },
+            }),
+        onSuccess: () => {
+            setDestino('')
+            setErro(null)
+            aoMesclar()
+        },
+        onError: (e: unknown) => setErro((e as Error).message),
+    })
+
+    /// Já mesclado: o campo desaparece e sobra o caminho para o outro chamado.
+    /// Oferecer "mesclar de novo" num chamado que já é duplicata convidaria à
+    /// cadeia que o servidor recusa.
+    if (mescladoEm !== null) {
+        return (
+            <div className="rounded-sm border border-borda bg-superficie p-3 text-xs text-tinta-fraca">
+                Mesclado em <strong className="text-tinta">{mescladoEm.numero}</strong>. A conversa
+                seguiu lá.
+            </div>
+        )
+    }
+
+    return (
+        <div>
+            <h2 className="mb-2 text-xs font-medium text-tinta-fraca">Mesclar em outro chamado</h2>
+            <form
+                className="flex gap-2"
+                onSubmit={(e) => {
+                    e.preventDefault()
+                    if (destino.trim() !== '') mesclar.mutate()
+                }}
+            >
+                <input
+                    value={destino}
+                    onChange={(e) => setDestino(e.target.value.replace(/\D/g, ''))}
+                    placeholder="número"
+                    inputMode="numeric"
+                    className="w-24 rounded-sm border border-borda bg-fundo px-2 py-1 text-xs text-tinta"
+                />
+                <Botao tipo="submit" variante="leve" desabilitado={destino.trim() === '' || mesclar.isPending}>
+                    Mesclar
+                </Botao>
+            </form>
+            {erro !== null ? (
+                <div className="mt-2">
+                    <Aviso>{erro}</Aviso>
+                </div>
+            ) : null}
+        </div>
     )
 }

@@ -727,7 +727,7 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 - [x] SLA por app e prioridade, calendário comercial, pausas, alertas de risco e de violação
 - [x] Gatilhos e automações, incluindo fechamento automático e lembrete ao usuário
 - [ ] Macros, visões salvas, tags, campos personalizados por app
-- [ ] Mesclar chamados, chamado de acompanhamento
+- [x] Mesclar chamados, chamado de acompanhamento
 - [ ] Relatórios e painel (seção 12)
 - [ ] Visão "chamados da empresa" para o administrador do tenant
 - [x] Resumo diário em `#desk-alertas`
@@ -781,6 +781,27 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 > sem movimento não gera resumo, porque "0 chamados, US$ 0,00" todas as manhãs é
 > a maneira mais eficiente de ninguém ler o resumo do dia em que houve algo. O
 > custo aparece mesmo zerado: é o número que ninguém olha até doer.
+
+> **Mesclar chamados, 22/11/2026.** A detecção de duplicata já avisava; faltava
+> a ação. Mesclar encerra a origem APONTANDO para o destino, e nada é movido:
+> mover mensagens pareceria mais limpo e seria pior, porque o histórico do
+> chamado de uma pessoa apareceria dentro do chamado de outra e a trilha
+> deixaria de dizer quem falou onde.
+>
+> Três recusas que não são detalhe. **Entre empresas diferentes, não mescla** —
+> apontar o chamado de uma para o da outra mandaria a pessoa a um lugar que ela
+> não pode abrir; quando o defeito é o mesmo, o que agrupa é o PROBLEMA.
+> **Destino que já é duplicata, não mescla**, senão nasceria cadeia e quem abre o
+> primeiro precisaria de dois saltos para achar a conversa. **Destino fechado,
+> não mescla**, porque ninguém responderia nele.
+>
+> O widget e o Console levam a pessoa ao outro chamado: um chamado fechado
+> citando um número sem caminho até ele teria dividido a navegação justamente
+> onde a mesclagem existe para juntar.
+>
+> A visão "chamados da empresa" tem a API pronta (`?escopo=empresa`, com a
+> permissão conferida), mas quem a mostra é o widget, que mora no venn-saas —
+> está na lista de pendências de lá.
 
 **Aceite:** uma política de SLA violada gera alerta e aparece no relatório. Uma automação criada no Console executa sem código novo. O painel mostra as métricas da seção 12 por app.
 

@@ -49,6 +49,7 @@ import { EXPIRA_MS, pedirSincronizacao } from '../conhecimento/sincronizar.ts'
 import { fontesDesatualizadas } from '../conhecimento/sugerir.ts'
 import { levantarDivergencias } from '../conhecimento/comparar-apps.ts'
 import { gastoDesde } from '../dados/gastos.ts'
+import { explicarRecusa } from '../dominio/mesclar.ts'
 
 /**
  * A API interna — o que o Console consome, e o que a ponte do Slack vai chamar
@@ -558,6 +559,10 @@ rotasInternas.get('/api/console/app/:app/chamados/:numero', async (c) => {
         }
     )
 
+    const mescladoEm =
+        chamado.mescladoEmId === null ? null : await escopo.chamados.porId(chamado.mescladoEmId)
+
+
     return c.json({
         chamado: {
             ...chamado,
@@ -565,6 +570,14 @@ rotasInternas.get('/api/console/app/:app/chamados/:numero', async (c) => {
         },
         app: { slug: app.slug, nome: app.nome, prefixo: app.prefixo },
         empresa,
+        /**
+         * O chamado em que este foi mesclado, pelo número que a pessoa lê.
+         *
+         * Sem isto o Console mostraria um chamado fechado com uma mensagem
+         * citando outro, e sem caminho até ele.
+         */
+        mescladoEm:
+            mescladoEm === null ? null : { numero: formatarNumero(c.get('app').prefixo, mescladoEm.numero) },
         sla: resumoDoChamado(
             relogios.map((linha) => ({
                 meta: linha.meta as Meta,
@@ -1471,6 +1484,45 @@ rotasInternas.get('/api/console/app/:app/painel', async (c) => {
          */
         csatDeSempre: resumirCsat(notas),
     })
+})
+
+/**
+ * Mesclar dois chamados (Fase 7).
+ *
+ * O destino vem pelo NÚMERO, não pelo id: é o que o atendente tem na tela e o
+ * que ele conseguiria digitar sem copiar e colar de outro lugar. O id do destino
+ * é resolvido aqui dentro, no escopo do app, então um número de outro produto
+ * simplesmente não existe.
+ */
+rotasInternas.post('/api/console/app/:app/chamados/:numero/mesclar', async (c) => {
+    const agente = c.get('agente')
+    const escopo = c.get('escopo')
+
+    const corpo = z
+        .object({ destino: z.coerce.number().int().positive() })
+        .safeParse(await c.req.json().catch(() => null))
+    if (!corpo.success) {
+        throw new ErroDeDominio('destino_invalido', 'Informe o número do chamado que continua.', 400)
+    }
+
+    const numero = Number(c.req.param('numero'))
+    const [origem, destino] = await Promise.all([
+        escopo.chamados.porNumero(numero),
+        escopo.chamados.porNumero(corpo.data.destino),
+    ])
+
+    if (origem === null || destino === null) {
+        throw new ErroDeDominio('chamado_nao_encontrado', 'Chamado não encontrado neste app.', 404)
+    }
+
+    const r = await escopo.chamados.mesclar(origem.id, destino.id, { ator: `agent:${agente.id}` })
+    if (!r.ok) {
+        /// A explicação é a do domínio, não uma frase da rota: a mesma recusa
+        /// precisa dizer a mesma coisa no Console, no Slack e no log.
+        throw new ErroDeDominio('mesclagem_recusada', explicarRecusa(r.motivo), 409)
+    }
+
+    return c.json({ mesclado: numero, em: corpo.data.destino })
 })
 
 /** Quem está logado. É como a SPA do Console sabe se há sessão. */

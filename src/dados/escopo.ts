@@ -19,6 +19,8 @@ import type { ChamadoMedido } from '../dominio/relatorio.ts'
 import type { ConsultaRegistrada } from '../dominio/consultas.ts'
 import { avanca, type Etapa as EtapaDeEngenharia } from '../dominio/engenharia.ts'
 import type { ChamadoParado } from '../dominio/automacoes.ts'
+import { podeMesclar, textoDaMesclagem, type MotivoDaRecusa as MotivoDaRecusaDeMesclagem } from '../dominio/mesclar.ts'
+import { formatarNumero } from '../dominio/numero.ts'
 import { calendarioDaPolitica, vencimentoComercial, type Calendario } from '../dominio/calendario.ts'
 import {
     aoMudarStatus,
@@ -237,6 +239,18 @@ export interface EscopoDoApp {
         ): Promise<Ticket>
         /** Liga o chamado ao defeito que o explica (Fase 5). */
         vincularProblema(id: string, problemId: string, autor: Autor): Promise<Ticket>
+        /**
+         * Encerra `origem` apontando para `destino` (Fase 7).
+         *
+         * Nada é movido: a origem continua com as mensagens que teve e passa a
+         * apontar o chamado onde a conversa seguiu. A regra de quem pode ser
+         * mesclado em quem mora em `src/dominio/mesclar.ts`.
+         */
+        mesclar(
+            origemId: string,
+            destinoId: string,
+            autor: Autor
+        ): Promise<{ ok: true } | { ok: false; motivo: MotivoDaRecusaDeMesclagem }>
         /**
          * Chamados encerrados que podem render artigo, com mensagens e CSAT no
          * mesmo ida-e-volta.
@@ -993,6 +1007,80 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 })
 
                 return reler(id, count)
+            },
+
+            async mesclar(origemId, destinoId, autor) {
+                const [origem, destino] = await Promise.all([
+                    conexao.ticket.findFirst({ where: { id: origemId, appId } }),
+                    conexao.ticket.findFirst({ where: { id: destinoId, appId } }),
+                ])
+
+                /// Fora do app, não existe: a resposta é a mesma de um id
+                /// inventado, e de propósito — dizer "existe, mas é de outro
+                /// produto" contaria algo sobre o vizinho.
+                if (origem === null || destino === null) {
+                    throw new ErroDeDominio('chamado_nao_encontrado', 'Chamado não encontrado.', 404)
+                }
+
+                const veredito = podeMesclar(origem, destino)
+                if (!veredito.ok) return veredito
+
+                /**
+                 * A ordem importa: aponta, avisa, fecha.
+                 *
+                 * O aviso público tem de existir ANTES do fechamento, porque
+                 * `aplicarEvento('fechar')` é o que dispara os efeitos de
+                 * encerramento (e-mail, relógios). Avisar depois mandaria o
+                 * e-mail de "chamado fechado" sem a mensagem que explica por
+                 * quê.
+                 */
+                await conexao.ticket.updateMany({
+                    where: { id: origemId, appId },
+                    data: { mescladoEmId: destinoId },
+                })
+
+                const esteEscopo = escopoDoApp(conexao, appId)
+
+                /// O prefixo vem do app porque o número tem de ser o que a
+                /// pessoa lê na tela (`ODB-1040`): um "1040" solto não diz em
+                /// qual produto procurar.
+                const doApp = await conexao.app.findFirst({ where: { id: appId }, select: { prefixo: true } })
+
+                await esteEscopo.mensagens.adicionar(
+                    {
+                        ticketId: origemId,
+                        autor: 'SISTEMA',
+                        corpo: textoDaMesclagem(formatarNumero(doApp?.prefixo ?? '', destino.numero)),
+                        visibilidade: 'PUBLICA',
+                        origem: 'CONSOLE',
+                    },
+                    autor
+                )
+
+                await esteEscopo.eventos.registrar({
+                    ticketId: origemId,
+                    ator: autor.ator,
+                    evento: 'mesclado:em',
+                    depois: { destinoId, numeroDoDestino: destino.numero },
+                })
+
+                await esteEscopo.eventos.registrar({
+                    ticketId: destinoId,
+                    ator: autor.ator,
+                    evento: 'mesclado:recebeu',
+                    depois: { origemId, numeroDaOrigem: origem.numero },
+                })
+
+                /// Fechar pode ser recusado pela máquina de estados (já
+                /// fechado), e isso não desfaz a mesclagem: o apontamento é o
+                /// que importa, e o status apenas acompanha.
+                try {
+                    await esteEscopo.chamados.aplicarEvento(origemId, 'fechar', autor)
+                } catch {
+                    /// Já estava fechado. Nada a fazer.
+                }
+
+                return { ok: true }
             },
 
             async candidatosASugestao(desde, limite) {
