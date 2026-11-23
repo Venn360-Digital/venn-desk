@@ -153,8 +153,14 @@ O endpoint está no ar. Em `github.com/Venn360-Digital/venn-saas/settings/hooks`
 - **Payload URL**: `https://desk.venn360.com/github/webhook`
 - **Content type**: `application/json`
 - **Secret**: gere um valor aleatório e guarde; ele vai para o Worker abaixo
-- **Eventos**: `Issues`, `Pull requests`, `Check suites`, `Workflow runs`,
-  `Deployment statuses`
+- **Eventos**: `Issues`, `Pull requests`, `Check runs`, `Check suites`,
+  `Workflow runs`, `Deployment statuses`
+
+`Check runs` é o que importa mais, e não é óbvio: o **Workers Builds não emite
+`deployment_status`**. Ele reporta ao GitHub por check run e por comentário de
+PR, e como é ele que publica os apps, é o check run dele que anuncia o deploy. O
+Desk reconhece o app `cloudflare-workers-and-pages` e usa a branch para saber o
+ambiente: `main` é produção, qualquer outra é homologação.
 
 Depois, nos dois ambientes:
 

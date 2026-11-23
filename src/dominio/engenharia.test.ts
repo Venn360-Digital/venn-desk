@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { avanca, chamadoNaReferencia, etapaParaOCliente, lerEvento } from './engenharia.ts'
+import { APP_DO_WORKERS_BUILDS, avanca, chamadoNaReferencia, etapaParaOCliente, lerEvento } from './engenharia.ts'
 
 describe('avanca', () => {
     it('só adiante, porque o GitHub entrega fora de ordem', () => {
@@ -43,6 +43,61 @@ describe('lerEvento', () => {
         /// uma pessoa, não o webhook.
         expect(lerEvento({ tipo: 'pull_request', acao: 'closed', mesclado: false }).etapa).toBe(null)
         expect(lerEvento({ tipo: 'pull_request', acao: 'closed', mesclado: true }).etapa).toBe('EM_STAGING')
+    })
+
+    it('check run do Workers Builds que passou É o deploy', () => {
+        /**
+         * Defeito encontrado em 23/11/2026, por uma pergunta sobre centralizar
+         * na Cloudflare: o Workers Builds NÃO emite `deployment_status`. Ele
+         * reporta ao GitHub por check run, e como é ele que publica os apps, o
+         * Desk esperava um evento que nunca chega — a etapa ficaria parada em
+         * "PR aberto" para sempre.
+         *
+         * A branch diz o ambiente: `main` publica produção, qualquer outra cria
+         * uma Preview, que é a homologação daquele commit.
+         */
+        const producao = lerEvento({
+            tipo: 'check_run',
+            acao: 'completed',
+            conclusao: 'success',
+            appDaVerificacao: APP_DO_WORKERS_BUILDS,
+            branch: 'main',
+        })
+        expect(producao).toMatchObject({ etapa: 'EM_PRODUCAO', link: 'DEPLOY' })
+
+        const homologacao = lerEvento({
+            tipo: 'check_run',
+            acao: 'completed',
+            conclusao: 'success',
+            appDaVerificacao: APP_DO_WORKERS_BUILDS,
+            branch: 'desk/ODB-1042',
+        })
+        expect(homologacao).toMatchObject({ etapa: 'EM_STAGING', link: 'DEPLOY' })
+    })
+
+    it('verificação de OUTRO app não é deploy', () => {
+        /// Um lint que passa não publicou nada. Sem distinguir o app, qualquer
+        /// check verde moveria o chamado para "publicado".
+        const lint = lerEvento({
+            tipo: 'check_run',
+            acao: 'completed',
+            conclusao: 'success',
+            appDaVerificacao: 'algum-linter',
+            branch: 'main',
+        })
+        expect(lint).toMatchObject({ etapa: null, link: 'RUN' })
+    })
+
+    it('check run do Workers Builds que FALHOU não publica nada', () => {
+        const falhou = lerEvento({
+            tipo: 'check_run',
+            acao: 'completed',
+            conclusao: 'failure',
+            appDaVerificacao: APP_DO_WORKERS_BUILDS,
+            branch: 'main',
+        })
+        expect(falhou.etapa).toBe(null)
+        expect(falhou.resumo).toContain('falhou')
     })
 
     it('verificação que FALHOU é informação, não passo adiante', () => {

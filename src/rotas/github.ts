@@ -251,8 +251,27 @@ function extrairResultado(tipo: string, corpo: Record<string, unknown>): { concl
     if (tipo === 'check_suite' || tipo === 'check_run' || tipo === 'workflow_run') {
         const alvo = (corpo['check_suite'] ?? corpo['check_run'] ?? corpo['workflow_run'] ?? {}) as {
             conclusion?: unknown
+            head_branch?: unknown
+            app?: { slug?: unknown }
+            check_suite?: { head_branch?: unknown }
         }
-        return typeof alvo.conclusion === 'string' ? { conclusao: alvo.conclusion } : {}
+
+        /**
+         * O app e a branch decidem se este check run é um DEPLOY.
+         *
+         * `check_run` guarda a branch dentro de `check_suite`; `check_suite` e
+         * `workflow_run` a têm na raiz. O app vem do próprio evento, e é o que
+         * distingue o Workers Builds de qualquer outra verificação do
+         * repositório — um lint que passa não publicou nada.
+         */
+        const branch = alvo.head_branch ?? alvo.check_suite?.head_branch
+        const app = ((corpo['check_run'] ?? corpo['check_suite'] ?? {}) as { app?: { slug?: unknown } }).app?.slug
+
+        return {
+            ...(typeof alvo.conclusion === 'string' ? { conclusao: alvo.conclusion } : {}),
+            ...(typeof branch === 'string' ? { branch } : {}),
+            ...(typeof app === 'string' ? { appDaVerificacao: app } : {}),
+        }
     }
 
     if (tipo === 'deployment_status') {

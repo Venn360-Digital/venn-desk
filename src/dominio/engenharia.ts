@@ -75,7 +75,33 @@ export interface EventoDoGitHub {
     ambiente?: string | undefined
     /** `true` quando o PR foi mesclado, não apenas fechado. */
     mesclado?: boolean | undefined
+    /**
+     * O app do GitHub que publicou a verificação, e a branch dela.
+     *
+     * Os dois existem por um defeito encontrado em 23/11/2026: o Workers Builds
+     * NÃO emite `deployment_status`. Ele reporta ao GitHub por CHECK RUN e por
+     * comentário de PR (documentado em
+     * `workers/ci-cd/builds/git-integration/github-integration`). Como o deploy
+     * dos apps é feito por ele, a etapa nunca chegaria a "em homologação" nem a
+     * "publicado" — o Desk esperava um evento que nunca vem.
+     *
+     * Com o app e a branch, um check run de sucesso do Workers Builds É o
+     * anúncio do deploy, que é o que ele de fato é.
+     */
+    appDaVerificacao?: string | undefined
+    branch?: string | undefined
 }
+
+/** O app do GitHub que o Workers Builds usa para reportar. */
+export const APP_DO_WORKERS_BUILDS = 'cloudflare-workers-and-pages'
+
+/**
+ * A branch de produção. Qualquer outra que construa é homologação.
+ *
+ * `main` porque é o que os três apps usam e o que a integração com Artifacts
+ * exige; se um app adotar outro nome, isto vira cadastro.
+ */
+export const BRANCH_DE_PRODUCAO = 'main'
 
 export type TipoDeLink = 'ISSUE' | 'PR' | 'RUN' | 'DEPLOY'
 
@@ -121,9 +147,30 @@ export function lerEvento(e: EventoDoGitHub): LeituraDoEvento {
 
     if (e.tipo === 'check_suite' || e.tipo === 'check_run' || e.tipo === 'workflow_run') {
         if (e.acao !== 'completed') return { etapa: null, link: null, resumo: 'verificação em andamento' }
-        return e.conclusao === 'success'
-            ? { etapa: null, link: 'RUN', resumo: 'verificações passaram' }
-            : { etapa: null, link: 'RUN', resumo: `verificação falhou (${e.conclusao ?? 'sem conclusão'})` }
+
+        if (e.conclusao !== 'success') {
+            return { etapa: null, link: 'RUN', resumo: `verificação falhou (${e.conclusao ?? 'sem conclusão'})` }
+        }
+
+        /**
+         * Check run do WORKERS BUILDS que passou É o deploy.
+         *
+         * O Workers Builds constrói e publica no mesmo passo: quando ele
+         * reporta sucesso, o Worker já está no ar. Tratar isso como "só
+         * verificação" deixaria a etapa parada para sempre, porque o evento de
+         * deploy que o Desk esperava (`deployment_status`) não é emitido por
+         * ele.
+         *
+         * A branch diz o ambiente: `main` publica produção, qualquer outra cria
+         * ou atualiza uma Preview, que é a homologação daquele commit.
+         */
+        if (e.appDaVerificacao === APP_DO_WORKERS_BUILDS) {
+            return e.branch === BRANCH_DE_PRODUCAO
+                ? { etapa: 'EM_PRODUCAO', link: 'DEPLOY', resumo: 'publicado em produção pelo Workers Builds' }
+                : { etapa: 'EM_STAGING', link: 'DEPLOY', resumo: 'publicado em homologação pelo Workers Builds' }
+        }
+
+        return { etapa: null, link: 'RUN', resumo: 'verificações passaram' }
     }
 
     if (e.tipo === 'deployment_status') {
