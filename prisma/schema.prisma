@@ -332,6 +332,17 @@ model Ticket {
     excluidoEm     DateTime? @map("excluido_em")
 
     /**
+     * Até quando cada lado leu (Fase 3, tempo real).
+     *
+     * Duas colunas e não uma tabela de leituras por mensagem: a pergunta da tela
+     * é "o outro lado já viu o que eu escrevi?", e ela se responde comparando
+     * este carimbo com a data da mensagem. Uma linha por mensagem por pessoa
+     * custaria uma escrita a cada rolagem para responder a mesma coisa.
+     */
+    lidoPeloSolicitanteEm DateTime? @map("lido_pelo_solicitante_em")
+    lidoPeloAtendenteEm   DateTime? @map("lido_pelo_atendente_em")
+
+    /**
      * O chamado em que este foi mesclado (Fase 7).
      *
      * Nulo no caso normal. Preenchido, este chamado está encerrado como

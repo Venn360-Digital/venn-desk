@@ -22,10 +22,20 @@ interface Assinante {
 }
 
 export interface AvisoDaSala {
-    tipo: 'mensagem' | 'status' | 'anexo'
+    tipo: 'mensagem' | 'status' | 'anexo' | 'digitando' | 'leitura'
     /** Carga pequena de propósito: um empurrão, não a mensagem inteira. */
     resumo?: string
     status?: string
+    /**
+     * Quem gerou o aviso, nos tipos em que isso decide o que mostrar.
+     *
+     * `digitando` do solicitante aparece para o atendente e não para ele mesmo;
+     * `leitura` é o contrário. Sem o lado, cada ponta mostraria o próprio
+     * evento de volta — "você está digitando" na sua própria tela.
+     */
+    lado?: 'solicitante' | 'atendente'
+    /** `leitura`: até quando aquele lado leu, em ISO. */
+    em?: string
 }
 
 const CODIFICADOR = new TextEncoder()

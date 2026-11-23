@@ -240,6 +240,19 @@ export interface EscopoDoApp {
             },
             autor: Autor
         ): Promise<Ticket>
+        /**
+         * Marca que um dos lados leu o chamado (Fase 3, tempo real).
+         *
+         * Só ESCREVE quando há o que marcar: se a última mensagem do outro lado
+         * é mais antiga que o carimbo, nada mudou e a escrita seria uma por
+         * abertura de tela. Devolve o instante quando gravou, para o aviso em
+         * tempo real sair com a mesma data que ficou no banco.
+         */
+        marcarLeitura(
+            id: string,
+            lado: 'solicitante' | 'atendente',
+            agora: Date
+        ): Promise<Date | null>
         /** Liga o chamado ao defeito que o explica (Fase 5). */
         vincularProblema(id: string, problemId: string, autor: Autor): Promise<Ticket>
         /**
@@ -1062,6 +1075,45 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 }
 
                 return reler(id, count)
+            },
+
+            async marcarLeitura(id, lado, agora) {
+                const chamado = await conexao.ticket.findFirst({
+                    where: { id, appId },
+                    select: { lidoPeloSolicitanteEm: true, lidoPeloAtendenteEm: true },
+                })
+                if (chamado === null) return null
+
+                const carimbo = lado === 'solicitante' ? chamado.lidoPeloSolicitanteEm : chamado.lidoPeloAtendenteEm
+
+                /**
+                 * A mensagem que interessa é a do OUTRO lado.
+                 *
+                 * A própria mensagem de alguém não precisa ser marcada como
+                 * lida por ele; e `autor` é o que distingue os dois — SISTEMA
+                 * conta como "outro lado" para o solicitante, porque o lembrete
+                 * automático é algo que ele precisa ver.
+                 */
+                const deQuem: ('USUARIO' | 'IA' | 'HUMANO' | 'SISTEMA')[] =
+                    lado === 'solicitante' ? ['IA', 'HUMANO', 'SISTEMA'] : ['USUARIO']
+
+                const ultima = await conexao.ticketMessage.findFirst({
+                    where: { appId, ticketId: id, rascunho: false, descartadoEm: null, autor: { in: deQuem } },
+                    orderBy: { criadoEm: 'desc' },
+                    select: { criadoEm: true },
+                })
+
+                /// Nada novo do outro lado: não escreve. Sem isto, cada abertura
+                /// de tela seria uma escrita no banco.
+                if (ultima === null) return null
+                if (carimbo !== null && carimbo >= ultima.criadoEm) return null
+
+                await conexao.ticket.updateMany({
+                    where: { id, appId },
+                    data: lado === 'solicitante' ? { lidoPeloSolicitanteEm: agora } : { lidoPeloAtendenteEm: agora },
+                })
+
+                return agora
             },
 
             async vincularProblema(id, problemId, autor) {

@@ -309,6 +309,24 @@ rotasDoSolicitante.post('/api/app/:app/chamados', async (c) => {
  * O texto é NOSSO e genérico. O detalhe do episódio diz "HTTP 502", que é
  * verdade e não é informação para quem só quer marcar uma consulta.
  */
+/**
+ * "O cliente está digitando" (Fase 3, tempo real).
+ *
+ * Empurra e não guarda: digitar é um estado de segundos, e persistir isso
+ * deixaria no banco um "digitando" eterno de quem fechou a aba. Quem decide
+ * quando o indicador apaga é quem o mostra.
+ *
+ * Tem limite próprio: o widget avisaria a cada tecla se pudesse, e a chave é por
+ * ação para isso não consumir a cota de abrir chamado.
+ */
+rotasDoSolicitante.post('/api/app/:app/chamados/:numero/digitando', async (c) => {
+    await conferirLimite(c, 'digitando', 'Aguarde um instante.')
+    const chamado = await chamadoDoSolicitante(c)
+
+    await publicarNaSala(c.env.SALAS, chamado.id, { tipo: 'digitando', lado: 'solicitante' })
+    return c.body(null, 204)
+})
+
 rotasDoSolicitante.get('/api/app/:app/aviso', async (c) => {
     const estado = await c.get('escopo').saude.estado()
     const aviso = avisoDeIncidente({
@@ -391,6 +409,24 @@ rotasDoSolicitante.get('/api/app/:app/chamados/:numero', async (c) => {
     const avaliacao = await escopo.csat.doChamado(chamado.id)
 
     /**
+     * Abrir o chamado É a confirmação de leitura.
+     *
+     * Não há botão: ninguém clica em "marcar como lido" num suporte. A escrita
+     * só acontece quando há mensagem nova do outro lado, então isto não
+     * transforma cada abertura de tela numa escrita no banco.
+     */
+    const leuEm = await escopo.chamados.marcarLeitura(chamado.id, 'solicitante', new Date())
+    if (leuEm !== null) {
+        c.executionCtx.waitUntil(
+            publicarNaSala(c.env.SALAS, chamado.id, {
+                tipo: 'leitura',
+                lado: 'solicitante',
+                em: leuEm.toISOString(),
+            })
+        )
+    }
+
+    /**
      * A etapa de engenharia, em palavras de produto.
      *
      * É o que a Fase 5 promete ao cliente: ele acompanha a correção sem ver
@@ -420,6 +456,14 @@ rotasDoSolicitante.get('/api/app/:app/chamados/:numero', async (c) => {
             problema === null
                 ? null
                 : { etapa: etapaParaOCliente(problema.etapa as Etapa), atualizadoEm: problema.atualizadoEm },
+        /**
+         * Até quando cada lado leu. O widget mostra "visto" na última mensagem
+         * cuja data é anterior ao carimbo do atendente.
+         */
+        leitura: {
+            solicitanteEm: leuEm?.toISOString() ?? chamado.lidoPeloSolicitanteEm?.toISOString() ?? null,
+            atendenteEm: chamado.lidoPeloAtendenteEm?.toISOString() ?? null,
+        },
         csat: {
             podeAvaliar:
                 podeAvaliar(chamado.status) &&

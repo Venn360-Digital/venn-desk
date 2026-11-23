@@ -625,6 +625,19 @@ rotasInternas.get('/api/console/app/:app/chamados/:numero', async (c) => {
 
     const tagsDoChamado = await escopo.tags.doChamado(chamado.id)
 
+    /// Abrir o chamado no Console é a leitura do atendente. Mesma regra do
+    /// widget: só escreve quando há mensagem nova do cliente.
+    const leuEm = await escopo.chamados.marcarLeitura(chamado.id, 'atendente', new Date())
+    if (leuEm !== null) {
+        c.executionCtx.waitUntil(
+            publicarNaSala(c.env.SALAS, chamado.id, {
+                tipo: 'leitura',
+                lado: 'atendente',
+                em: leuEm.toISOString(),
+            })
+        )
+    }
+
     const mescladoEm =
         chamado.mescladoEmId === null ? null : await escopo.chamados.porId(chamado.mescladoEmId)
 
@@ -643,6 +656,10 @@ rotasInternas.get('/api/console/app/:app/chamados/:numero', async (c) => {
          * citando outro, e sem caminho até ele.
          */
         tags: tagsDoChamado,
+        leitura: {
+            solicitanteEm: chamado.lidoPeloSolicitanteEm?.toISOString() ?? null,
+            atendenteEm: leuEm?.toISOString() ?? chamado.lidoPeloAtendenteEm?.toISOString() ?? null,
+        },
         mescladoEm:
             mescladoEm === null ? null : { numero: formatarNumero(c.get('app').prefixo, mescladoEm.numero) },
         sla: resumoDoChamado(
@@ -1764,6 +1781,15 @@ rotasInternas.post('/api/console/app/:app/titular/:requesterId/esquecer', async 
 
     console.log('[lgpd] exclusão atendida:', JSON.stringify({ app: c.get('app').slug, por: agente.id, ...r }))
     return c.json({ atendido: true, ...r })
+})
+
+/** "O atendente está digitando", para o widget mostrar. Empurra e não guarda. */
+rotasInternas.post('/api/console/app/:app/chamados/:numero/digitando', async (c) => {
+    const chamado = await c.get('escopo').chamados.porNumero(Number(c.req.param('numero')))
+    if (chamado === null) throw new ErroDeDominio('chamado_nao_encontrado', 'Chamado não encontrado.', 404)
+
+    await publicarNaSala(c.env.SALAS, chamado.id, { tipo: 'digitando', lado: 'atendente' })
+    return c.body(null, 204)
 })
 
 /** Quem está logado. É como a SPA do Console sabe se há sessão. */

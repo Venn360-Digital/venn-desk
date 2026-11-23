@@ -556,14 +556,38 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 - [x] Vínculo entre usuário do Slack e `agents`
 
 * [ ] Chat ao vivo: "Falar com uma pessoa", "Assumir chat", prefixo de nota interna, silêncio do Claude, encerramento, disponibilidade e prazo de espera
-* [ ] Tempo real por WebSocket (Durable Object) com confirmação de leitura e "cliente digitando"
+* [x] Tempo real pelo Durable Object, com confirmação de leitura e "cliente digitando" (SSE; WebSocket só se o chat ao vivo exigir)
 * [x] Verificação de saúde por app e criação automática do problema urgente
 * [x] Página de status estática por app, em outro fornecedor, com "também fui afetado"
 * [x] Portal de contingência com acesso por link enviado a e-mails conhecidos
 
 **Aceite:** um humano atende um chamado do início ao fim sem abrir o Console. Nenhum dado pessoal ou anexo aparece no Slack. Evento repetido do Slack não duplica mensagem. Em um chat ao vivo, a mensagem do atendente chega ao widget em até 3 segundos e uma linha iniciada por // nunca chega ao cliente. Com o app de staging derrubado de propósito, o incidente é criado sozinho, a página de status o exibe e um usuário conhecido abre chamado pelo portal. Um e-mail desconhecido não recebe link.
 
-### Fase 4: Atendimento N1 pela IA
+#> **Leitura e digitação, 23/11/2026.** A sala (Durable Object) já empurrava
+> mensagem, status e anexo; faltavam os dois sinais que fazem uma conversa
+> parecer conversa.
+>
+> **A confirmação de leitura mora no CHAMADO, em dois carimbos**, e não numa
+> tabela de leituras por mensagem. A pergunta da tela é "o outro lado já viu o
+> que eu escrevi?", e ela se responde comparando o carimbo com a data da
+> mensagem — uma linha por mensagem por pessoa custaria uma escrita a cada
+> rolagem para responder a mesma coisa.
+>
+> Abrir o chamado É a confirmação: ninguém clica em "marcar como lido" num
+> suporte. E a escrita só acontece quando há mensagem nova do OUTRO lado — sem
+> essa condição, cada abertura de tela seria uma escrita, e a tela do Console
+> recarrega sozinha a cada vinte segundos. Rascunho do modo sombra não conta:
+> marcar leitura por causa dele diria que o cliente viu algo que ninguém enviou.
+>
+> **"Digitando" empurra e não guarda.** Digitar é um estado de segundos, e
+> persistir isso deixaria no banco um "digitando" eterno de quem fechou a aba.
+> Tem limitador com chave própria, porque o widget avisaria a cada tecla se
+> pudesse — e isso não pode consumir a cota de abrir chamado.
+>
+> O aviso leva o LADO. Sem ele, cada ponta mostraria o próprio evento de volta:
+> "você está digitando" na sua própria tela.
+
+## Fase 4: Atendimento N1 pela IA
 
 **Objetivo:** dúvidas de uso respondidas pelo Claude, primeiro em modo sombra.
 
