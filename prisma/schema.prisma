@@ -225,6 +225,15 @@ model Requester {
     criadoEm      DateTime @default(now()) @map("criado_em")
     atualizadoEm  DateTime @updatedAt @map("atualizado_em")
 
+    /**
+     * Quando o pedido de exclusão do titular foi atendido (LGPD, seção 10).
+     *
+     * O nome e o e-mail são substituídos no lugar, e isso é irreversível de
+     * propósito: metade de um apagamento não atende ao pedido. A data fica
+     * porque é o que uma auditoria pergunta.
+     */
+    anonimizadoEm DateTime? @map("anonimizado_em")
+
     tickets Ticket[]
 
     @@unique([appId, externalId])
@@ -501,7 +510,17 @@ model Attachment {
 
     criadoEm DateTime @default(now()) @map("criado_em")
 
+    /**
+     * Quando o arquivo saiu do R2 pela política de retenção.
+     *
+     * A LINHA fica. Sem ela, um anexo citado numa conversa de três anos atrás
+     * viraria link quebrado sem explicação; com ela, o Console diz "removido
+     * pela política de retenção" e a trilha continua coerente.
+     */
+    expurgadoEm DateTime? @map("expurgado_em")
+
     @@index([appId, ticketId])
+    @@index([appId, criadoEm])
     @@map("attachments")
 }
 

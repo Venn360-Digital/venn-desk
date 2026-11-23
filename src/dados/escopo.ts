@@ -22,6 +22,7 @@ import { avanca, type Etapa as EtapaDeEngenharia } from '../dominio/engenharia.t
 import type { ChamadoParado } from '../dominio/automacoes.ts'
 import { podeMesclar, textoDaMesclagem, type MotivoDaRecusa as MotivoDaRecusaDeMesclagem } from '../dominio/mesclar.ts'
 import { tagsNormalizadas } from '../dominio/macros.ts'
+import { identidadeAnonima, TEXTO_REMOVIDO } from '../dominio/retencao.ts'
 import { formatarNumero } from '../dominio/numero.ts'
 import { calendarioDaPolitica, vencimentoComercial, type Calendario } from '../dominio/calendario.ts'
 import {
@@ -329,6 +330,16 @@ export interface EscopoDoApp {
         }): Promise<Attachment>
         porChave(chave: string): Promise<Attachment | null>
         doChamado(ticketId: string): Promise<Attachment[]>
+        /**
+         * Anexos velhos que ainda estão no armazenamento (seção 10).
+         *
+         * `expurgadoEm` nulo é a condição que importa: o que já saiu do R2 não
+         * precisa sair de novo, e sem o filtro a varredura releria os mesmos
+         * arquivos todos os dias.
+         */
+        aExpurgar(limite: Date, quantos: number): Promise<Attachment[]>
+        /** Marca o anexo como expurgado. A linha fica; o arquivo, não. */
+        marcarExpurgado(id: string, agora: Date): Promise<void>
     }
 
     /** Contadores do selo do widget. Uma consulta, não três. */
@@ -588,6 +599,26 @@ export interface EscopoDoApp {
             depois?: Prisma.InputJsonValue
         }): Promise<void>
         doArtigo(artigoId: string): Promise<KbEvento[]>
+    }
+
+    /**
+     * O pedido de exclusão do titular (LGPD, seção 10).
+     *
+     * **Isto é irreversível, e é o ponto.** Metade de um apagamento não atende
+     * ao pedido. O nome e o e-mail do solicitante são substituídos no lugar, e o
+     * corpo das mensagens que ELE escreveu passa a dizer que foi removido —
+     * mensagem de atendente fica, porque é registro do que a empresa respondeu.
+     *
+     * O que NÃO se apaga: a existência do chamado, os eventos e os prazos. Eles
+     * não contêm o texto da pessoa e são a prova de que o atendimento aconteceu,
+     * que é exatamente o que uma auditoria de LGPD pede para ver.
+     */
+    titular: {
+        /** Devolve o que foi tocado, para a trilha e para a resposta. */
+        esquecer(
+            requesterId: string,
+            agora: Date
+        ): Promise<{ chamados: number; mensagens: number; anexos: number } | null>
     }
 
     /**
@@ -1541,6 +1572,21 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                 return conexao.attachment.findFirst({ where: { chave, appId } })
             },
 
+            async aExpurgar(limite, quantos) {
+                return conexao.attachment.findMany({
+                    where: { appId, expurgadoEm: null, criadoEm: { lt: limite } },
+                    orderBy: { criadoEm: 'asc' },
+                    take: quantos,
+                })
+            },
+
+            async marcarExpurgado(id, agora) {
+                await conexao.attachment.updateMany({
+                    where: { id, appId, expurgadoEm: null },
+                    data: { expurgadoEm: agora },
+                })
+            },
+
             async doChamado(ticketId) {
                 return conexao.attachment.findMany({
                     where: { appId, ticketId },
@@ -2379,6 +2425,64 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                     where: { appId, problemId },
                     orderBy: { criadoEm: 'asc' },
                 })
+            },
+        },
+
+        titular: {
+            async esquecer(requesterId, agora) {
+                const solicitante = await conexao.requester.findFirst({ where: { id: requesterId, appId } })
+                if (solicitante === null) return null
+
+                const anonima = identidadeAnonima(requesterId)
+                await conexao.requester.updateMany({
+                    where: { id: requesterId, appId },
+                    data: { nome: anonima.nome, email: anonima.email, anonimizadoEm: agora },
+                })
+
+                const chamados = await conexao.ticket.findMany({
+                    where: { appId, requesterId },
+                    select: { id: true },
+                })
+                const ids = chamados.map((c) => c.id)
+
+                let mensagens = 0
+                let anexos = 0
+
+                if (ids.length > 0) {
+                    /**
+                     * Só o que o TITULAR escreveu.
+                     *
+                     * A resposta do atendente fica: é registro do que a empresa
+                     * disse, e apagá-la removeria a prova do atendimento sem
+                     * remover dado pessoal nenhum.
+                     */
+                    const r = await conexao.ticketMessage.updateMany({
+                        where: { appId, ticketId: { in: ids }, autor: 'USUARIO' },
+                        data: { corpo: TEXTO_REMOVIDO },
+                    })
+                    mensagens = r.count
+
+                    /// O contexto do widget também sai: ele carrega rota, versão
+                    /// e navegador daquela pessoa.
+                    await conexao.ticket.updateMany({
+                        where: { appId, id: { in: ids } },
+                        data: { contexto: Prisma.DbNull },
+                    })
+
+                    /**
+                     * Os anexos são marcados para expurgo com data no passado,
+                     * e quem os apaga do R2 é a varredura de retenção — ela já
+                     * sabe falar com o bucket, e duplicar isso aqui criaria um
+                     * segundo caminho para apagar arquivo.
+                     */
+                    const a = await conexao.attachment.updateMany({
+                        where: { appId, ticketId: { in: ids }, expurgadoEm: null },
+                        data: { criadoEm: new Date(0) },
+                    })
+                    anexos = a.count
+                }
+
+                return { chamados: ids.length, mensagens, anexos }
             },
         },
 

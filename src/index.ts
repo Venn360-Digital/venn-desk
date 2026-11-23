@@ -17,6 +17,7 @@ import { verificarSaude } from './saude/verificar.ts'
 import { vigiarPrazos, vigiarRiscos } from './sla/vigiar.ts'
 import { rodarAutomacoes } from './automacoes/rodar.ts'
 import { postarResumoDiario } from './automacoes/resumo.ts'
+import { rodarRetencao } from './retencao/rodar.ts'
 import { consumirAtendimentos, type LoteDaFila } from './agente/fila.ts'
 import { consumirConhecimento } from './conhecimento/fila.ts'
 import { leitorGitHub } from './conhecimento/github.ts'
@@ -270,6 +271,21 @@ export default {
                 } catch (erro) {
                     console.error('[custo] cão de guarda falhou:', erro)
                 }
+            }
+
+            /**
+             * A retenção de anexos, às 3h UTC.
+             *
+             * De madrugada porque é a única rotina que APAGA arquivo: se algo
+             * der errado, o erro aparece no log da noite e não no meio do
+             * expediente, com o atendimento disputando o mesmo Worker.
+             */
+            if (agora.getUTCHours() === 3 && agora.getUTCMinutes() === 0) {
+                const limpos = await rodarRetencao(cliente, {
+                    agora,
+                    bucket: env.ANEXOS as unknown as { delete(chave: string): Promise<void> } | undefined,
+                })
+                if (limpos.length > 0) console.log('[retencao]', JSON.stringify(limpos))
             }
 
             /**

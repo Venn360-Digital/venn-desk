@@ -871,7 +871,7 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 - [ ] Aviso de incidente geral dentro do widget e histórico de incidentes na página de status
 - [x] Painel de custo de IA por app e por chamado, com teto e alerta
 - [ ] Teste de carga e revisão de segurança
-- [ ] Rotinas de retenção e exclusão de dados
+- [x] Rotinas de retenção e exclusão de dados
 - [ ] Manual de operação: o que fazer quando a IA erra, quando o Slack cai, quando o GitHub cai
 
 > **Estado em 21/11/2026 — a contabilidade de IA existe, por causa de um dia.**
@@ -893,6 +893,33 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 > Console, onde uma pessoa decide sabendo o que perde. O nível já avisado mora na
 > própria tabela, e não em memória: o cron é outro processo a cada minuto, e
 > estado em memória morreria antes do segundo aviso.
+
+> **Retenção e exclusão, 23/11/2026.** A varredura das 3h apaga do R2 o anexo
+> que passou de doze meses e marca a linha. A LINHA FICA: um anexo citado numa
+> conversa de três anos atrás viraria link quebrado sem explicação, e com a marca
+> o Console diz "removido pela política de retenção".
+>
+> A marca vem DEPOIS de apagar, nunca antes. Marcar primeiro e falhar no R2
+> deixaria o arquivo lá para sempre com a linha dizendo que ele saiu — o pior dos
+> dois mundos, porque ninguém voltaria a olhar. Sem o bucket a varredura não roda:
+> marcar sem apagar mentiria.
+>
+> **O pedido de exclusão do titular** (LGPD) é rota de ADMIN e exige
+> `{"confirmo": true}` no corpo, porque não tem volta: um clique duplo ou um
+> script de teste apontado para produção não podem apagar o texto de uma pessoa.
+> Substitui no lugar o nome e o e-mail do solicitante, o texto que ELE escreveu e
+> o contexto do widget. A resposta do ATENDENTE fica, porque é registro do que a
+> empresa disse, e apagá-la removeria a prova do atendimento sem remover dado
+> pessoal nenhum. A existência do chamado, os eventos e os prazos também ficam:
+> são o que uma auditoria de LGPD pede para ver.
+>
+> O e-mail anônimo carrega o id interno para continuar ÚNICO por app — a coluna é
+> indexada e usada para achar o solicitante, e dois titulares anonimizados com o
+> mesmo valor colidiriam.
+>
+> **Não implementado de propósito:** encerrar chamado com mais de cinco anos. O
+> produto tem meses, e escrever hoje a regra que roda em 2031 seria escrever sem
+> poder testá-la contra nada real.
 
 **Aceite:** um quarto app fictício é incluído seguindo só o roteiro. Com o Slack indisponível, os chamados continuam sendo registrados e atendidos pelo Console.
 

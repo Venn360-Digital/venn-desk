@@ -1684,6 +1684,47 @@ rotasInternas.post('/api/console/app/:app/chamados/:numero/tags', async (c) => {
     return c.json({ tags })
 })
 
+/**
+ * O pedido de exclusão do titular (LGPD, seção 10).
+ *
+ * **Só ADMIN, e é irreversível.** Substitui no lugar o nome e o e-mail do
+ * solicitante e o texto que ELE escreveu; a resposta do atendente fica, porque é
+ * registro do que a empresa disse. A existência do chamado, os eventos e os
+ * prazos também ficam: são a prova de que o atendimento aconteceu, que é
+ * exatamente o que uma auditoria pede para ver.
+ *
+ * O caminho leva `titular` no literal antes do id para não disputar com as rotas
+ * de chamado (ADR 0009).
+ */
+rotasInternas.post('/api/console/app/:app/titular/:requesterId/esquecer', async (c) => {
+    const agente = c.get('agente')
+    if (agente.papel !== 'ADMIN') {
+        throw new ErroDeDominio('sem_permissao', 'Só administrador atende pedido de exclusão.', 403)
+    }
+
+    const corpo = z
+        .object({ confirmo: z.literal(true) })
+        .safeParse(await c.req.json().catch(() => null))
+    if (!corpo.success) {
+        /**
+         * A confirmação explícita no CORPO existe porque isto não tem volta.
+         * Uma chamada acidental — um clique duplo, um script de teste apontado
+         * para produção — não pode apagar o texto de uma pessoa.
+         */
+        throw new ErroDeDominio(
+            'confirmacao_necessaria',
+            'Isto é irreversível. Envie {"confirmo": true} para seguir.',
+            400
+        )
+    }
+
+    const r = await c.get('escopo').titular.esquecer(c.req.param('requesterId'), new Date())
+    if (r === null) throw new ErroDeDominio('solicitante_nao_encontrado', 'Solicitante não encontrado.', 404)
+
+    console.log('[lgpd] exclusão atendida:', JSON.stringify({ app: c.get('app').slug, por: agente.id, ...r }))
+    return c.json({ atendido: true, ...r })
+})
+
 /** Quem está logado. É como a SPA do Console sabe se há sessão. */
 rotasInternas.get('/api/console/sessao', comSessaoDeAgente, (c) => {
     const agente = c.get('agente')
