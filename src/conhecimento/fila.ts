@@ -17,6 +17,7 @@ import { sincronizarApp, type ResultadoDaSincronizacao } from './sincronizar.ts'
 import { sugerirDeChamado, sugerirDeLacuna, type ResultadoDaSugestao } from './sugerir.ts'
 import { diagnosticar, diagnosticoEmTexto } from '../engenharia/diagnosticar.ts'
 import { arquivosDaTela } from '../engenharia/candidatos.ts'
+import { anonimizar } from './privacidade.ts'
 import { postar } from '../slack/cliente.ts'
 import type { LanguageModel } from 'ai'
 
@@ -163,7 +164,11 @@ export async function consumirConhecimento(lote: LoteDaFila, env: Ambiente['Bind
                     const candidatos = typeof rota === 'string' ? await arquivosDaTela(escopo, rota) : []
 
                     const resultado = await diagnosticar({
-                        resumo: pedido.data.resumo,
+                        /// O resumo vem do evento de escalonamento, escrito pela
+                        /// IA a partir do chamado: anonimizar antes de mandá-lo
+                        /// ao modelo é a mesma regra da biblioteca de casos — o
+                        /// que não entra no prompt não volta na resposta.
+                        resumo: anonimizar(pedido.data.resumo),
                         candidatos,
                         repositorio: app.repositorio,
                         commitSha: await leitor.shaDoRamo(app.repositorio, 'main'),

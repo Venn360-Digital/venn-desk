@@ -594,3 +594,44 @@ describe('decidirPortaoDaIssue', () => {
         ).toEqual({ decidido: false, motivo: 'defeito_de_outro_app' })
     })
 })
+
+describe('o que sai para o canal de engenharia é anonimizado', () => {
+    it('e-mail e telefone no resumo do N1 não chegam ao Slack', async () => {
+        /**
+         * Achado da revisão de segurança de 23/11/2026. O resumo é escrito pela
+         * IA, não pelo cliente — e é por isso mesmo que precisa passar pelo
+         * anonimizador: o modelo lê o chamado, que tem e-mail e telefone, e
+         * resume. "A cliente maria@x.com não consegue salvar" é um resumo
+         * correto e um dado pessoal num canal que tem o repositório ligado.
+         *
+         * A prova é sobre o que vai À REDE, com o buscador injetado.
+         */
+        const { conexao } = conexaoFalsa({
+            'slackThread.findFirst': { id: 'th-1', ticketId: 'tkt-1', threadTsEngenharia: null },
+        })
+        const slack = slackFalso({ ok: true, ts: '200.1', channel: 'C-ENG' })
+        const { saidaDeEngenharia } = await import('../engenharia/ao-escalar.ts')
+
+        const sair = saidaDeEngenharia(
+            escopoDoApp(conexao, 'app-1'),
+            { id: 'app-1', slug: 'odontobox', canalEngenharia: 'C-ENG' },
+            { SLACK_BOT_TOKEN: 'xoxb-t', URL_BASE: 'https://desk.venn360.com' },
+            slack.config.buscador
+        )
+
+        await sair({
+            chamadoId: 'tkt-1',
+            numero: 'ODB-1042',
+            resumo: 'a cliente maria@exemplo.com, fone (11) 98765-4321, não consegue salvar o agendamento',
+            ponteiros: 'agenda/recorrencia.ts:88',
+        })
+
+        const corpo = slack.chamadas[0]?.corpo as { text: string }
+        expect(corpo.text).not.toMatch(/maria@exemplo|98765/)
+        expect(corpo.text).toContain('[e-mail]')
+        expect(corpo.text).toContain('[telefone]')
+        /// E o que importa para quem corrige sobrevive.
+        expect(corpo.text).toContain('não consegue salvar o agendamento')
+        expect(corpo.text).toContain('agenda/recorrencia.ts:88')
+    })
+})

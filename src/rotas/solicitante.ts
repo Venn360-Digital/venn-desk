@@ -142,6 +142,23 @@ function paraOWidget(chamado: {
     }
 }
 
+/**
+ * O limite de escrita do solicitante (seção 10).
+ *
+ * O mesmo binding da abertura, com chave DIFERENTE por ação: o limitador da
+ * Cloudflare conta por chave, então `mensagem:` e `abertura:` têm cotas
+ * separadas — quem está mandando mensagem depressa não deve perder o direito de
+ * abrir um chamado novo, que pode ser outro problema.
+ *
+ * Vem antes de ler o corpo: quem está abusando não deveria custar parse.
+ */
+async function conferirLimite(c: Context<Ambiente>, acao: string, mensagem: string): Promise<void> {
+    const { success } = await c.env.ABERTURA_RATE_LIMITER.limit({
+        key: `${acao}:${c.get('app').id}:${c.get('solicitante').requesterId}`,
+    })
+    if (!success) throw new ErroDeDominio(`limite_de_${acao}`, mensagem, 429)
+}
+
 rotasDoSolicitante.post('/api/app/:app/chamados', async (c) => {
     const identidade = c.get('identidade')
     const solicitante = c.get('solicitante')
@@ -437,6 +454,8 @@ rotasDoSolicitante.get('/api/app/:app/chamados/:numero', async (c) => {
  * se o atendimento automático é ligado num app.
  */
 rotasDoSolicitante.post('/api/app/:app/chamados/:numero/csat', async (c) => {
+    await conferirLimite(c, 'csat', 'Aguarde um instante para avaliar de novo.')
+
     const chamado = await chamadoDoSolicitante(c)
     const escopo = c.get('escopo')
     const solicitante = c.get('solicitante')
@@ -502,6 +521,8 @@ rotasDoSolicitante.post('/api/app/:app/chamados/:numero/csat', async (c) => {
 })
 
 rotasDoSolicitante.post('/api/app/:app/chamados/:numero/mensagens', async (c) => {
+    await conferirLimite(c, 'mensagem', 'Você escreveu muitas mensagens em pouco tempo. Aguarde um instante.')
+
     const chamado = await chamadoDoSolicitante(c)
     const escopo = c.get('escopo')
     const solicitante = c.get('solicitante')
@@ -668,6 +689,10 @@ const TAMANHO_MAXIMO = 10 * 1024 * 1024
  * verificado contra a extensão esperada.
  */
 rotasDoSolicitante.post('/api/app/:app/chamados/:numero/anexos', async (c) => {
+    /// Dez megabytes por arquivo e nenhum limite de arquivos era um laço de
+    /// upload esperando acontecer.
+    await conferirLimite(c, 'anexo', 'Você enviou muitos arquivos em pouco tempo. Aguarde um instante.')
+
     const chamado = await chamadoDoSolicitante(c)
     const app = c.get('app')
     const solicitante = c.get('solicitante')

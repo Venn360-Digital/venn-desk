@@ -2,7 +2,8 @@ import type { App } from '#prisma'
 
 import type { EscopoDoApp } from '../dados/escopo.ts'
 import { abrirThreadDeEngenharia } from '../slack/ponte.ts'
-import { postar } from '../slack/cliente.ts'
+import { anonimizar } from '../conhecimento/privacidade.ts'
+import { postar, type Buscador } from '../slack/cliente.ts'
 import { mensagemDePedidoDeAprovacao } from '../slack/mensagens.ts'
 
 /**
@@ -20,7 +21,10 @@ export function saidaDeEngenharia(
         SLACK_BOT_TOKEN?: string | undefined
         URL_BASE?: string | undefined
         CONHECIMENTO?: { send(mensagem: unknown): Promise<void> } | undefined
-    }
+    },
+    /// Injetável pela mesma razão do canal de alertas: sem isto, o teste de que
+    /// o resumo sai anonimizado provaria apenas que `fetch` falha offline.
+    buscador?: Buscador
 ): (p: { chamadoId: string; numero: string; resumo: string; ponteiros: string | null }) => Promise<void> {
     return async (p) => {
         /**
@@ -48,12 +52,23 @@ export function saidaDeEngenharia(
 
         await abrirThreadDeEngenharia({
             escopo,
-            config: { token: env.SLACK_BOT_TOKEN },
+            config: { token: env.SLACK_BOT_TOKEN, ...(buscador === undefined ? {} : { buscador }) },
             canal: app.canalEngenharia,
             dados: {
                 chamadoId: p.chamadoId,
                 numero: p.numero,
-                resumo: p.resumo,
+                /**
+                 * O resumo é anonimizado antes de sair (seção 10).
+                 *
+                 * Ele é escrito pela IA, não pelo cliente — e é justamente por
+                 * isso que precisa passar por aqui: o modelo lê o chamado, que
+                 * tem e-mail e telefone, e resume. "A cliente maria@x.com não
+                 * consegue salvar" é um resumo correto e um dado pessoal no
+                 * canal de engenharia, que tem o repositório ligado.
+                 *
+                 * Achado da revisão de segurança de 23/11/2026.
+                 */
+                resumo: anonimizar(p.resumo),
                 ...(p.ponteiros === null ? {} : { ponteiros: p.ponteiros }),
                 urlNoConsole: `${env.URL_BASE ?? ''}/app/${app.slug}/chamados/${p.numero.split('-').pop() ?? ''}`,
             },
@@ -83,8 +98,10 @@ export function saidaDeAprovacao(
                 mensagem: mensagemDePedidoDeAprovacao({
                     numero: p.numero,
                     problemaId: p.problemaId,
-                    titulo: p.titulo,
-                    proposta: p.proposta,
+                    /// Mesma razão do resumo: o título do defeito sai do assunto
+                    /// do chamado, que é texto de cliente.
+                    titulo: anonimizar(p.titulo),
+                    proposta: anonimizar(p.proposta),
                     urlNoConsole: `${env.URL_BASE ?? ''}/app/${app.slug}/chamados/${p.numero.split('-').pop() ?? ''}`,
                 }),
             }

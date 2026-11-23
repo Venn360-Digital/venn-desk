@@ -870,7 +870,7 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 - [x] Roteiro e script de inclusão de app: cadastro, chaves, canais, instruções, proteções, instalação do widget
 - [x] Aviso de incidente geral dentro do widget e histórico de incidentes na página de status
 - [x] Painel de custo de IA por app e por chamado, com teto e alerta
-- [ ] Teste de carga e revisão de segurança
+- [x] Teste de carga e revisão de segurança
 - [x] Rotinas de retenção e exclusão de dados
 - [x] Manual de operação: o que fazer quando a IA erra, quando o Slack cai, quando o GitHub cai
 
@@ -946,6 +946,29 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 > **O manual** (`docs/manual-de-operacao.md`) começa por SINTOMA, porque é o que
 > se tem às duas da manhã, e a primeira linha dele é a regra que resolve metade
 > das dúvidas: o Console é a verdade, e Slack, e-mail e status são superfícies.
+
+> **Revisão de segurança e carga, 23/11/2026** (`docs/revisao-de-seguranca.md`).
+> Nove defesas da seção 10 verificadas contra o código, não assumidas. Duas
+> falhas encontradas e corrigidas:
+>
+> **O resumo que ia ao canal de engenharia não era anonimizado.** Ele é escrito
+> pela IA, não pelo cliente, e era exatamente por isso que passava livre — a
+> regra "texto de cliente não vai ao Slack" não o alcançava. Mas o modelo lê o
+> chamado, que tem e-mail e telefone, e resume: "a cliente maria@x.com não
+> consegue salvar" é um resumo correto e um dado pessoal num canal que tem o
+> repositório ligado. Resumo, título do defeito e proposta passam a ser
+> anonimizados antes de sair, e o teste prova isso sobre o que vai À REDE.
+>
+> **Só a abertura tinha limite de requisições.** Mensagem, anexo e CSAT não
+> tinham, e dez megabytes por arquivo sem limite de arquivos era um laço de
+> upload esperando acontecer. O limitador passa a ter chave por AÇÃO: quem manda
+> mensagem depressa não perde o direito de abrir um chamado novo, que pode ser
+> outro problema.
+>
+> Carga medida nos dois ambientes, sem nenhum erro de servidor: 23 req/s em
+> produção com p99 de 1,3 s. A escrita no teste é opt-in e só em homologação,
+> porque aqui nada é apagado — mil chamados de teste ficariam mil chamados para
+> sempre.
 
 **Aceite:** um quarto app fictício é incluído seguindo só o roteiro. Com o Slack indisponível, os chamados continuam sendo registrados e atendidos pelo Console.
 
