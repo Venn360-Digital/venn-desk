@@ -16,6 +16,7 @@ import {
 } from '../dominio/artigo.ts'
 import { fundir, parecidos } from '../dominio/busca.ts'
 import type { ChamadoMedido } from '../dominio/relatorio.ts'
+import type { MarcoDeEngenharia } from '../dominio/engenharia-metricas.ts'
 import type { ConsultaRegistrada } from '../dominio/consultas.ts'
 import { avanca, type Etapa as EtapaDeEngenharia } from '../dominio/engenharia.ts'
 import type { ChamadoParado } from '../dominio/automacoes.ts'
@@ -439,6 +440,14 @@ export interface EscopoDoApp {
      */
     painel: {
         chamadosMedidos(desde: Date): Promise<ChamadoMedido[]>
+        /**
+         * Os marcos de engenharia dos defeitos do período (seção 12).
+         *
+         * Lê a trilha, não a etapa atual: a etapa diz onde o defeito ESTÁ, e os
+         * indicadores querem saber QUANDO ele passou por cada ponto. Um defeito
+         * já em produção não conta quanto tempo levou para chegar lá.
+         */
+        marcosDeEngenharia(desde: Date): Promise<MarcoDeEngenharia[]>
         relogiosEncerrados(desde: Date): Promise<{ violadoEm: Date | null; cumpridoEm: Date | null }[]>
     }
 
@@ -1639,6 +1648,11 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                         status: true,
                         criadoEm: true,
                         primeiraRespostaEm: true,
+                        /// O módulo vem do contexto que o widget captura, e é a
+                        /// única dimensão da seção 12 que o chamado não tem em
+                        /// coluna própria.
+                        contexto: true,
+                        tenant: { select: { nome: true } },
                         messages: {
                             where: { visibilidade: 'PUBLICA', rascunho: false },
                             select: { autor: true },
@@ -1676,10 +1690,15 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                             return soma + (d?.custoEstimadoUsd ?? 0)
                         }, 0)
 
+                    const contexto = (c.contexto ?? null) as { modulo?: unknown } | null
+                    const modulo = typeof contexto?.modulo === 'string' && contexto.modulo !== '' ? contexto.modulo : null
+
                     return {
                         tipo: c.tipo,
                         prioridade: c.prioridade,
                         status: c.status,
+                        modulo,
+                        empresa: c.tenant.nome,
                         minutosAteResposta:
                             c.primeiraRespostaEm === null
                                 ? null
@@ -1690,6 +1709,57 @@ export function escopoDoApp(conexao: Conexao, appId: string): EscopoDoApp {
                         respondidoPorHumano: c.messages.some((m) => m.autor === 'HUMANO'),
                         reaberto: voltou,
                         custoDaIa: custo,
+                    }
+                })
+            },
+
+            async marcosDeEngenharia(desde) {
+                const defeitos = await conexao.problem.findMany({
+                    where: { appId, criadoEm: { gte: desde } },
+                    select: {
+                        criadoEm: true,
+                        tickets: { select: { id: true, criadoEm: true }, orderBy: { criadoEm: 'asc' }, take: 1 },
+                        engLinks: { select: { tipo: true, estado: true } },
+                    },
+                })
+
+                /// Os eventos de etapa moram na trilha do CHAMADO, porque é
+                /// nela que tudo do Desk é registrado — então a leitura é por
+                /// chamado e depois agrupada por defeito.
+                const ids = defeitos.flatMap((d) => d.tickets.map((t) => t.id))
+                const eventos =
+                    ids.length === 0
+                        ? []
+                        : await conexao.ticketEvent.findMany({
+                              where: { appId, ticketId: { in: ids }, evento: 'engenharia:evento' },
+                              select: { ticketId: true, depois: true, criadoEm: true },
+                              orderBy: { criadoEm: 'asc' },
+                          })
+
+                return defeitos.map((d) => {
+                    const chamado = d.tickets[0]
+                    const daTrilha = eventos.filter((e) => e.ticketId === chamado?.id)
+
+                    const etapas: Partial<Record<string, Date>> = {}
+                    for (const e of daTrilha) {
+                        const para = (e.depois as { para?: unknown } | null)?.para
+                        /// O PRIMEIRO registro de cada etapa: um evento repetido
+                        /// pelo GitHub não deve reescrever o instante em que a
+                        /// etapa foi alcançada.
+                        if (typeof para === 'string' && etapas[para] === undefined) etapas[para] = e.criadoEm
+                    }
+
+                    const prs = d.engLinks.filter((l) => l.tipo === 'PR')
+
+                    return {
+                        abertoEm: chamado?.criadoEm ?? d.criadoEm,
+                        etapas: etapas as MarcoDeEngenharia['etapas'],
+                        /// Reversão aparece como deploy de produção DEPOIS de já
+                        /// ter havido um: é o rollback publicando a versão
+                        /// anterior.
+                        revertido: daTrilha.filter((e) => ((e.depois as { para?: unknown } | null)?.para) === 'EM_PRODUCAO').length > 1,
+                        prAprovadoSemAlteracao:
+                            prs.length === 0 ? null : !prs.some((l) => (l.estado ?? '').includes('falhou')),
                     }
                 })
             },

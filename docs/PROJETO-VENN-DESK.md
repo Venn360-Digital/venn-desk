@@ -728,7 +728,7 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 - [x] Gatilhos e automações, incluindo fechamento automático e lembrete ao usuário
 - [ ] Macros, visões salvas, tags, campos personalizados por app
 - [x] Mesclar chamados, chamado de acompanhamento
-- [ ] Relatórios e painel (seção 12)
+- [x] Relatórios e painel (seção 12)
 - [ ] Visão "chamados da empresa" para o administrador do tenant
 - [x] Resumo diário em `#desk-alertas`
 
@@ -802,6 +802,28 @@ São nove fases. Cada uma termina em algo utilizável e tem critério de aceite 
 > A visão "chamados da empresa" tem a API pronta (`?escopo=empresa`, com a
 > permissão conferida), mas quem a mostra é o widget, que mora no venn-saas —
 > está na lista de pendências de lá.
+
+> **O painel fecha a seção 12, 23/11/2026.** Faltavam duas coisas: o volume por
+> MÓDULO e por EMPRESA, e os tempos de ENGENHARIA.
+>
+> Os dois recortes respondem perguntas que o total não responde — "onde o produto
+> dói" e "quem está sofrendo" — e são lidos juntos: um módulo campeão com uma
+> empresa campeã é problema de cliente; com empresas espalhadas, é problema de
+> produto. Vêm como lista ordenada, não como objeto, porque a ORDEM é a
+> informação, e cortados no décimo com o resto somado em "outros": trinta
+> empresas com um chamado cada dizem menos que uma linha.
+>
+> Os tempos de engenharia são TRÊS trechos e não um total — chamado até issue,
+> issue até staging, staging até produção —, porque demorar para decidir, para
+> corrigir ou para publicar são três problemas com três soluções. Mediana, não
+> média: um defeito que ficou três semanas esperando decisão de produto
+> deslocaria a média e sumiria com a informação. Trecho com evento fora de ordem
+> é DESCARTADO e não zerado, senão contaria como instantâneo e puxaria a mediana
+> para baixo. E a taxa de reversão é medida sobre o que chegou à produção, não
+> sobre todos os defeitos, que diluiria o indicador com o que nem foi publicado.
+>
+> Os marcos saem da TRILHA, não da etapa atual: a etapa diz onde o defeito está,
+> e o indicador quer saber quando ele passou por cada ponto.
 
 **Aceite:** uma política de SLA violada gera alerta e aparece no relatório. Uma automação criada no Console executa sem código novo. O painel mostra as métricas da seção 12 por app.
 

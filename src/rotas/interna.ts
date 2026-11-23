@@ -50,6 +50,7 @@ import { fontesDesatualizadas } from '../conhecimento/sugerir.ts'
 import { levantarDivergencias } from '../conhecimento/comparar-apps.ts'
 import { gastoDesde } from '../dados/gastos.ts'
 import { explicarRecusa } from '../dominio/mesclar.ts'
+import { medirEngenharia } from '../dominio/engenharia-metricas.ts'
 
 /**
  * A API interna — o que o Console consome, e o que a ponte do Slack vai chamar
@@ -1448,11 +1449,12 @@ rotasInternas.get('/api/console/app/:app/painel', async (c) => {
     const desde = new Date(Date.now() - dias * 24 * 60 * 60 * 1000)
     const escopo = escopoDoApp(c.get('cliente'), c.get('app').id)
 
-    const [chamados, relogios, notas, gastos] = await Promise.all([
+    const [chamados, relogios, notas, gastos, marcos] = await Promise.all([
         escopo.painel.chamadosMedidos(desde),
         escopo.painel.relogiosEncerrados(desde),
         escopo.csat.todas(),
         gastoDesde(c.get('cliente'), desde),
+        escopo.painel.marcosDeEngenharia(desde),
     ])
 
     /**
@@ -1483,6 +1485,11 @@ rotasInternas.get('/api/console/app/:app/painel', async (c) => {
          * dado.
          */
         csatDeSempre: resumirCsat(notas),
+        /**
+         * Os indicadores de engenharia da seção 12: onde está o gargalo entre
+         * decidir, corrigir e publicar.
+         */
+        engenharia: medirEngenharia(marcos),
     })
 })
 

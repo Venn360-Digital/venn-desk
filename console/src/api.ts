@@ -107,6 +107,18 @@ export interface PainelDoApp {
         reabertura: { casos: number; deQuantos: number; percentual: number | null }
         sla: { cumpridos: number; violados: number; percentual: number | null }
         custo: { total: number; porChamado: number | null }
+        /** Volume por módulo e por empresa, maiores primeiro (seção 12). */
+        porModulo: { nome: string; chamados: number }[]
+        porEmpresa: { nome: string; chamados: number }[]
+    }
+    /** Onde está o gargalo: decidir, corrigir ou publicar (seção 12). */
+    engenharia: {
+        defeitos: number
+        chamadoAteIssueH: number | null
+        issueAteStagingH: number | null
+        stagingAteProducaoH: number | null
+        reversao: { casos: number; deQuantos: number; percentual: number | null }
+        prSemAlteracao: { casos: number; deQuantos: number; percentual: number | null }
     }
     csatDeSempre: {
         respostas: number

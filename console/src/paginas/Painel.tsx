@@ -104,6 +104,10 @@ export function Painel() {
                         />
                     </section>
 
+                    <Recortes porModulo={r.porModulo} porEmpresa={r.porEmpresa} />
+
+                    <Engenharia e={data.engenharia} />
+
                     <GastoDeIa gasto={data.gastoDeIa} dias={dias} />
 
                     <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -368,6 +372,96 @@ function GastoDeIa({
                     <ul className="space-y-1">{gasto.semApp.map(linha)}</ul>
                 </>
             ) : null}
+        </section>
+    )
+}
+
+/**
+ * Volume por módulo e por empresa (seção 12).
+ *
+ * Respondem perguntas que o total não responde: "onde o produto dói" e "quem
+ * está sofrendo". Lado a lado porque são lidos juntos — um módulo campeão com
+ * uma empresa campeã é um problema de cliente; com empresas espalhadas, é um
+ * problema de produto.
+ */
+function Recortes({
+    porModulo,
+    porEmpresa,
+}: {
+    porModulo: { nome: string; chamados: number }[]
+    porEmpresa: { nome: string; chamados: number }[]
+}) {
+    if (porModulo.length === 0 && porEmpresa.length === 0) return null
+
+    const lista = (titulo: string, itens: { nome: string; chamados: number }[]) => (
+        <div className="space-y-1">
+            <h3 className="text-xs font-medium text-tinta-fraca">{titulo}</h3>
+            <ul className="space-y-1">
+                {itens.map((i) => (
+                    <li key={i.nome} className="flex items-baseline justify-between gap-3 text-xs">
+                        <span className="truncate text-tinta">{i.nome}</span>
+                        <span className="tabular-nums text-tinta-fraca">{i.chamados}</span>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    )
+
+    return (
+        <section className="grid gap-4 rounded-sm border border-borda bg-superficie p-4 sm:grid-cols-2">
+            {lista('Por módulo', porModulo)}
+            {lista('Por empresa', porEmpresa)}
+        </section>
+    )
+}
+
+/**
+ * Os tempos de engenharia (seção 12).
+ *
+ * Três trechos e não um total, porque dizem coisas diferentes: demora para
+ * decidir, para corrigir ou para publicar são três problemas com três soluções.
+ * Medianas em horas; nulo aparece como travessão, e não como zero.
+ */
+function Engenharia({ e }: { e: PainelDoApp['engenharia'] }) {
+    if (e.defeitos === 0) {
+        return (
+            <section className="rounded-sm border border-borda bg-superficie p-4 text-xs text-tinta-fraca">
+                Nenhum defeito registrado na janela.
+            </section>
+        )
+    }
+
+    const horas = (v: number | null) => (v === null ? '—' : `${v} h`)
+    const pct = (p: { percentual: number | null; casos: number; deQuantos: number }) =>
+        p.percentual === null ? '—' : `${p.percentual}% (${p.casos}/${p.deQuantos})`
+
+    return (
+        <section className="space-y-2 rounded-sm border border-borda bg-superficie p-4">
+            <h2 className="text-xs font-medium text-tinta">
+                Engenharia · {e.defeitos} defeito(s) na janela
+            </h2>
+            <dl className="grid gap-2 text-xs sm:grid-cols-3">
+                <div>
+                    <dt className="text-tinta-fraca">chamado → issue</dt>
+                    <dd className="tabular-nums text-tinta">{horas(e.chamadoAteIssueH)}</dd>
+                </div>
+                <div>
+                    <dt className="text-tinta-fraca">issue → staging</dt>
+                    <dd className="tabular-nums text-tinta">{horas(e.issueAteStagingH)}</dd>
+                </div>
+                <div>
+                    <dt className="text-tinta-fraca">staging → produção</dt>
+                    <dd className="tabular-nums text-tinta">{horas(e.stagingAteProducaoH)}</dd>
+                </div>
+                <div>
+                    <dt className="text-tinta-fraca">reversão</dt>
+                    <dd className="tabular-nums text-tinta">{pct(e.reversao)}</dd>
+                </div>
+                <div>
+                    <dt className="text-tinta-fraca">PR sem alteração</dt>
+                    <dd className="tabular-nums text-tinta">{pct(e.prSemAlteracao)}</dd>
+                </div>
+            </dl>
         </section>
     )
 }

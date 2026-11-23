@@ -72,6 +72,26 @@ export function taxa(parte: number, total: number): number | null {
     return Number(((parte / total) * 100).toFixed(1))
 }
 
+/** Até quantas fatias cada recorte mostra. O resto vira "outros". */
+const FATIAS = 10
+
+/**
+ * Conta ocorrências e devolve as maiores primeiro, com o resto somado.
+ *
+ * O corte existe porque a cauda longa não cabe na tela nem ajuda: trinta
+ * empresas com um chamado cada dizem menos que a linha "outros: 30".
+ */
+function maioresPrimeiro(valores: string[]): { nome: string; chamados: number }[] {
+    const soma = new Map<string, number>()
+    for (const v of valores) soma.set(v, (soma.get(v) ?? 0) + 1)
+
+    const ordenado = [...soma.entries()].sort((a, b) => b[1] - a[1])
+    const principais = ordenado.slice(0, FATIAS).map(([nome, chamados]) => ({ nome, chamados }))
+    const resto = ordenado.slice(FATIAS).reduce((s, [, n]) => s + n, 0)
+
+    return resto === 0 ? principais : [...principais, { nome: 'outros', chamados: resto }]
+}
+
 export interface ChamadoMedido {
     tipo: string
     prioridade: string
@@ -88,6 +108,10 @@ export interface ChamadoMedido {
     reaberto: boolean
     /** Custo somado dos atendimentos da IA, em dólares. */
     custoDaIa: number
+    /** O módulo em que o cliente estava, quando o widget capturou. */
+    modulo?: string | null
+    /** O nome da empresa, para o volume por tenant (seção 12). */
+    empresa?: string | null
 }
 
 export interface Relatorio {
@@ -95,6 +119,14 @@ export interface Relatorio {
     porTipo: Record<string, number>
     porPrioridade: Record<string, number>
     porStatus: Record<string, number>
+    /**
+     * Volume por MÓDULO e por EMPRESA (seção 12), maiores primeiro.
+     *
+     * Lista e não `Record` porque a ORDEM é a informação: o módulo que mais dói
+     * é a primeira linha, e um objeto não garante ordem de leitura.
+     */
+    porModulo: { nome: string; chamados: number }[]
+    porEmpresa: { nome: string; chamados: number }[]
     primeiraResposta: Distribuicao
     resolucao: Distribuicao
     /** Resolvidos SÓ pela IA, sem nenhuma resposta humana. */
@@ -165,6 +197,19 @@ export function montarRelatorio(
             percentual: taxa(cumpridos, cumpridos + violados),
         },
 
+        /**
+         * Volume por MÓDULO e por EMPRESA (seção 12).
+         *
+         * Os dois respondem perguntas que o total não responde: "onde o produto
+         * dói" e "quem está sofrendo". Chamado sem módulo entra como "não
+         * informado" em vez de desaparecer — some-los esconderia justamente a
+         * lacuna de instrumentação do widget.
+         *
+         * Ordenados por volume e cortados no décimo: uma lista de duzentas
+         * empresas com um chamado cada não é informação, é a tabela inteira.
+         */
+        porModulo: maioresPrimeiro(chamados.map((c) => c.modulo ?? 'não informado')),
+        porEmpresa: maioresPrimeiro(chamados.map((c) => c.empresa ?? 'não informada')),
         custo: {
             total: custoTotal,
             /**
